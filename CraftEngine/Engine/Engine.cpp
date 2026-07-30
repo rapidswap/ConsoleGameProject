@@ -21,6 +21,7 @@ namespace Craft
 		LARGE_INTEGER frequency;
 		QueryPerformanceFrequency(&frequency);
 
+		// 현재 시간 읽기.
 		LARGE_INTEGER counter;
 		QueryPerformanceCounter(&counter);
 
@@ -29,7 +30,7 @@ namespace Craft
 		int64_t previousTime = currentTime;
 
 		// 프레임 고정.
-		float oneFrameTime = 1.0f / 120.0f;
+		float oneFrameTime = 1.0f / setting.framerate;
 
 		while (true)
 		{
@@ -40,7 +41,7 @@ namespace Craft
 
 			// 입력 처리.
 			ProcessInput();
-
+			 
 			// 현재 시간 확인.
 			QueryPerformanceCounter(&counter);
 
@@ -48,7 +49,8 @@ namespace Craft
 			currentTime = counter.QuadPart;
 
 			// 프레임 시간 계산.
-			float deltaTime = static_cast<float>(currentTime - previousTime)
+			float deltaTime 
+				= static_cast<float>(currentTime - previousTime)
 				/ static_cast<float>(frequency.QuadPart);
 
 			// 고정 프레임 처리
@@ -100,8 +102,10 @@ namespace Craft
 
 	void Engine::Tick(float deltaTime)
 	{
-		std::cout << "Engine::Tick() - DeltaTime: " << deltaTime
-			<< " | FPS: " << (1.0f / deltaTime)
+		std::cout << "Engine::Tick() - DeltaTime: " 
+			<< deltaTime
+			<< " | FPS: " 
+			<< (1.0f / deltaTime)
 			<< "\n";
 	}
 

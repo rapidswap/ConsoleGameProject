@@ -1,10 +1,11 @@
-#include "Engine/Engine.h"
+﻿#include <Engine/Engine.h>
 #include <iostream>
 
-using namespace Craft;
+//using namespace Craft;
 
 int main()
 {
-	Engine engine;
+	// 엔진 객체 생성 및 실행.
+	Craft::Engine engine;
 	engine.Run();
 }
