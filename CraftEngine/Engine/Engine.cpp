@@ -1,4 +1,4 @@
-#include "Engine.h"
+﻿#include "Engine.h"
 #include <windows.h>
 #include<stdint.h>
 #include <iostream>
@@ -33,6 +33,11 @@ namespace Craft
 
 		while (true)
 		{
+			if (isQuit)
+			{
+				break;
+			}
+
 			// 입력 처리.
 			ProcessInput();
 
@@ -52,7 +57,7 @@ namespace Craft
 				// 레벨 초기화 이벤트 함수.
 				OnInitialized();
 
-				// 레벨의 액터 초기화 이벤트 함수.
+				// 레벨의 액터 초기화 이벤트 함수(1번만 호출됨).
 				BeginPlay();
 
 				// 레벨의 액터 업데이트 함수.
@@ -67,11 +72,18 @@ namespace Craft
 				// 이전 프레임 시간 기록.
 				previousTime = currentTime;
 			}
+
 		}
+
+		// 종료 처리 함수 호출.
+		Shutdown();
 	}
 
 	void Engine::Quit()
 	{
+
+		// 엔진 종료 플래그 설정.
+		isQuit = true;
 	}
 
 	void Engine::ProcessInput()
@@ -88,7 +100,7 @@ namespace Craft
 
 	void Engine::Tick(float deltaTime)
 	{
-		std::cout << "DeltaTime: " << deltaTime
+		std::cout << "Engine::Tick() - DeltaTime: " << deltaTime
 			<< " | FPS: " << (1.0f / deltaTime)
 			<< "\n";
 	}
