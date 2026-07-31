@@ -26,6 +26,9 @@ namespace Craft
 		// 엔진 종료 함수.
 		void Quit();
 
+		// 전역 접근 함수.
+		static Engine& Get();
+
 	protected:
 		// 입력 처리 함수.
 		void ProcessInput();
@@ -49,12 +52,18 @@ namespace Craft
 		// 정리 함수.
 		void Shutdown();
 
+		
+
 	protected:
 		// 엔진 종료 요청 여부 플래그.
 		bool isQuit = false;
 
 		// 엔진 설정 함수.
 		Setting setting;
+	
+		// 전역 접근이 가능하도록 변수 선언.
+		static Engine* instance;
+
 	};
 }
 
