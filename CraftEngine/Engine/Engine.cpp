@@ -1,7 +1,10 @@
 ﻿#include "Engine.h"
+#include <Level/Level.h>
+
 #include <iostream>
 #include <Windows.h>
 #include <cassert>
+
 
 namespace Craft
 {
@@ -82,6 +85,30 @@ namespace Craft
 				// 화면 그리기.
 				Draw();
 
+				// 이 위까지 호출이 완료되면 프레임 처리 완료됨.
+
+				// 레벨 전환 처리.
+				if (nextLevel)
+				{
+					// 기존 레벨 정리.
+					if (mainLevel)
+					{
+						mainLevel.reset();
+					}
+					
+					// 추가 요청된 레벨을 메인 레벨로 설정.
+					mainLevel = nextLevel;
+
+					// 포인터 정리.
+					nextLevel.reset();
+				}
+
+				// 추가 또는 제거 요청된 액터 정리.
+				if (mainLevel)
+				{
+					mainLevel->ProcessAddAndDestroyActors();
+				}
+
 				// 입력 상태 저장.
 				SavePreviousInputStates();
 
@@ -112,26 +139,49 @@ namespace Craft
 	void Engine::ProcessInput()
 	{
 	}
+
 	void Engine::OnInitialized()
 	{
+		// 레벨 초기화 처리.
+		// 예외 처리.
+
+		if (!mainLevel || mainLevel->HasInitialized())
+		{
+			return;
+		}
+
+		mainLevel->OnInitialized();
 	}
+
 	void Engine::BeginPlay()
 	{
+		if (!mainLevel)
+		{
+			return;
+		}
+
+		// 레벨의 이벤트 전달.
+		mainLevel->BeginPlay();
 	}
 
 	void Engine::Tick(float deltaTime)
 	{
-		// Todo: deltaTime 출력.
-		std::cout
-			<< "Engine::Tick() - deltaTime: "
-			<< deltaTime
-			<< " | FPS: "
-			<< (1.0f / deltaTime)
-			<< "\n";
+		if (!mainLevel)
+		{
+			return;
+		}
+
+		mainLevel->Tick(deltaTime);
 	}
 
 	void Engine::Draw()
 	{
+		if (!mainLevel)
+		{
+			return;
+		}
+
+		mainLevel->Draw();
 	}
 	void Engine::SavePreviousInputStates()
 	{
