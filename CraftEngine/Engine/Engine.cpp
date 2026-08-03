@@ -1,5 +1,6 @@
 ﻿#include "Engine.h"
 #include <Level/Level.h>
+#include <Input/Input.h>
 
 #include <iostream>
 #include <Windows.h>
@@ -16,6 +17,8 @@ namespace Craft
 		// instance 초기화.
 		assert(!instance && "instance is not null");
 		instance = this;
+
+		input = std::make_unique<Input>();
 	}
 
 	Engine::~Engine()
@@ -132,12 +135,18 @@ namespace Craft
 		// 검증 - 어서트(어써트/assert).
 		// 무조건(필수로) 통화해야하는 조건이 있을 때 사용.
 		// 디버그 모드에서만 동작.
-		assert(instance && "instance is null");
+		assert(instance && "instance is null.");
 		return *instance;
 	}
 
 	void Engine::ProcessInput()
 	{
+		assert(input && "input should not be null here.");
+		if (!input)
+		{
+			return;
+		}
+		input->ProcessInput();
 	}
 
 	void Engine::OnInitialized()
@@ -185,6 +194,12 @@ namespace Craft
 	}
 	void Engine::SavePreviousInputStates()
 	{
+		assert(input && "input should not be null here.");
+		if (!input)
+		{
+			return;
+		}
+		input->SavePreviousStates();
 	}
 	void Engine::Shutdown()
 	{
