@@ -2,9 +2,9 @@
 
 #include <Actor/Actor.h>
 
-class TestActor :public Craft::Actor
+// 테스트 액터.
+class TestActor : public Craft::Actor
 {
 public:
 	virtual void Tick(float deltaTime) override;
 };
-

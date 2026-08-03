@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <Core/Core.h>
 #include <memory> // weak_ptr 사용을 위해.
 
 namespace Craft
@@ -8,7 +9,7 @@ namespace Craft
 	class Level;
 
 	// 가상 공간에 배치될 모든 액터의 기본 클래스.
-	class Actor
+	class CRAFT_API Actor
 	{
 	public:
 		

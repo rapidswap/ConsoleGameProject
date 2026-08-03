@@ -54,4 +54,5 @@ namespace Craft
 			state.wasKeyDown = state.isKeyDown;
 		}
 	}
+
 }
