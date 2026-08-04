@@ -3,7 +3,7 @@
 #include <Core/Core.h>
 #include <Windows.h>
 
-namespace Carft
+namespace Craft
 {
 	enum class CRAFT_API Color : WORD
 	{
@@ -15,9 +15,5 @@ namespace Carft
 		Purple = Red | Blue,
 		White = Red | Green | Blue,
 		BrightWhite = White | FOREGROUND_INTENSITY
-
-
-
-
 	};
 }

@@ -23,9 +23,11 @@ namespace Craft
 		Vector2 operator/(const Vector2& other) const;
 
 		// 대입 연산자 오버로딩.
-		Vc
+		Vector2& operator=(const Vector2& other);
 
 		// 비교 연산자 오버로딩.
+		bool operator==(const Vector2& other) const;
+		bool operator!=(const Vector2& other) const;
 
 		// 자주 사용할 값을 전역 변수로 선언.
 		static Vector2 Zero;

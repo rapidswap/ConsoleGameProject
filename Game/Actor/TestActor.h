@@ -6,5 +6,7 @@
 class TestActor : public Craft::Actor
 {
 public:
+	TestActor();
+	~TestActor()=default;
 	virtual void Tick(float deltaTime) override;
 };
