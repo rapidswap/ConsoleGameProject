@@ -20,6 +20,9 @@ namespace Craft
 		assert(!instance && "instance is not null");
 		instance = this;
 
+		// 엔진 설정 로드.
+		LoadEngineSetting();
+
 		// 입력 객체 생성.
 		input = std::make_unique<Input>();
 		
@@ -216,5 +219,66 @@ namespace Craft
 	}
 	void Engine::Shutdown()
 	{
+	}
+
+	void Engine::LoadEngineSetting()
+	{
+		// 파일 열기 (개행 문자 처리를 쉽게 텍스트 모드로 열기.)
+		FILE* file = nullptr;
+		fopen_s(&file, "../Config/Setting.txt", "rt");
+
+		if (!file)
+		{
+			std::cout << "Failed to open engine setting file.\n";
+		
+			// 디버그 모드에서 강제 중단 시키는 기능.
+			__debugbreak();
+			return;
+		}
+
+		// 데이터 읽어오기.
+		const int bufferSize = 2048;
+		char buffer[bufferSize] = {};
+
+		size_t readSize = fread(buffer, sizeof(char), bufferSize, file);
+
+		// 값 저장을 위해 서식 해석(파싱 - Parcing).
+		// 문자열 자르기(Split).
+		char* context = nullptr;
+		char* token = nullptr;
+		// 파일에서 읽은 전체 문자열을 개행(\n)문자 기준으로 자르기.
+		token = strtok_s(buffer, "\n", &context);
+
+		// 반복해서 자르기.
+		while (token)
+		{
+			// 공백 전까지 읽은 문자열을 저장할 변수.
+			char key[15] = {};
+
+			// 포맷을 지정한 문자열 읽기.
+			// 공백 문자를 만나면 그 전까지 읽어서 저장.
+			sscanf_s(token, "%s", key, 15);
+
+			// 키 값을 비교해서 값 설정.
+			if (strcmp(key, "framerate") == 0)
+			{
+				sscanf_s(token, "framerate = %f", &setting.framerate);
+			}
+			else if (strcmp(key, "width") == 0)
+			{
+				sscanf_s(token, "width = %d", &setting.width);
+			}
+			else if (strcmp(key, "height") == 0)
+			{
+				sscanf_s(token, "height = %d", &setting.height);
+			}
+
+			// 나머지 문자열 자르기(개행 문자 기준으로).
+			token = strtok_s(nullptr, "\n", &context);
+		}
+
+		// 파일 닫기.
+		fclose(file);
+		file = nullptr;
 	}
 }
