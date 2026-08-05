@@ -27,7 +27,9 @@ namespace Craft
 		input = std::make_unique<Input>();
 		
 		// 렌더러 객체 생성.
-		renderer = std::make_unique<Renderer>();
+		renderer = std::make_unique<Renderer>(
+		Vector2(setting.width, setting.height)
+		);
 	}
 
 	Engine::~Engine()
