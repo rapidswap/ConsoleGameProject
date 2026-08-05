@@ -258,7 +258,7 @@ namespace Craft
 			// 포맷을 지정한 문자열 읽기.
 			// 공백 문자를 만나면 그 전까지 읽어서 저장.
 			sscanf_s(token, "%s", key, 15);
-
+			
 			// 키 값을 비교해서 값 설정.
 			if (strcmp(key, "framerate") == 0)
 			{
