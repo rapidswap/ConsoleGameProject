@@ -80,12 +80,12 @@ namespace Craft
 
 		// 설정할 글자 영역.
 		SMALL_RECT rect = {
-			0,								// left
-			0,								// top
-			static_cast<short>(size.x),		// right
-			static_cast<short>(size.y)		// bottom
+			0,									// left
+			0,									// top
+			static_cast<short>(size.x - 1),		// right
+			static_cast<short>(size.y - 1)		// bottom
 		};
-
+ 
 		// 콘솔에 CHAR_INFO 타입으로 글자 쓰는 함수.
 		BOOL result = WriteConsoleOutputA(
 			buffer,
