@@ -1,5 +1,6 @@
 ﻿#include "Player.h"
 #include <Input/Input.h>
+#include <Level/GameLevel.h>
 
 using namespace Craft;
 Player::Player(const Vector2& position)
@@ -24,6 +25,10 @@ void Player::Tick(float deltaTime)
 		return;
 	}
 
+	// 이동 처리를 위해 GameLevel 객체 얻어오기.
+	// 다운 캐스팅 - 위험함 -> 형변환 실패하면 null 반환.
+	std::shared_ptr<GameLevel> level = Cast<GameLevel>(GetOwner());
+
 	// 이동 처리.
 	if (Input::Get().GetKeyDown(VK_RIGHT))
 	{
@@ -31,8 +36,12 @@ void Player::Tick(float deltaTime)
 		Vector2 newPosition = GetPosition();
 		newPosition.x += 1;
 
-		// 새로운 위치 설정.
-		SetPosition(newPosition);
+		// 이동 가능 여부 확인.
+		if (level && level->CanMove(GetPosition(), newPosition))
+		{
+			// 새로운 위치 설정.
+			SetPosition(newPosition);
+		}
 	}
 
 	if (Input::Get().GetKeyDown(VK_LEFT))
@@ -41,8 +50,12 @@ void Player::Tick(float deltaTime)
 		Vector2 newPosition = GetPosition();
 		newPosition.x -= 1;
 
-		// 새로운 위치 설정.
-		SetPosition(newPosition);
+		// 이동 가능 여부 확인.
+		if (level && level->CanMove(GetPosition(), newPosition))
+		{
+			// 새로운 위치 설정.
+			SetPosition(newPosition);
+		}
 	}
 
 	if (Input::Get().GetKeyDown(VK_UP))
@@ -51,8 +64,12 @@ void Player::Tick(float deltaTime)
 		Vector2 newPosition = GetPosition();
 		newPosition.y -= 1;
 
-		// 새로운 위치 설정.
-		SetPosition(newPosition);
+		// 이동 가능 여부 확인.
+		if (level && level->CanMove(GetPosition(), newPosition))
+		{
+			// 새로운 위치 설정.
+			SetPosition(newPosition);
+		}
 	}
 
 	if (Input::Get().GetKeyDown(VK_DOWN))
@@ -61,7 +78,11 @@ void Player::Tick(float deltaTime)
 		Vector2 newPosition = GetPosition();
 		newPosition.y += 1;
 
-		// 새로운 위치 설정.
-		SetPosition(newPosition);
+		// 이동 가능 여부 확인.
+		if (level && level->CanMove(GetPosition(), newPosition))
+		{
+			// 새로운 위치 설정.
+			SetPosition(newPosition);
+		}
 	}
 }
