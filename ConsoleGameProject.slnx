@@ -6,4 +6,5 @@
   <Project Path="Game/Game.vcxproj" Id="56cdc6f0-d8e8-4732-a5c2-2b3c12cc9bdc">
     <BuildDependency Project="CraftEngine/CraftEngine.vcxproj" />
   </Project>
+  <Project Path="ShootingGame/ShootingGame.vcxproj" Id="50ba7d47-16d1-4db8-84bf-b91f2d204ff6" />
 </Solution>
