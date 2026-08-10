@@ -1,0 +1,71 @@
+#include "Enemy.h"
+#include <Util/Util.h>
+#include <Engine/Engine.h>
+
+using namespace Craft;
+Enemy::Enemy(const std::string& image, int yPosition)
+	: Actor(image)
+{
+	// 랜덤 (오른쪽 또는 왼쪽으로 이동할지 결정).
+	int random = Util::RandomRange(1, 10);
+
+	// 랜덤으로 선택된 수가 짝수/홀수 여부에 따라 방향 결정.
+	if (random % 2 == 0)
+	{
+		// 화면 오른쪽에 생성(이동은 왼쪽 방향).
+		direction = MoveDirection::Left;
+		xPosition = static_cast<float>(Engine::Get().GetWidth() - width - 1);
+	}
+	else
+	{
+		// 화면 왼쪽에 생성(이동은 오른쪽 방향).
+		direction = MoveDirection::Right;
+		xPosition = 0.0f;
+	}
+
+	// 위치 설정.
+	SetPosition(Vector2(static_cast<int>(xPosition), yPosition));
+
+	// 발사 타이머 시간 설정 (1초에서 3초 사이의 시간을 랜덤으로).
+	timer.SetTargetTime(Util::RandomRange(1.0f, 3.0f));
+}
+
+void Enemy::Tick(float deltaTime)
+{
+	super::Tick(deltaTime);
+
+	// 이동.
+	float dir = direction == MoveDirection::Left ? -1.0f : 1.0f;
+	xPosition += dir * moveSpeed * deltaTime;
+
+	// 좌표 검사 (왼쪽으로 벗어나는 경우).
+	if (xPosition + width < 0)
+	{
+		Destroy();
+		return;
+	}
+
+	// 오른쪽으로 벗어나는 경우.
+	if (xPosition > Engine::Get().GetWidth() - 1)
+	{
+		Destroy();
+		return;
+	}
+
+	// 위치 설정.
+	SetPosition(Vector2(static_cast<int>(xPosition), GetPosition().y));
+
+	// 발사 처리.
+
+	// 타이머 시간 업데이트.
+	timer.Tick(deltaTime);
+	if (!timer.IsTimeOut())
+	{
+		return;
+	}
+
+	// 발사 가능하다면 타이머 리셋.
+	timer.Reset();
+
+	// Todo: 탄약 생성.
+}
