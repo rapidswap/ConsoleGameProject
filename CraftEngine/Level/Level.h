@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include <Core/Core.h>
-#include <Core/CraftObject.h>
 #include <Actor/Actor.h>
-#include <memory> // std::unique_ptr / std::shared_ptr 사용.
-#include <vector> // std::vector 동적 배열.
+#include <Core/CraftObject.h>
+#include <memory>		// std::unique_ptr / std::shared_ptr 사용.
+#include <vector>		// std::vector 동적 배열.
 
 namespace Craft
 {
@@ -13,15 +13,16 @@ namespace Craft
 	// : shared_from_this() / weak_from_this() 사용하기 위해.
 	// : shared_from_this() - this 포인터를 shared_ptr로 변환.
 	// : weak_from_this() - this 포인터를 weak_ptr로 변환.
-	class CRAFT_API Level
-		: public CraftObject, public std::enable_shared_from_this<Level>
+	class CRAFT_API Level :
+		public CraftObject,
+		public std::enable_shared_from_this<Level>
 	{
 		// 커스텀 타입 설정.
-		TYPE_DECLARATIONS(Level,CraftObject)
+		TYPE_DECLARATIONS(Level, CraftObject)
 
-		// friend 선언.
-		friend class Engine;
-	
+			// friend 선언.
+			friend class Engine;
+
 	public:
 		Level();
 		virtual ~Level();
@@ -34,53 +35,56 @@ namespace Craft
 		virtual void Tick(float deltaTime);
 		virtual void Draw();
 
-		// 액터 추가 함수 (템플릿).
+		// 액터 추가 함수(템플릿).
 		template<typename T, typename ...Args,
 			typename = std::enable_if_t<std::is_base_of<Actor, T>::value>>
-			std::shared_ptr<T> SpawnActor(Args&...args)
+			std::shared_ptr<T> SpawnActor(Args&& ...args)
 		{
-			// 새로운 객체 생성.
+			// 새로운 액터 생성.
 			std::shared_ptr<T> newActor
 				= std::make_shared<T>(std::forward<Args>(args)...);
 
 			// 추가 요청 목록에 포함.
 			addRequestedActorList.emplace_back(newActor);
 
-			//오너십 설정.
+			// 오너십 설정.
 			newActor->SetOwner(weak_from_this());
-
-
 
 			// 생성한 액터 반환.
 			return newActor;
 		}
 
-		// 액터 검색 함수 (템플릿).
-		template<typename T, // 사피네 T타입이 액터여만 한다. 아니면 함수 없다고 뜸.
+		// 액터 검색 함수(템플릿).
+		template<typename T,
 			typename = std::enable_if_t<std::is_base_of<Actor, T>::value>>
 			std::shared_ptr<T> FindActor()
 		{
 			// 검색 - 형변환.
-				for(const auto& actor: actorList)
+			for (const auto& actor : actorList)
+			{
+				// T 타입으로 형변환 시도.
+				// T 타입이 아닌 경우에는 null 반환.
+				std::shared_ptr<T> targetActor
+					= std::dynamic_pointer_cast<T>(actor);
+				if (targetActor)
 				{
-					std::shared_ptr<T> targetActor
-						= std::dynamic_pointer_cast<T>(actor);
-					if (targetActor)
-					{
-						return targetActor;
-					}
+					return targetActor;
 				}
+			}
 
-				// 못찾은 경우 null 반환.
-				return nullptr;
+			// 못찾은 경우 null 밚환.
+			return nullptr;
 		}
 
-		// Getter
+		// Getter.
 		inline bool HasInitialized() const { return hasInitialized; }
 
 	protected:
 		// 이전 프레임에 추가/제거 요청된 액터 처리 함수.
 		void ProcessAddAndDestroyActors();
+
+		// 액터의 이전 상태 처리 함수.
+		void SavePreviousActorStates();
 
 	protected:
 		// 초기화 처리 여부 플래그.
@@ -91,12 +95,9 @@ namespace Craft
 
 		// 레벨에 추가 요청된 액터를 저장해두는 목록.
 		// 현재 프레임을 처리하는 과정에서 액터 추가 요청이 발생하면,
-		// 해당 액터를 바로 추가하면 기존 액터 처리에 문제가 발생 할 수 있어서
-		// 현재 프레임을 모두 처리한 후에 추가 요청된 액터를 actorList로
+		// 해당 액터를 바로 추가하면 기존 액터 처리에 문제가 발생할 수 있어서
+		// 현재 프레임을 모두 처리한 후에 추가 요청된 액터를 actorList로 
 		// 옮김.
 		std::vector<std::shared_ptr<Actor>> addRequestedActorList;
-
-
 	};
 }
-

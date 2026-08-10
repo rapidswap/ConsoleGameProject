@@ -1,6 +1,8 @@
 #include "Enemy.h"
 #include <Util/Util.h>
 #include <Engine/Engine.h>
+#include <Actor/EnemyBullet.h>
+#include <Level/Level.h>
 
 using namespace Craft;
 Enemy::Enemy(const std::string& image, int yPosition)
@@ -67,5 +69,16 @@ void Enemy::Tick(float deltaTime)
 	// 발사 가능하다면 타이머 리셋.
 	timer.Reset();
 
-	// Todo: 탄약 생성.
+	// 탄약 생성.
+	// 생성 위치 설정.
+	Vector2 bulletPosition(GetPosition().x + (width / 2), GetPosition().y);
+
+	// 액터 생성.
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner)
+	{
+		owner->SpawnActor<EnemyBullet>(
+			bulletPosition, Util::RandomRange(10.0f, 20.0f)
+		);
+	}
 }
