@@ -6,7 +6,8 @@
 
 using namespace Craft;
 Player::Player()
-	:Actor("<=A=>",Vector2::Zero,Color::Green)
+	:Actor("<=A=>",Vector2::Zero,Color::Green),
+	fireMode(FireMode::OneShot)
 {
 	// 생성 위치 설정.
 	int x = (Engine::Get().GetWidth() / 2) - (width / 2);
@@ -16,6 +17,9 @@ Player::Player()
 
 	// x위치 저장.
 	xPosition = static_cast<float>(x);
+
+	// 연사 타이머 시간 설정.
+	timer.SetTargetTime(fireInterval);
 
 }
 
@@ -45,11 +49,39 @@ void Player::Tick(float deltaTime)
 	// 이동 함수 호출.
 	Move(direction, deltaTime);
 
-	// 탄약 발사 처리.
-	if (Input::Get().GetKeyDown(VK_SPACE))
+	// 발사 타이머 업데이트.
+	timer.Tick(deltaTime);
+
+	if (fireMode == FireMode::OneShot) 
 	{
-		Fire();
+		// 탄약 발사 처리.
+		if (Input::Get().GetKeyDown(VK_SPACE))
+		{
+			Fire();
+		}
 	}
+	else if(fireMode==FireMode::Repeat)
+	{
+		if (Input::Get().GetKey(VK_SPACE))
+		{
+			// 연사 발사 함수 호출.
+			FireInterval();
+		}
+	}
+
+	// 발사 모드 전환 처리.
+	if (Input::Get().GetKeyDown('R'))
+	{
+		if (fireMode == FireMode::OneShot)
+		{
+			fireMode = FireMode::Repeat;
+		}
+		else if (fireMode == FireMode::Repeat)
+		{
+			fireMode = FireMode::OneShot;
+		}
+	}
+	
 }
 
 	
@@ -95,4 +127,20 @@ void Player::Fire()
 	{
 		owner->SpawnActor<PlayerBullet>(bulletPosition);
 	}
+}
+
+void Player::FireInterval()
+{
+	// 발사 가능 여부 확인.
+	if (!CanShoot())
+	{
+		return;
+	}
+
+	// 발사 처리.
+	Fire();
+
+	// 경과 시간 초기화.
+	timer.Reset();
+	 
 }
