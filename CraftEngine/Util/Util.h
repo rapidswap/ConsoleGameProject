@@ -36,7 +36,7 @@ namespace Util
 	inline float RandomRange(int min, int max)
 	{
 		// min에서 max까지 균등하게 부동소수점 난수를 생성해주는 분포 정의.
-		std::uniform_real_distribution<int> distribution(min, max);
+		std::uniform_int_distribution<int> distribution(min, max);
 
 		// 난수 반환.
 		return distribution(GetRandomEngine());

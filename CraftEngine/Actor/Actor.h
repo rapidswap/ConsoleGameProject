@@ -34,7 +34,7 @@ namespace Craft
 		virtual void Draw();
 
 		// 충돌 이벤트 함수.
-		virtual void OnCollitsion(const std::shared_ptr<Actor>& other);
+		virtual void OnCollision(const std::shared_ptr<Actor>& other);
 
 		// 액터 제거 함수.
 		void Destroy();
@@ -63,6 +63,16 @@ namespace Craft
 
 		// 너비 반환 함수.
 		inline int GetWidth() const { return width; }
+
+		// 액터의 이미지 설정 함수.
+		inline void ChangeImage(const std::string& newImage)
+		{
+			// 이미지 길이 설정.
+			width = static_cast<int>(newImage.length());
+
+			// 새로운 글자 값 설정.
+			image = newImage;
+		}
 
 	protected:
 		// BeginPlay 이벤트 처리 여부 플래그.

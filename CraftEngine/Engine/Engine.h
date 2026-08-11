@@ -9,6 +9,7 @@ namespace Craft
 	class Level;
 	class Input;
 	class Renderer;
+	class CollisionSystem;
 
 	// 메인 엔진 클래스.
 	// 엔진 루프 제공.
@@ -77,6 +78,9 @@ namespace Craft
 		// 화면에 그리는 함수.
 		void Draw();
 
+		// 충돌 처리 함수.
+		void ProcessCollision();
+
 		// 이전입력을 저장하는 함수.
 		void SavePreviousInputStates();
 
@@ -108,6 +112,9 @@ namespace Craft
 
 		// 렌더러.
 		std::unique_ptr<Renderer> renderer;
+
+		// 콜리전 시스템.
+		std::unique_ptr<CollisionSystem> collisionSystem;
 	};
 }
 
