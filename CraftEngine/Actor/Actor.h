@@ -54,6 +54,7 @@ namespace Craft
 
 		inline Vector2 GetPosition() const { return position; }
 		void SetPosition(const Vector2& newPosition);
+		
 
 		// 이전 위치 반환 함수.
 		inline Vector2 GetPreviousPosition()const { return previousPosition; }
