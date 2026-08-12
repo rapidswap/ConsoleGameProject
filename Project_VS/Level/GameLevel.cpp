@@ -58,7 +58,7 @@ void GameLevel::OnInitialized()
 		"Attack Speed Up",
 		"Attack Speed Up -0.1sec",
 		player->AttackSpeedUp(),
-		player->GetAttackSpeed() < 0.5f)
+		player->GetAttackSpeed() > 0.5f)
 
 	// 3. 무조건 뜨는 일반 증강들
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp())

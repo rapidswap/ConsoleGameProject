@@ -58,7 +58,7 @@ private:
 	Timer timer;
 
 	// 자동 발사 간격(단위: 초).
-	float autoFireInterval = 2.0f;
+	float autoFireInterval = 1.5f;
 
 	// 플레이어 체력.
 	int playerHp = 3;

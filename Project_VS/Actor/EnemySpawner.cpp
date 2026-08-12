@@ -34,10 +34,10 @@ EnemySpawner::EnemySpawner()
 	diffcultyTimer.SetTargetTime(1.0f);
 	
 	// 엘리트 보스 스폰 타이머 설정.
-	eliteBossTimer.SetTargetTime(30.0f);
+	eliteBossTimer.SetTargetTime(50.0f);
 
 	// 데몬 스폰 타이머 설정
-	demonTimer.SetTargetTime(300.0f);
+	demonTimer.SetTargetTime(10.0f);
 
 }
 
