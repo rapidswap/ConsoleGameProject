@@ -14,6 +14,8 @@ Enemy::Enemy(const std::string& image, float x, float y)
 {
 	// 초기 위치 설정.
 	SetPosition(Vector2(static_cast<int>(xPosition), static_cast<int>(yPosition)));
+
+	color = Color::Cyan;
 }
 
 void Enemy::Tick(float deltaTime)

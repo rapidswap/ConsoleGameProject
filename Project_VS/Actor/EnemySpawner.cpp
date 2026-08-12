@@ -2,7 +2,9 @@
 #include <Util/Util.h>
 #include <Actor/Enemy.h>
 #include <Actor/EliteBoss.h>
+#include <Actor/Demon.h>
 #include <Level/Level.h>
+#include <Level/GameLevel.h>
 #include <Engine/Engine.h>
 
 using namespace Craft;
@@ -30,8 +32,11 @@ EnemySpawner::EnemySpawner()
 	timer.SetTargetTime(Util::RandomRange(minSpawnTime, maxSpawnTime));
 	diffcultyTimer.SetTargetTime(1.0f);
 	
-	// 보스 스폰 타이머 설정 (180초 = 3분)
-	eliteBossTimer.SetTargetTime(10.0f);
+	// 엘리트 보스 스폰 타이머 설정.
+	eliteBossTimer.SetTargetTime(180.0f);
+
+	// 데몬 스폰 타이머 설정
+	demonTimer.SetTargetTime(10.0f);
 
 }
 
@@ -39,17 +44,39 @@ void EnemySpawner::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
+	// 데몬이 이미 소환되었다면 스포너는 작동을 멈춥니다.
+	if (isDemonSpawned) return;
+
 	// 타이머 업데이트.
 	timer.Tick(deltaTime);
 	diffcultyTimer.Tick(deltaTime);
 	eliteBossTimer.Tick(deltaTime);
-	
-	// 보스 스폰 체크
+	demonTimer.Tick(deltaTime);
+
+	if (demonTimer.IsTimeOut())
+	{
+		isDemonSpawned = true; 
+		SpawnDemon();
+		
+		// 화면의 잡몹과 엘리트 보스 즉시 전멸.
+		std::shared_ptr<Level> owner = GetOwner();
+		if (owner)
+		{
+			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+			if (gameLevel)
+			{
+				gameLevel->WipeOutEnemies();
+				gameLevel->ShowLevelUpMenu(3);
+			}
+		}
+		
+		return;
+	}
 	if (eliteBossTimer.IsTimeOut())
 	{
 		eliteBossTimer.Reset();
 		eliteBossTimer.SetTargetTime(180.0f);
-		SpawnBoss();
+		SpawnElite();
 	}
 
 	if (diffcultyTimer.IsTimeOut())
@@ -127,7 +154,7 @@ void EnemySpawner::SpawnEnemy()
 	}
 }
 
-void EnemySpawner::SpawnBoss()
+void EnemySpawner::SpawnElite()
 {
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
@@ -161,6 +188,24 @@ void EnemySpawner::SpawnBoss()
 	if (owner)
 	{
 		owner->SpawnActor<EliteBoss>(Craft::Vector2((int)spawnX, (int)spawnY));
+	}
+}
+
+void EnemySpawner::SpawnDemon()
+{
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+
+	int edge = Util::RandomRange(0, 3);
+	float spawnX = static_cast<float>(screenWidth) / 2;
+	float spawnY = static_cast<float>(screenHeight) / 2;
+
+	
+
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner)
+	{
+		owner->SpawnActor<Demon>(Craft::Vector2((int)spawnX, (int)spawnY));
 	}
 }
 

@@ -2,10 +2,13 @@
 #include <Engine/Engine.h>
 
 using namespace Craft;
-EnemyBullet::EnemyBullet(const Vector2& position, float moveSpeed)
+EnemyBullet::EnemyBullet(const Vector2& position, float dirX, float dirY, float moveSpeed)
 	: Actor("#", position, Color::Red),
 	moveSpeed(moveSpeed),
-	yPosition(static_cast<float>(position.y))
+	xPosition(static_cast<float>(position.x)),
+	yPosition(static_cast<float>(position.y)),
+	directionX(dirX),
+	directionY(dirY)
 {
 }
 
@@ -13,11 +16,15 @@ void EnemyBullet::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// y 위치 업데이트 (아래로 이동 처리).
-	yPosition += moveSpeed * deltaTime;
+	// 방향과 속도에 따른 위치 업데이트.
+	xPosition += directionX * moveSpeed * deltaTime;
+	yPosition += directionY * moveSpeed * deltaTime;
 
-	// 좌표 검사.
-	if (yPosition >= Engine::Get().GetHeight() - 1)
+	// 좌표 검사 (화면 밖으로 나가면 파괴).
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+
+	if (yPosition >= screenHeight - 1 || yPosition < 0 || xPosition >= screenWidth || xPosition < 0)
 	{
 		Destroy();
 		return;
@@ -25,6 +32,6 @@ void EnemyBullet::Tick(float deltaTime)
 
 	// 위치 설정.
 	SetPosition(Vector2(
-		GetPosition().x, static_cast<int>(yPosition)
+		static_cast<int>(xPosition), static_cast<int>(yPosition)
 	));
 }

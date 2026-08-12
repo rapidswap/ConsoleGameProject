@@ -6,6 +6,11 @@
 #include <Input/Input.h>
 #include <Util/Util.h>
 #include <Util/Timer.h>
+#include <Actor/Enemy.h>
+#include <Actor/EliteBoss.h>
+#include <Actor/DestroyEffect.h>
+#include <Actor/DestroyEXP.h>
+
 #include <string>
 #include <algorithm>
 
@@ -62,8 +67,13 @@ void GameLevel::OnInitialized()
 	ADD_AUGMENT("extra Bullet", "Bullet +1", player->AddProjectile())
 }
 
-void GameLevel::ShowLevelUpMenu()
+ void GameLevel::ShowLevelUpMenu(int times)
 {
+	if (times > 1)
+	{
+		pendingAugmentCount += (times - 1);
+	}
+
 	// 레벨업 메뉴 오픈.
 	isLevelUpMenuOpen = true;
 	seletedAugmentIndex = 0;
@@ -131,8 +141,18 @@ void GameLevel::Tick(float deltaTime)
 				// 선택된 증강의 효과 함수.
 				currentChoices[seletedAugmentIndex].onSelected();
 			}
-			// 메뉴 닫기.
-			isLevelUpMenuOpen = false;
+			
+			// 남은 증강 선택 횟수가 있다면 메뉴를 다시 띄움
+			if (pendingAugmentCount > 0)
+			{
+				pendingAugmentCount--;
+				ShowLevelUpMenu(1);
+			}
+			else
+			{
+				// 메뉴 닫기.
+				isLevelUpMenuOpen = false;
+			}
 		}
 
 		// Level::Tick을 호출하지 않으면 게임 내 액터들이 멈춤(Freeze).
@@ -176,7 +196,7 @@ void GameLevel::Draw()
 			+ std::string(targetExpBuf);
 		
 		// 화면 최상단 중앙 즈음에 출력 (예시 좌표: x=10, y=0).
-		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Gyan, 100);
+		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan, 100);
 	}
 
 	// 증강 선택 창이 켜져있을 때(프리즈 상태) 화면 중앙에 안내 문구 출력.
@@ -234,6 +254,13 @@ void GameLevel::Draw()
 
 		}
 	}
+
+	// Todo: 게임 클리어 시.
+	// 화면 게임 클리어 엔터 -> 메인 메뉴
+
+	// Todo: 게임 실패 시.
+	// 따로 메뉴 창
+	// 다시 시작, 메인 메뉴로 돌아가기, 게임 종료
 }
 
 void GameLevel::TakeDamage()
@@ -251,9 +278,24 @@ bool GameLevel::CheckGameFailed()
 	auto player = FindActor<Player>();
 	if (player && player->GetHp() <= 0)
 	{
-		// 엔진의 Quit 함수를 호출하여 게임 즉시 종료.
-		Craft::Engine::Get().Quit();
+		Engine::Get().Quit();
 		return true;
 	}
+
 	return false;
+}
+
+void GameLevel::WipeOutEnemies()
+{
+	for (auto& actor : actorList)
+	{
+		if (actor->IsTypeOf<Enemy>() || actor->IsTypeOf<EliteBoss>())
+		{
+			actor->Destroy();
+			
+			// 파괴 이펙트와 경험치 스폰.
+			SpawnActor<DestroyEffect>(actor->GetPosition());
+			SpawnActor<DestroyEXP>(actor->GetPosition());
+		}
+	}
 }

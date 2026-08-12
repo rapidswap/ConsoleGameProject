@@ -11,7 +11,7 @@
 using namespace Craft;
 
 EliteBoss::EliteBoss(const Craft::Vector2& position)
-	: Actor("[==BOSS==]", position, Color::Red)
+	: Actor("[==ELITE==]", position, Color::Purple)
 {
 	xPosition = static_cast<float>(position.x);
 	yPosition = static_cast<float>(position.y);
@@ -49,10 +49,7 @@ void EliteBoss::Tick(float deltaTime)
 	SetPosition(Vector2(static_cast<int>(xPosition), static_cast<int>(yPosition)));
 }
 
-void EliteBoss::Draw()
-{
-	super::Draw();
-}
+
 
 void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 {

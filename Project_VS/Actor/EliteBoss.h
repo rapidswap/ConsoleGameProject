@@ -12,12 +12,11 @@ public:
 
 private:
 	virtual void Tick(float deltaTime)override;
-	virtual void Draw() override;
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 
 
 private:
-	// 중간 보스의 체력.
+	// 엘리트 보스의 체력.
 	int eliteBossHp = 30;
 	
 	float xPosition = 0.0f;

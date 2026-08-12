@@ -26,7 +26,11 @@ public:
 	void TakeDamage();
 
 	// 플레이어가 레벨업했을 때 메뉴를 띄우고 게임을 프리즈시키는 함수.
-	void ShowLevelUpMenu();
+	// 여러 번 연속으로 띄워야 할 경우 times 인자에 횟수를 넘깁니다 (기본값 1).
+	void ShowLevelUpMenu(int times = 1);
+
+	// 보스 등장 시 모든 일반 적과 중간 보스를 소멸시키는 함수.
+	void WipeOutEnemies();
 
 private:
 	// 게임 오버 여부를 확인하는 함수.
@@ -45,4 +49,7 @@ private:
 	
 	// 현재 방향키로 선택중인 증강의 인덱스 번호.
 	int seletedAugmentIndex = 0;
+
+	// 추가로 선택해야 할 증강의 남은 횟수 (연속 선택을 위함).
+	int pendingAugmentCount = 0;
 };

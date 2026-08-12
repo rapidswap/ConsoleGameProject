@@ -92,6 +92,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor\Demon.cpp" />
     <ClCompile Include="Actor\DestroyEffect.cpp" />
     <ClCompile Include="Actor\DestroyEXP.cpp" />
     <ClCompile Include="Actor\EliteBoss.cpp" />
@@ -106,6 +107,7 @@
     <ClCompile Include="Util\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor\Demon.h" />
     <ClInclude Include="Actor\DestroyEffect.h" />
     <ClInclude Include="Actor\DestroyEXP.h" />
     <ClInclude Include="Actor\EliteBoss.h" />

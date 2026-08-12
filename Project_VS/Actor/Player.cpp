@@ -8,6 +8,8 @@
 #include <Level/GameLevel.h>
 #include <Actor/DestroyEXP.h>
 #include <Actor/EliteBoss.h>
+#include <Actor/Demon.h>
+#include <Actor/EnemyBullet.h>
 #include <cmath>
 
 using namespace Craft;
@@ -30,6 +32,8 @@ Player::Player()
 	// 무적 타이머 초기화
 	invincibilityTimer.SetTargetTime(1.0f);
 	blinkTimer.SetTargetTime(0.1f);
+
+	sortingOrder = 12;
 }
 
 
@@ -101,12 +105,17 @@ void Player::Tick(float deltaTime)
 		std::shared_ptr<Level> owner = GetOwner();
 		if (owner)
 		{
-			// 엘리트 보스가 있는지 먼저 확인합니다.
-			std::shared_ptr<Actor> targetEnemy = owner->FindActor<EliteBoss>();
+			// 데몬(최종 보스)이 있는지 가장 먼저 확인합니다.
+			std::shared_ptr<Actor> targetEnemy = owner->FindActor<Demon>();
 			if (!targetEnemy)
 			{
-				// 엘리트 보스가 없다면 일반 적을 찾습니다.
-				targetEnemy = owner->FindActor<Enemy>();
+				// 데몬이 없다면 엘리트 보스가 있는지 확인합니다.
+				targetEnemy = owner->FindActor<EliteBoss>();
+				if (!targetEnemy)
+				{
+					// 엘리트 보스가 없다면 일반 적을 찾습니다.
+					targetEnemy = owner->FindActor<Enemy>();
+				}
 			}
 
 			if (targetEnemy)
@@ -169,7 +178,7 @@ void Player::Tick(float deltaTime)
 
 	// 일직선 연사 모드 처리 (매 프레임마다 검사)
 	if (pendingBullets > 0)
-	{
+	{	
 		burstTimer.Tick(deltaTime);
 		
 		// 대기 시간이 지났으면 한 발 발사.
@@ -178,12 +187,15 @@ void Player::Tick(float deltaTime)
 			std::shared_ptr<Level> owner = GetOwner();
 			if (owner)
 			{
-				// 엘리트 보스가 있는지 먼저 확인합니다.
-				std::shared_ptr<Actor> targetEnemy = owner->FindActor<EliteBoss>();
+				// 데몬(최종 보스)이 있는지 가장 먼저 확인합니다.
+				std::shared_ptr<Actor> targetEnemy = owner->FindActor<Demon>();
 				if (!targetEnemy)
 				{
-					// 엘리트 보스가 없다면 일반 적을 찾습니다.
-					targetEnemy = owner->FindActor<Enemy>();
+					targetEnemy = owner->FindActor<EliteBoss>();
+					if (!targetEnemy)
+					{
+						targetEnemy = owner->FindActor<Enemy>();
+					}
 				}
 
 				if (targetEnemy)
@@ -234,10 +246,10 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 	if (isInvincible) return;
 
 	// 부딪힌 액터가 적 기체(Enemy)이거나 엘리트 보스(EliteBoss)이면 처리.
-	if (other->IsTypeOf<Enemy>() || other->IsTypeOf<EliteBoss>())
+	if (other->IsTypeOf<Enemy>() || other->IsTypeOf<EliteBoss>() || other->IsTypeOf<Demon>())
 	{
 		// 제안서의 기본 방향에 맞춰 무적 통과 적용 후 맞았을 때만 일반 적 파괴.
-		// 보스는 체력이 따로 있으므로 즉시 파괴되지 않고 플레이어만 데미지를 입음.
+		// 엘리트와 보스는 체력이 따로 있으므로 즉시 파괴되지 않고 플레이어만 데미지를 입음.
 		if (other->IsTypeOf<Enemy>())
 		{
 			other->Destroy();
@@ -263,6 +275,27 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 				gameLevel->TakeDamage();
 			}
 		}
+	}
+
+	// 부딪힌 액터가 적의 총알이면 데미지 받는 처리.
+	if (other->IsTypeOf<EnemyBullet>())
+	{
+
+		other->Destroy();
+
+		// 무적 상태일 때는 충돌 무시 (적/보스 통과),
+		if (isInvincible) return;
+		
+
+		std::shared_ptr<Level> owner = GetOwner();
+		std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+		
+		gameLevel->TakeDamage();
+
+		// 피격 즉시 무적 상태로 돌입.
+		isInvincible = true;
+		invincibilityTimer.Reset();
+		blinkTimer.Reset();
 	}
 
 	// 부딪힌 액터가 경험치(DestroyEXP)이면 획득 처리.

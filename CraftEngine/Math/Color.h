@@ -11,7 +11,7 @@ namespace Craft
 		Green=FOREGROUND_GREEN,
 		Blue=FOREGROUND_BLUE,
 		Yellow = Red | Green,
-		Gyan = Green | Blue,
+		Cyan = Green | Blue,
 		Purple = Red | Blue,
 		White = Red | Green | Blue,
 		BrightWhite = White | FOREGROUND_INTENSITY

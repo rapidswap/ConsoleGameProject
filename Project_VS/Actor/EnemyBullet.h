@@ -10,6 +10,8 @@ class EnemyBullet : public Craft::Actor
 public:
 	EnemyBullet(
 		const Craft::Vector2& position,
+		float dirX = 0.0f,
+		float dirY = 1.0f,
 		float moveSpeed = 15.0f
 	);
 
@@ -21,6 +23,11 @@ private:
 	// 이동 처리를 위한 변수.
 	float moveSpeed = 0.0f;
 
-	// y위치 처리를 위한 변수.
+	// 위치 처리를 위한 변수.
+	float xPosition = 0.0f;
 	float yPosition = 0.0f;
+	
+	// 이동 방향.
+	float directionX = 0.0f;
+	float directionY = 1.0f;
 };
