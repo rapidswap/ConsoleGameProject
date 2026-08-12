@@ -7,7 +7,7 @@
 #include <Actor/Enemy.h>
 #include <Level/GameLevel.h>
 #include <Actor/DestroyEXP.h>
-#include <Actor/DestroyEXP.h>
+#include <Actor/EliteBoss.h>
 #include <cmath>
 
 using namespace Craft;
@@ -27,6 +27,9 @@ Player::Player()
 	// 연사 타이머 시간 설정.
 	timer.SetTargetTime(autoFireInterval);
 
+	// 무적 타이머 초기화
+	invincibilityTimer.SetTargetTime(1.0f);
+	blinkTimer.SetTargetTime(0.1f);
 }
 
 
@@ -65,7 +68,30 @@ void Player::Tick(float deltaTime)
 		direction = 1.0f;
 		yMove(direction, deltaTime);
 	}
+	 
+	if (Input::Get().GetKeyDown('R'))
+	{
+		bulletMode = 1 - bulletMode;
+	}
 
+	// 무적 타이머 및 깜빡임 처리
+	if (isInvincible)
+	{
+		invincibilityTimer.Tick(deltaTime);
+		blinkTimer.Tick(deltaTime);
+
+		if (blinkTimer.IsTimeOut())
+		{
+			isVisible = !isVisible; // 깜빡임 토글
+			blinkTimer.Reset();
+		}
+
+		if (invincibilityTimer.IsTimeOut())
+		{
+			isInvincible = false;
+			isVisible = true; // 무적 끝나면 확실히 보이게
+		}
+	}
 
 	// 발사 타이머 업데이트 및 자동 발사.
 	timer.Tick(deltaTime);
@@ -75,11 +101,18 @@ void Player::Tick(float deltaTime)
 		std::shared_ptr<Level> owner = GetOwner();
 		if (owner)
 		{
-			auto enemy = owner->FindActor<Enemy>();
-			if (enemy)
+			// 엘리트 보스가 있는지 먼저 확인합니다.
+			std::shared_ptr<Actor> targetEnemy = owner->FindActor<EliteBoss>();
+			if (!targetEnemy)
+			{
+				// 엘리트 보스가 없다면 일반 적을 찾습니다.
+				targetEnemy = owner->FindActor<Enemy>();
+			}
+
+			if (targetEnemy)
 			{
 				Vector2 pPos = GetPosition();
-				Vector2 ePos = enemy->GetPosition();
+				Vector2 ePos = targetEnemy->GetPosition();
 				
 				// 적을 향하는 기본 방향.
 				float baseDx = static_cast<float>(ePos.x) - pPos.x;
@@ -100,57 +133,129 @@ void Player::Tick(float deltaTime)
 				// 총알 생성 위치.
 				Vector2 bulletPosition(pPos.x + (width / 2), pPos.y);
 
-				// 총알 개수 만큼 반복해서 쏘기.
-				// 총알 간의 각도는 15도.
-				float spreadAngle = 15.0f;
-				
-				for (int i = 0;i < projectileCount;++i)
+				if (bulletMode == 1)
 				{
-					// 중앙을 기준으로 좌우로 각도 분배.
-					float offsetAngle = 0.0f;
-
-					if (i > 0)
+					// 일직선 발사 모드: 연사를 위해 대기 총알 수 설정
+					// 첫 발은 즉시 나가도록 타이머를 0.0f로 설정합니다.
+					pendingBullets = projectileCount;
+					burstTimer.SetTargetTime(0.0f);
+					burstTimer.Reset();
+				}
+				else 
+				{
+					// 기존 부채꼴 발사 모드 (동시 발사)
+					float spreadAngle = 15.0f;
+					for (int i = 0; i < projectileCount; ++i)
 					{
-						float sign = (i % 2 != 0) ? 1.0f : -1.0f;
+						float offsetAngle = 0.0f;
+						if (i > 0)
+						{
+							float sign = (i % 2 != 0) ? 1.0f : -1.0f;
+							int pairIndex = (i + 1) / 2;
+							offsetAngle = sign * (pairIndex * spreadAngle);
+						}
+						float rad = offsetAngle * 3.14f / 180.0f;
+						float finalDx = baseDx * std::cos(rad) - baseDy * std::sin(rad);
+						float finalDy = baseDx * std::sin(rad) + baseDy * std::cos(rad);
 
-						int pairIndex = (i + 1) / 2;
-						offsetAngle = sign * (pairIndex * spreadAngle);
+						owner->SpawnActor<PlayerBullet>(bulletPosition, finalDx, finalDy);
 					}
-			
-					// 각도를 라디안으로 변환.
-					float rad = offsetAngle * 3.14f / 180.0f;
-
-					// 회전 행렬을 이용해 방향 틀어주기.
-					float finalDx = baseDx * std::cos(rad) - baseDy * std::sin(rad);
-					float finalDy = baseDx * std::sin(rad) + baseDy * std::cos(rad);
-					
-					// 틀어진 방향으로 총알 생성.
-					owner->SpawnActor<PlayerBullet>(bulletPosition, finalDx, finalDy);
 				}
 				
 				timer.Reset();
 			}
 		}
 	}
+
+	// 일직선 연사 모드 처리 (매 프레임마다 검사)
+	if (pendingBullets > 0)
+	{
+		burstTimer.Tick(deltaTime);
+		
+		// 대기 시간이 지났으면 한 발 발사.
+		if (burstTimer.IsTimeOut())
+		{
+			std::shared_ptr<Level> owner = GetOwner();
+			if (owner)
+			{
+				// 엘리트 보스가 있는지 먼저 확인합니다.
+				std::shared_ptr<Actor> targetEnemy = owner->FindActor<EliteBoss>();
+				if (!targetEnemy)
+				{
+					// 엘리트 보스가 없다면 일반 적을 찾습니다.
+					targetEnemy = owner->FindActor<Enemy>();
+				}
+
+				if (targetEnemy)
+				{
+					Vector2 pPos = GetPosition();
+					Vector2 ePos = targetEnemy->GetPosition();
+					
+					// 적을 향하는 방향 계산.
+					float baseDx = static_cast<float>(ePos.x) - pPos.x;
+					float baseDy = static_cast<float>(ePos.y) - pPos.y;
+					float length = std::sqrt(baseDx * baseDx + baseDy * baseDy);
+					if (length > 0.0f)
+					{
+						baseDx /= length;
+						baseDy /= length;
+					}
+					else
+					{
+						baseDx = 0.0f;
+						baseDy = -1.0f;
+					}
+					
+					Vector2 bulletPosition(pPos.x + (width / 2), pPos.y);
+					owner->SpawnActor<PlayerBullet>(bulletPosition, baseDx, baseDy);
+				}
+			}
+			
+			pendingBullets--;
+			
+			// 다음 발사는 0.1초 뒤에 나가도록 타이머 재설정.
+			burstTimer.SetTargetTime(0.1f);
+			burstTimer.Reset();
+		}
+	}
+}
+
+void Player::Draw()
+{
+	if (!isVisible) return;
+	super::Draw();
 }
 
 void Player::OnCollision(const std::shared_ptr<Actor>& other)
 {
 	super::OnCollision(other);
 
-	// 부딪힌 액터가 적 기체(Enemy)이면 처리.
-	if (other->IsTypeOf<Enemy>())
-	{
-		// 부딪힌 적 기체 제거.
-		other->Destroy();
+	// 무적 상태일 때는 충돌 무시 (적/보스 통과),
+	if (isInvincible) return;
 
-		// 파괴 이펙트 생성.
+	// 부딪힌 액터가 적 기체(Enemy)이거나 엘리트 보스(EliteBoss)이면 처리.
+	if (other->IsTypeOf<Enemy>() || other->IsTypeOf<EliteBoss>())
+	{
+		// 제안서의 기본 방향에 맞춰 무적 통과 적용 후 맞았을 때만 일반 적 파괴.
+		// 보스는 체력이 따로 있으므로 즉시 파괴되지 않고 플레이어만 데미지를 입음.
+		if (other->IsTypeOf<Enemy>())
+		{
+			other->Destroy();
+			std::shared_ptr<Level> owner = GetOwner();
+			if (owner)
+			{
+				owner->SpawnActor<DestroyEffect>(other->GetPosition());
+			}
+		}
+
+		// 피격 즉시 무적 상태로 돌입.
+		isInvincible = true;
+		invincibilityTimer.Reset();
+		blinkTimer.Reset();
+
 		std::shared_ptr<Level> owner = GetOwner();
 		if (owner)
 		{
-			// 적의 위치에 파괴 이펙트 출력.
-			owner->SpawnActor<DestroyEffect>(other->GetPosition());
-
 			// 레벨을 GameLevel로 변환한 뒤 체력 깎기 처리.
 			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
 			if (gameLevel)

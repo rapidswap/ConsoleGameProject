@@ -94,6 +94,7 @@
   <ItemGroup>
     <ClCompile Include="Actor\DestroyEffect.cpp" />
     <ClCompile Include="Actor\DestroyEXP.cpp" />
+    <ClCompile Include="Actor\EliteBoss.cpp" />
     <ClCompile Include="Actor\Enemy.cpp" />
     <ClCompile Include="Actor\EnemyBullet.cpp" />
     <ClCompile Include="Actor\EnemySpawner.cpp" />
@@ -107,6 +108,7 @@
   <ItemGroup>
     <ClInclude Include="Actor\DestroyEffect.h" />
     <ClInclude Include="Actor\DestroyEXP.h" />
+    <ClInclude Include="Actor\EliteBoss.h" />
     <ClInclude Include="Actor\Enemy.h" />
     <ClInclude Include="Actor\EnemyBullet.h" />
     <ClInclude Include="Actor\EnemySpawner.h" />

@@ -9,6 +9,24 @@
 #include <string>
 #include <algorithm>
 
+// 조건 없이 등장하는 증강.
+#define ADD_AUGMENT(Name,Desc,Logic)								\
+	augmentList.push_back({											\
+		Name, Desc,													\
+			[this]() {auto player = FindActor<Player>();if (player)	\
+		{															\
+			Logic;}},												\
+			nullptr													\
+	});
+
+// 특정 조건으로 등장하는 증강.
+#define ADD_COND_AUGMENT(Name, Desc, Logic, Cond) \
+	augmentList.push_back({ \
+		Name, Desc, \
+		[this]() { auto player = FindActor<Player>(); if(player) { Logic; } }, \
+		[this]() { auto player = FindActor<Player>(); return player && (Cond); } \
+	});
+
 
 using namespace Craft;
 void GameLevel::OnInitialized()
@@ -22,85 +40,26 @@ void GameLevel::OnInitialized()
 	SpawnActor<EnemySpawner>();
 
 	// 증강 목록에 증강 추가.
-	// 플레이어 치료.
-	augmentList.push_back(
-		{
-			"Heal",
-			"Heal your Hp 1 (MAX 3)",
-			[this]() {
-			auto player = FindActor<Player>();
-			int hp = player->GetHp();
-			if (hp < 3) player->hpUp();},
-		[this]() {
-			auto player = FindActor<Player>();
-			return player->GetHp() < 3;}
-		});
-	// 플레이어 최대 체력 증가.
-	augmentList.push_back(
-		{
-			"Max Hp Up",
-			"extra Hp Up",
-			[this]() { 
-			auto player = FindActor<Player>();
-			player->hpUp();}
-		});
-	// 플레이어 이동 속도 증가.
-	augmentList.push_back(
-		{
-			"Player Speed Up",
-			"Speed + 1",
-			[this]() {
-				auto player = FindActor<Player>();
-				if (player)
-				{
-					player->PlayerSpeedUp();
-				}
-			}
-		});
-	// 플레이어 추가 경험치.
-	augmentList.push_back(
-		{
-			"extra EXP",
-			"extra EXP +10%",
-			[this]() { 
-				auto player = FindActor<Player>();
-				if (player)
-				{
-				player->PlayerExpUp();
-				}
-			}
-		});
-	// 플레이어 추가 탄환.
-	augmentList.push_back(
-		{
-			"extra Bullet",
-			"Bullet +1",
-			[this]() {
-				auto player = FindActor<Player>();
-				if (player)
-				{
-				player->AddProjectile();
-				}
-			}
-		});
-	// 플레이어 공격 속도 증가.
-	augmentList.push_back(
-		{
-			"Attack Speed Up",
-			"Attack Speed Up -0.1sec",
-			[this]() {
-				auto player = FindActor<Player>();
-				if (player)
-				{
-				player->AttackSpeedUp();
-				}
-			},
-			[this]()
-			{
-				auto player = FindActor<Player>();
-				return player && player->GetAttackSpeed() < 0.5f;
-			}
-		});
+	
+	// 1. 조건부 증강 (체력이 덜 찼을 때만 뜸).
+	ADD_COND_AUGMENT(
+		"Heal",
+		"Heal your Hp 1",
+		player->hpUp(),
+		player->GetHp() < player->GetMaxHp())
+
+	// 2. 조건부 증강 (공격 속도 제한).
+	ADD_COND_AUGMENT(
+		"Attack Speed Up",
+		"Attack Speed Up -0.1sec",
+		player->AttackSpeedUp(),
+		player->GetAttackSpeed() < 0.5f)
+
+	// 3. 무조건 뜨는 일반 증강들
+	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp())
+	ADD_AUGMENT("Player Speed Up", "Speed + 1", player->PlayerSpeedUp())
+	ADD_AUGMENT("extra EXP", "extra EXP +10%", player->PlayerExpUp())
+	ADD_AUGMENT("extra Bullet", "Bullet +1", player->AddProjectile())
 }
 
 void GameLevel::ShowLevelUpMenu()

@@ -17,6 +17,7 @@ public:
 	inline float GetEXP() const { return playerEXP; }
 	inline float GetTargetEXP() const { return targetEXP; }
 	inline int GetHp() const { return playerHp; }
+	inline int GetMaxHp() const { return maxHp; }
 	inline int GetAttackSpeed() const { return autoFireInterval; }
 	
 	// 증강으로 인한 플레이어의 정보 변경.
@@ -29,10 +30,12 @@ public:
 	}
 	inline void hpDown() { playerHp--; }
 	inline void hpUp() { playerHp++; }
+	inline void MaxHpUp() { maxHp++; playerHp++; }
 	
 private:
 	// 이벤트 함수 오버라이드.
 	virtual void Tick(float deltaTime) override;
+	virtual void Draw() override;
 
 	// 충돌 이벤트 함수 오버라이드.
 	virtual void OnCollision(const std::shared_ptr<Actor>& other)override;
@@ -49,7 +52,7 @@ private:
 	float yPosition = 0.0f;
 
 	// 이동 속도 변수.
-	float moveSpeed = 31.0f;
+	float moveSpeed = 20.0f;
 
 	// 타이머 변수.
 	Timer timer;
@@ -59,6 +62,7 @@ private:
 
 	// 플레이어 체력.
 	int playerHp = 3;
+	int maxHp = 3;
 
 	// 플레이어 레벨.
 	int playerLevel = 1;
@@ -74,5 +78,18 @@ private:
 
 	// 한 번에 발사할 총알의 개수
 	int projectileCount = 1;
+
+	// 발사 모드 결정.
+	int bulletMode = 1;
+
+	// 일직선 연사 모드를 위한 변수.
+	Timer burstTimer;
+	int pendingBullets = 0;
+
+	// 피격 시 무적 판정을 위한 변수
+	bool isInvincible = false;
+	bool isVisible = true;
+	Timer invincibilityTimer;
+	Timer blinkTimer;
 };
 

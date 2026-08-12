@@ -1,6 +1,7 @@
 #include "EnemySpawner.h"
 #include <Util/Util.h>
 #include <Actor/Enemy.h>
+#include <Actor/EliteBoss.h>
 #include <Level/Level.h>
 #include <Engine/Engine.h>
 
@@ -28,6 +29,10 @@ EnemySpawner::EnemySpawner()
 	// 적 생성 타이머 설정.
 	timer.SetTargetTime(Util::RandomRange(minSpawnTime, maxSpawnTime));
 	diffcultyTimer.SetTargetTime(1.0f);
+	
+	// 보스 스폰 타이머 설정 (180초 = 3분)
+	eliteBossTimer.SetTargetTime(10.0f);
+
 }
 
 void EnemySpawner::Tick(float deltaTime)
@@ -37,6 +42,15 @@ void EnemySpawner::Tick(float deltaTime)
 	// 타이머 업데이트.
 	timer.Tick(deltaTime);
 	diffcultyTimer.Tick(deltaTime);
+	eliteBossTimer.Tick(deltaTime);
+	
+	// 보스 스폰 체크
+	if (eliteBossTimer.IsTimeOut())
+	{
+		eliteBossTimer.Reset();
+		eliteBossTimer.SetTargetTime(180.0f);
+		SpawnBoss();
+	}
 
 	if (diffcultyTimer.IsTimeOut())
 	{
@@ -110,6 +124,43 @@ void EnemySpawner::SpawnEnemy()
 	if (owner)
 	{
 		owner->SpawnActor<Enemy>(enemyType[index], spawnX, spawnY);
+	}
+}
+
+void EnemySpawner::SpawnBoss()
+{
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	
+	int edge = Util::RandomRange(0, 3);
+	float spawnX = 0.0f;
+	float spawnY = 0.0f;
+
+	if (edge == 0) // 상단
+	{
+		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
+		spawnY = 0.0f;
+	}
+	else if (edge == 1) // 하단
+	{
+		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
+		spawnY = (float)(screenHeight - 1);
+	}
+	else if (edge == 2) // 좌측
+	{
+		spawnX = 0.0f;
+		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
+	}
+	else // 우측
+	{
+		spawnX = (float)(screenWidth - 1);
+		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
+	}
+
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner)
+	{
+		owner->SpawnActor<EliteBoss>(Craft::Vector2((int)spawnX, (int)spawnY));
 	}
 }
 
