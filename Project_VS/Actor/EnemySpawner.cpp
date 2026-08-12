@@ -3,6 +3,7 @@
 #include <Actor/Enemy.h>
 #include <Actor/EliteBoss.h>
 #include <Actor/Demon.h>
+#include <Actor/SpawnDemonEffect.h>
 #include <Level/Level.h>
 #include <Level/GameLevel.h>
 #include <Engine/Engine.h>
@@ -33,10 +34,10 @@ EnemySpawner::EnemySpawner()
 	diffcultyTimer.SetTargetTime(1.0f);
 	
 	// 엘리트 보스 스폰 타이머 설정.
-	eliteBossTimer.SetTargetTime(180.0f);
+	eliteBossTimer.SetTargetTime(30.0f);
 
 	// 데몬 스폰 타이머 설정
-	demonTimer.SetTargetTime(10.0f);
+	demonTimer.SetTargetTime(300.0f);
 
 }
 
@@ -44,9 +45,32 @@ void EnemySpawner::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// 데몬이 이미 소환되었다면 스포너는 작동을 멈춥니다.
-	if (isDemonSpawned) return;
+	// 스폰 완료 상태(보스전 돌입)면 아무것도 하지 않음.
+	if (demonSpawnStep == 2) return;
 
+	// 대기 상태(전멸 후 이펙트 감상 중)
+	if (demonSpawnStep == 1)
+	{
+		demonWaitTimer.Tick(deltaTime);
+		if (demonWaitTimer.IsTimeOut())
+		{
+			demonSpawnStep = 2; // 스폰 완료 상태로 전환
+			SpawnDemon();
+
+			std::shared_ptr<Level> owner = GetOwner();
+			if (owner)
+			{
+				std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+				if (gameLevel)
+				{
+					gameLevel->ShowLevelUpMenu(3); // 대기 끝나고 데몬 나오면서 증강
+				}
+			}
+		}
+		return; // 대기 중이므로 평소 스폰 로직 실행 안 함
+	}
+
+	// 이하 demonSpawnStep == 0 (평상시) 로직
 	// 타이머 업데이트.
 	timer.Tick(deltaTime);
 	diffcultyTimer.Tick(deltaTime);
@@ -55,10 +79,11 @@ void EnemySpawner::Tick(float deltaTime)
 
 	if (demonTimer.IsTimeOut())
 	{
-		isDemonSpawned = true; 
-		SpawnDemon();
-		
-		// 화면의 잡몹과 엘리트 보스 즉시 전멸.
+		demonSpawnStep = 1; // 대기 상태로 전환
+		demonWaitTimer.SetTargetTime(2.0f); // 2초 딜레이
+		demonWaitTimer.Reset();
+
+		// 화면의 잡몹과 엘리트 보스 즉시 전멸
 		std::shared_ptr<Level> owner = GetOwner();
 		if (owner)
 		{
@@ -66,7 +91,14 @@ void EnemySpawner::Tick(float deltaTime)
 			if (gameLevel)
 			{
 				gameLevel->WipeOutEnemies();
-				gameLevel->ShowLevelUpMenu(3);
+				
+				// 맵 정중앙에 데몬 소환 전조 이펙트(포탈) 스폰
+				int screenWidth = Engine::Get().GetWidth();
+				int screenHeight = Engine::Get().GetHeight();
+				float spawnX = static_cast<float>(screenWidth) / 2;
+				float spawnY = static_cast<float>(screenHeight) / 2;
+				
+				gameLevel->SpawnActor<SpawnDemonEffect>(Craft::Vector2((int)spawnX, (int)spawnY));
 			}
 		}
 		

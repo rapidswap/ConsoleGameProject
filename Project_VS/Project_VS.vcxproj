@@ -101,6 +101,7 @@
     <ClCompile Include="Actor\EnemySpawner.cpp" />
     <ClCompile Include="Actor\Player.cpp" />
     <ClCompile Include="Actor\PlayerBullet.cpp" />
+    <ClCompile Include="Actor\SpawnDemonEffect.cpp" />
     <ClCompile Include="Level\GameLevel.cpp" />
     <ClCompile Include="Level\MainMenuLevel.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Actor\EnemySpawner.h" />
     <ClInclude Include="Actor\Player.h" />
     <ClInclude Include="Actor\PlayerBullet.h" />
+    <ClInclude Include="Actor\SpawnDemonEffect.h" />
     <ClInclude Include="Level\GameLevel.h" />
     <ClInclude Include="Level\MainMenuLevel.h" />
     <ClInclude Include="Util\Timer.h" />

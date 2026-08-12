@@ -17,7 +17,7 @@ private:
 
 private:
 	// 엘리트 보스의 체력.
-	int eliteBossHp = 30;
+	int eliteBossHp = 20;
 	
 	float xPosition = 0.0f;
 	float yPosition = 0.0f;

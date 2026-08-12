@@ -15,7 +15,7 @@ Demon::Demon(const Craft::Vector2& position)
 	yPosition = static_cast<float>(position.y);
 
 	// 발사 타이머.
-	timer.SetTargetTime(Util::RandomRange(1.0f, 10.0f));
+	timer.SetTargetTime(3.0f);
 
 	sortingOrder = 11;
 }
@@ -89,7 +89,7 @@ void Demon::Tick(float deltaTime)
 			
 			currentPattern = 0;
 			// 패턴 종료 후 대기.
-			timer.SetTargetTime(Util::RandomRange(1.0f, 10.0f));
+			timer.SetTargetTime(2.0f);
 			timer.Reset();
 		}
 		// 패턴 2: 360도 순차 발사 (총 24발, 0.1초 간격).
@@ -107,7 +107,7 @@ void Demon::Tick(float deltaTime)
 			if (patternStep >= 24)
 			{
 				currentPattern = 0;
-				timer.SetTargetTime(Util::RandomRange(2.0f, 10.0f));
+				timer.SetTargetTime(2.0f);
 				timer.Reset();
 			}
 			else
@@ -133,7 +133,7 @@ void Demon::Tick(float deltaTime)
 			}
 			
 			currentPattern = 0;
-			timer.SetTargetTime(Util::RandomRange(2.0f, 10.0f));
+			timer.SetTargetTime(2.0f);
 			timer.Reset();
 		}
 		// 패턴 4: 대각선 십자(X자) 방향 3발씩.
@@ -153,7 +153,7 @@ void Demon::Tick(float deltaTime)
 			}
 			
 			currentPattern = 0;
-			timer.SetTargetTime(Util::RandomRange(2.0f, 10.0f));
+			timer.SetTargetTime(2.0f);
 			timer.Reset();
 		}
 	}

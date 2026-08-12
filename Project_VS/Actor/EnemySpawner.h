@@ -41,8 +41,11 @@ private:
 	// 데몬을 소환하기 위한 타이머.
 	Timer demonTimer;
 
-	// 데몬 소환시 모든 액터가 나오지 않게 할 변수.
-	bool isDemonSpawned = false;
+	// 데몬 소환 시 연출용 타이머.
+	Timer demonWaitTimer;
+
+	// 데몬 스폰 단계 (0: 평상시, 1: 전멸 후 딜레이, 2: 데몬 소환 완료)
+	int demonSpawnStep = 0;
 	
 
 };
