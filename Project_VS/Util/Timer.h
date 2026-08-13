@@ -16,6 +16,12 @@ public:
 	// 설정한 시간이 지났는지 확인하는 함수.
 	inline bool IsTimeOut() const { return elapsedTime >= targetTime; }
 
+	// 남은 시간 반환 함수.
+	inline float GetRemainingTime() const { 
+		float remain = targetTime - elapsedTime;
+		return remain > 0.0f ? remain : 0.0f; 
+	}
+
 private:
 	// 경과 시간 계산용 변수.
 	float elapsedTime = 0.0f;

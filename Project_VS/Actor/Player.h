@@ -22,7 +22,8 @@ public:
 	inline float GetMoveSpeed() const { return moveSpeed; }
 	inline int GetBullets() const { return projectileCount; }
 	inline std::string GetMode() const { return bulletMode == 1 ? "Pistol" : "Shotgun"; }
-		
+	inline float GetDashCooldown() const { return flashTimer.GetRemainingTime(); }
+
 	// 증강으로 인한 플레이어의 정보 변경.
 	inline void PlayerSpeedUp() { moveSpeed += 1.0f; }
 	inline void PlayerExpUp() { EXP *= 1.25f; }
@@ -91,8 +92,12 @@ private:
 
 	// 피격 시 무적 판정을 위한 변수
 	bool isInvincible = false;
+	bool isBlinking = false; // 대시 무적과 피격 무적의 깜빡임을 구분하기 위한 변수
 	bool isVisible = true;
 	Timer invincibilityTimer;
 	Timer blinkTimer;
-};
 
+	// 플레이어 대시 쿨타임 타이머.
+	Timer flashTimer;
+	
+};

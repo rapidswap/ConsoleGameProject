@@ -212,6 +212,21 @@ void GameLevel::Draw()
 		// "Mode: " 글자 길이만큼 X좌표를 띄워서 바로 옆에 컬러로 출력.
 		Renderer::Get().Submit(modeStr, Vector2(static_cast<int>(modeLabel.length()), 2), modeColor);
 
+		// 대시(텔레포트) 쿨타임 렌더링 (Mode 밑줄).
+		float dashCooldown = player->GetDashCooldown();
+		if (dashCooldown <= 0.0f)
+		{
+			// 쿨타임이 0초 이하(다 찼을 때).
+			Renderer::Get().Submit("Dash: ON", Vector2(0, 3), Color::Green);
+		}
+		else
+		{
+			// 쿨타임이 남았을 때 (소수점 1자리 출력).
+			char dashBuf[32];
+			sprintf_s(dashBuf, "Dash: %.1fs", dashCooldown);
+			Renderer::Get().Submit(dashBuf, Vector2(0, 3), Color::Red);
+		}
+
 		// 플레이어의 정보 읽어오기.
 		int level = player->GetLevel();
 		float exp = player->GetEXP();

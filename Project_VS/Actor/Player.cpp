@@ -29,9 +29,12 @@ Player::Player()
 	// 연사 타이머 시간 설정.
 	timer.SetTargetTime(autoFireInterval);
 
-	// 무적 타이머 초기화
+	// 무적 타이머 초기화.
 	invincibilityTimer.SetTargetTime(1.0f);
 	blinkTimer.SetTargetTime(0.1f);
+
+	// 대시 쿨타임 초기화.
+	flashTimer.SetTargetTime(2.0f);
 
 	sortingOrder = 12;
 }
@@ -73,27 +76,39 @@ void Player::Tick(float deltaTime)
 		yMove(direction, deltaTime);
 	}
 	
-	// 텔레포트(대시) 기능
-	if (Input::Get().GetKeyDown(VK_SPACE))
+	// 대시 쿨타임 타이머 업데이트.
+	flashTimer.Tick(deltaTime);
+
+	// 텔레포트(대시) 기능.
+	if (Input::Get().GetKeyDown(VK_SPACE) && flashTimer.IsTimeOut())
 	{
-		float dashDistance = 15.0f; // 텔레포트 거리 (원하는 만큼 수정 가능)
+		// 텔레포트 거리.
+		float dashDistance = 20.0f; 
 		float dx = 0.0f;
 		float dy = 0.0f;
-		
+
 		if (Input::Get().GetKey(VK_RIGHT)) dx += 1.0f;
 		if (Input::Get().GetKey(VK_LEFT)) dx -= 1.0f;
-		if (Input::Get().GetKey(VK_DOWN)) dy += 1.0f;
-		if (Input::Get().GetKey(VK_UP)) dy -= 1.0f;
+		if (Input::Get().GetKey(VK_DOWN)) dy += 0.5f;
+		if (Input::Get().GetKey(VK_UP)) dy -= 0.5f;
 
-		// 방향키를 누른 상태에서만 해당 방향으로 텔레포트
+		// 방향키를 누른 상태에서만 해당 방향으로 텔레포트.
 		if (dx != 0.0f || dy != 0.0f)
 		{
 			xPosition += dx * dashDistance;
 			yPosition += dy * dashDistance;
-			
+
 			// xMove, yMove에 0을 넣어서 화면 밖으로 뚫고 나가는지(경계선 체크)만 안전하게 확인 후 좌표 적용
 			xMove(0.0f, 0.0f);
 			yMove(0.0f, 0.0f);
+
+			// 대시를 성공적으로 썼을 때 쿨타임 리셋 및 0.5초 무적(i-frame) 부여
+			flashTimer.Reset();
+			isInvincible = true;
+			isBlinking = false; // 대시 무적은 깜빡이지 않음
+			invincibilityTimer.SetTargetTime(0.5f); // 대시 무적은 0.5초
+			invincibilityTimer.Reset();
+			blinkTimer.Reset();
 		}
 	}
 	if (Input::Get().GetKeyDown('R'))
@@ -108,17 +123,22 @@ void Player::Tick(float deltaTime)
 	if (isInvincible)
 	{
 		invincibilityTimer.Tick(deltaTime);
-		blinkTimer.Tick(deltaTime);
 
-		if (blinkTimer.IsTimeOut())
+		if (isBlinking)
 		{
-			isVisible = !isVisible; // 깜빡임 토글
-			blinkTimer.Reset();
+			blinkTimer.Tick(deltaTime);
+
+			if (blinkTimer.IsTimeOut())
+			{
+				isVisible = !isVisible; // 깜빡임 토글
+				blinkTimer.Reset();
+			}
 		}
 
 		if (invincibilityTimer.IsTimeOut())
 		{
 			isInvincible = false;
+			isBlinking = false;
 			isVisible = true; // 무적 끝나면 확실히 보이게
 		}
 	}
@@ -286,8 +306,10 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 			}
 		}
 
-		// 피격 즉시 무적 상태로 돌입.
+		// 피격 즉시 1초간 무적 상태로 돌입.
 		isInvincible = true;
+		isBlinking = true; // 맞았을 때는 깜빡임 켜기
+		invincibilityTimer.SetTargetTime(1.0f); 
 		invincibilityTimer.Reset();
 		blinkTimer.Reset();
 
@@ -318,8 +340,10 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 		
 		gameLevel->TakeDamage();
 
-		// 피격 즉시 무적 상태로 돌입.
+		// 피격 즉시 1초간 무적 상태로 돌입.
 		isInvincible = true;
+		isBlinking = true; // 맞았을 때는 깜빡임 켜기
+		invincibilityTimer.SetTargetTime(1.0f); // 피격 무적은 1.0초
 		invincibilityTimer.Reset();
 		blinkTimer.Reset();
 	}
