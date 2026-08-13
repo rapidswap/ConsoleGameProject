@@ -57,12 +57,24 @@ void GameLevel::OnInitialized()
 		player->hpUp(),
 		player->GetHp() < player->GetMaxHp())
 
-	// 2. 조건부 증강 (공격 속도 제한).
+	// 2. 조건부 증강
 	ADD_COND_AUGMENT(
 		"Attack Speed Up",
 		"Attack Speed Up -0.2sec",
 		player->AttackSpeedUp(),
 		player->GetAttackSpeed() > 0.5f)
+
+	ADD_COND_AUGMENT(
+		"Bouncing Bullet",
+		"Bullets bounce off walls",
+		player->EnableBouncingBullet(),
+		!player->HasBouncingBullet())
+
+	ADD_COND_AUGMENT(
+		"Death Nova",
+		"Explode into 4 bullets",
+		player->EnableDeathNova(),
+		!player->HasDeathNova())
 
 	// 3. 무조건 뜨는 일반 증강들
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp())
@@ -162,6 +174,12 @@ void GameLevel::Tick(float deltaTime)
 		// Level::Tick을 호출하지 않으면 게임 내 액터들이 멈춤(Freeze).
 		return;
 	}
+	
+	if (endlessMessageTime > 0.0f)
+	{
+		endlessMessageTime -= deltaTime;
+	}
+
 	playTime += deltaTime;
 	// 증강 선택 창이 꺼져있을 때만 정상 게임 진행.
 	super::Tick(deltaTime);
@@ -251,6 +269,19 @@ void GameLevel::Draw()
 		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan);
 	}
 
+	// 무한 루프 진입 텍스트 렌더링
+	if (endlessMessageTime > 0.0f)
+	{
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
+		
+		std::string endlessText1 = "LOOP " + std::to_string(endlessLoopCount) + " COMPLETED!";
+		std::string endlessText2 = "ENDLESS MODE START - ENEMY HP/SPEED MULTIPLIED";
+		
+		Renderer::Get().Submit(endlessText1, Vector2((screenWidth - endlessText1.length()) / 2, screenHeight / 2 - 2), Color::Red, 300);
+		Renderer::Get().Submit(endlessText2, Vector2((screenWidth - endlessText2.length()) / 2, screenHeight / 2), Color::Yellow, 300);
+	}
+
 	// 증강 선택 창이 켜져있을 때(프리즈 상태) 화면 중앙에 안내 문구 출력.
 	if (isLevelUpMenuOpen)
 	{
@@ -268,10 +299,10 @@ void GameLevel::Draw()
 		);
 
 		// 증강 카드의 가로 크기와 세로 크기.
-		int cardWidth = 24;
+		int cardWidth = 30; // 너비를 24에서 30으로 넓힘
 		int cardHeight = 9;
 		// 카드 간격.
-		int spacing = 28; 
+		int spacing = 34; // 간격을 28에서 34로 넓힘
 		
 		// 카드들이 중앙에 오도록 기준점 계산.
 		int startX = (screenWidth / 2) - (spacing * (currentChoices.size() - 1)) / 2;
@@ -292,15 +323,15 @@ void GameLevel::Draw()
 			// 1. 카드 박스 그리기.
 			int cardLeftX = startX + (i * spacing) - (cardWidth / 2);
 			
-			// 윗면.
-			Renderer::Get().Submit("+----------------------+", Vector2(cardLeftX, startY), cardColor, 200);
-			// 옆면(내부 빈 공간).
+			// 윗면. (28칸의 - 사용)
+			Renderer::Get().Submit("+----------------------------+", Vector2(cardLeftX, startY), cardColor, 200);
+			// 옆면(내부 빈 공간). (28칸의 공백 사용)
 			for (int j = 1; j < cardHeight - 1; ++j)
 			{
-				Renderer::Get().Submit("|                      |", Vector2(cardLeftX, startY + j), cardColor, 200);
+				Renderer::Get().Submit("|                            |", Vector2(cardLeftX, startY + j), cardColor, 200);
 			}
 			// 아랫면
-			Renderer::Get().Submit("+----------------------+", Vector2(cardLeftX, startY + cardHeight - 1), cardColor, 200);
+			Renderer::Get().Submit("+----------------------------+", Vector2(cardLeftX, startY + cardHeight - 1), cardColor, 200);
 
 
 			// 2. 증강 이름 텍스트 렌더링 (카드 안쪽 상단).
@@ -389,8 +420,7 @@ bool GameLevel::CheckGameFailed()
 
 bool GameLevel::CheckGameClear()
 {
-	// 게임 클리어시.
-	// 화면 게임 클리어 엔터 -> 메인 메뉴
+	// 보스(Demon) 처치 시 무한 모드 진입 로직
 	auto demon = FindActor<Demon>();
 	if (demon->GetHp() <= 20)
 	{
@@ -398,8 +428,19 @@ bool GameLevel::CheckGameClear()
 	}
 	if (demon && demon->GetHp() <= 0)
 	{
-		Engine::Get().AddNewLevel<GameClear>(playTime);
-		return true;
+		auto spawner = FindActor<EnemySpawner>();
+		if (spawner)
+		{
+			spawner->NextLoop();
+			endlessLoopCount++;
+			endlessMessageTime = 5.0f; // 5초 동안 텍스트 표시
+		}
+		
+		// 죽은 데몬 파괴
+		demon->Destroy();
+		
+		// 더 이상 GameClear(종료) 화면으로 가지 않음.
+		// return true; 대신 무한 플레이 유지.
 	}
 	return false;
 }

@@ -50,8 +50,22 @@ private:
 
 	// 탄약 발사 관련 함수 및 변수들은 제거됨.
 
+public:
+	// 벽 반사(Bouncing) 증강 활성화
+	inline void EnableBouncingBullet() { isBouncingBullet = true; }
+	inline bool HasBouncingBullet() const { return isBouncingBullet; }
+
+	// 시체 폭발(Death Nova) 증강 활성화
+	inline void EnableDeathNova() { hasDeathNova = true; }
+	inline bool HasDeathNova() const { return hasDeathNova; }
+
 private:
-	// 이동 처리에 필요한 변수.
+
+	// 벽 반사(Bouncing) 증강 획득 여부
+	bool isBouncingBullet = false;
+	
+	// 시체 폭발(Death Nova) 증강 획득 여부
+	bool hasDeathNova = false;
 	float xPosition = 0.0f;
 	float yPosition = 0.0f;
 
@@ -81,7 +95,7 @@ private:
 	float EXP = 1.0f;
 
 	// 한 번에 발사할 총알의 개수
-	int projectileCount = 2;
+	int projectileCount = 10;
 
 	// 발사 모드 결정.
 	int bulletMode = 1;
@@ -99,5 +113,7 @@ private:
 
 	// 플레이어 대시 쿨타임 타이머.
 	Timer flashTimer;
+	
+public:
 	
 };

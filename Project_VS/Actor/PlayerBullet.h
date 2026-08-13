@@ -9,7 +9,11 @@ class PlayerBullet:public Craft::Actor
 	TYPE_DECLARATIONS(PlayerBullet, Actor)
 
 public:
-	PlayerBullet(const Craft::Vector2& position, float dirX, float dirY);
+	// 벽 반사 여부를 결정하는 isBouncing 파라미터 및 파편(분열탄) 여부 isShrapnel 추가
+	PlayerBullet(const Craft::Vector2& position, float dirX, float dirY, bool isBouncing = false, bool isShrapnel = false);
+
+	// 파편 총알인지 확인하는 Getter
+	inline bool IsShrapnel() const { return bIsShrapnel; }
 
 private:
 	// 이벤트 함수 오버라이딩.
@@ -26,5 +30,12 @@ private:
 	// 이동 방향.
 	float directionX = 0.0f;
 	float directionY = 0.0f;
+	
+	// 벽 반사(Bouncing) 기능 활성화 여부
+	bool canBounce = false;
+	int bounceLimit = 3; // 벽에 무한정 튕겨서 남아있는 것을 방지 (최대 3회 튕김)
+
+	// 파편(Shrapnel) 여부: 적이 죽어서 터져나온 총알인지 여부
+	bool bIsShrapnel = false;
 };
 

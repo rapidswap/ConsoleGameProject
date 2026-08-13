@@ -2,7 +2,7 @@
 #include <Util/Util.h>
 #include <Engine/Engine.h>
 #include <Level/Level.h>
-#include "Player.h"
+#include <Actor/Player.h>
 #include <cmath>
 #include <Actor/PlayerBullet.h>
 #include <Actor/DestroyEffect.h>
@@ -63,8 +63,33 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	// 커스텀 타입 활용.
 	if (other->IsTypeOf<PlayerBullet>())
 	{
+		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
+
 		//  플레이어 탄약 제거.
 		other->Destroy();
+
+		// 플레이어의 Death Nova 상태 확인
+		if (GetOwner() && !isShrapnel)
+		{
+			auto player = GetOwner()->FindActor<Player>();
+			if (player && player->HasDeathNova())
+			{
+				Vector2 pos = GetPosition();
+				
+				// 대각선 4방향 (45, 135, 225, 315도)
+				float baseAngles[4] = {45.0f, 135.0f, 225.0f, 315.0f};
+				for (int i = 0; i < 4; ++i)
+				{
+					float rad = baseAngles[i] * 3.141592f / 180.0f;
+					float dx = std::cos(rad);
+					float dy = std::sin(rad);
+					
+					// isBouncing=false, isShrapnel=true 로 생성
+					GetOwner()->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
+				}
+			}
+		}
 
 		// 적 액터 제거.
 		Destroy();

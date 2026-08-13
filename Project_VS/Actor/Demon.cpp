@@ -1,10 +1,12 @@
 #include "Demon.h"
-#include <Level/GameLevel.h>
+#include <Engine/Engine.h>
 #include <Actor/Player.h>
-#include <Util/Util.h>
-#include <Actor/EnemyBullet.h>
+#include <Level/Level.h>
+#include <Level/GameLevel.h>
 #include <Actor/PlayerBullet.h>
+#include <Actor/EnemyBullet.h>
 #include <Actor/DestroyEffect.h>
+#include <Util/Util.h>
 #include <cmath>
 
 using namespace Craft;
@@ -168,9 +170,11 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 
 	if (other->IsTypeOf<PlayerBullet>())
 	{
+		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
+
 		// 총알 파괴.
 		other->Destroy();
-
 
 		std::shared_ptr<Level> owner = GetOwner();
 		if (owner)
@@ -179,6 +183,25 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
 			if (gameLevel)
 			{
+				// 데몬은 게임레벨에서 관리하므로 즉사하지 않을 수 있음.
+				// 하지만 맞을때마다 파편이 터진다면 너무 사기증강이 됨.
+				// 여기서는 Demon 체력이 깎일 때 터지도록 임시 구현.
+				if (!isShrapnel)
+				{
+					auto player = owner->FindActor<Player>();
+					if (player && player->HasDeathNova())
+					{
+						Vector2 pos = GetPosition();
+						float baseAngles[4] = {45.0f, 135.0f, 225.0f, 315.0f};
+						for (int i = 0; i < 4; ++i)
+						{
+							float rad = baseAngles[i] * 3.141592f / 180.0f;
+							float dx = std::cos(rad);
+							float dy = std::sin(rad);
+							owner->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
+						}
+					}
+				}
 				gameLevel->TakeDemonDamage();
 			}
 		}

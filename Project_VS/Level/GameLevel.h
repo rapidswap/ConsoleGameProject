@@ -46,6 +46,10 @@ private:
 
 	// 레벨업 메뉴가 켜져서 게임이 멈춰 있는지 여부
 	bool isLevelUpMenuOpen = false;
+	
+	// 무한 루프 안내 메시지 출력을 위한 남은 시간
+	float endlessMessageTime = 0.0f;
+	int endlessLoopCount = 0;
 
 	// 전체 증강의 종류를 담아둘 목록.
 	std::vector<Augment> augmentList;

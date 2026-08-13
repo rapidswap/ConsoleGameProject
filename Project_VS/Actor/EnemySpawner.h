@@ -22,6 +22,9 @@ private:
 	// 데몬 생성 함수.
 	void SpawnDemon();
 
+public:
+	// 무한 루프 진입 (보스 처치 시 호출됨)
+	void NextLoop();
 	
 private:
 
@@ -47,6 +50,8 @@ private:
 	// 데몬 스폰 단계 (0: 평상시, 1: 전멸 후 딜레이, 2: 데몬 소환 완료)
 	int demonSpawnStep = 0;
 	
-
+	// 무한 루프 난이도 제어 변수
+	int loopCount = 0;
+	float difficultyMultiplier = 1.0f;
 };
 

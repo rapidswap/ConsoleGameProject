@@ -57,6 +57,9 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 
 	if (other->IsTypeOf<PlayerBullet>())
 	{
+		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
+
 		// 총알 파괴.
 		other->Destroy();
 		
@@ -64,6 +67,28 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 		eliteBossHp--;
 		if (eliteBossHp <= 0)
 		{
+			// 플레이어의 Death Nova 상태 확인
+			if (GetOwner() && !isShrapnel)
+			{
+				auto player = GetOwner()->FindActor<Player>();
+				if (player && player->HasDeathNova())
+				{
+					Vector2 pos = GetPosition();
+					
+					// 대각선 4방향 (45, 135, 225, 315도)
+					float baseAngles[4] = {45.0f, 135.0f, 225.0f, 315.0f};
+					for (int i = 0; i < 4; ++i)
+					{
+						float rad = baseAngles[i] * 3.141592f / 180.0f;
+						float dx = std::cos(rad);
+						float dy = std::sin(rad);
+						
+						// isBouncing=false, isShrapnel=true 로 생성
+						GetOwner()->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
+					}
+				}
+			}
+
 			Destroy();
 			
 			if (GetOwner())

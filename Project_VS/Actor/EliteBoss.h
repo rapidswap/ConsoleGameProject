@@ -10,6 +10,10 @@ public:
 	EliteBoss(const Craft::Vector2& position);
 	~EliteBoss() = default;
 
+	// 스탯 설정용 Setter
+	inline void SetMoveSpeed(float speed) { moveSpeed = speed; }
+	inline void SetMaxHp(int hp) { eliteBossHp = hp; }
+
 private:
 	virtual void Tick(float deltaTime)override;
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;

@@ -213,7 +213,7 @@ void Player::Tick(float deltaTime)
 						float finalDx = baseDx * std::cos(rad) - baseDy * std::sin(rad);
 						float finalDy = baseDx * std::sin(rad) + baseDy * std::cos(rad);
 
-						owner->SpawnActor<PlayerBullet>(bulletPosition, finalDx, finalDy);
+						owner->SpawnActor<PlayerBullet>(bulletPosition, finalDx, finalDy, isBouncingBullet);
 					}
 				}
 				
@@ -265,7 +265,7 @@ void Player::Tick(float deltaTime)
 					}
 					
 					Vector2 bulletPosition(pPos.x + (width / 2), pPos.y);
-					owner->SpawnActor<PlayerBullet>(bulletPosition, baseDx, baseDy);
+					owner->SpawnActor<PlayerBullet>(bulletPosition, baseDx, baseDy, isBouncingBullet);
 				}
 			}
 			

@@ -23,6 +23,10 @@ public:
 	inline int GetHp() const { return demonHp; }
 	inline int GetMaxHp() const { return maxDemonHp; }
 
+	// 스탯 설정용 Setter
+	inline void SetMaxHp(int hp) { demonHp = hp; maxDemonHp = hp; }
+	inline void SetMoveSpeed(float speed) { moveSpeed = speed; }
+
 private:
 	virtual void Tick(float deltaTime) override;
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;

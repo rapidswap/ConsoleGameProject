@@ -140,104 +140,96 @@ void EnemySpawner::Tick(float deltaTime)
 
 void EnemySpawner::SpawnEnemy()
 {
-	// 적 생성 처리.
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner == nullptr) return;
 
-	// 적 이미지 배열의 길이 확인.
-	const int length = sizeof(enemyType) / sizeof(enemyType[0]);
-
-	// 랜덤 인덱스.
-	const int index = Util::RandomRange(0, length - 1);
-
-	// 뱀파이어 서바이벌 방식: 화면 가장자리 랜덤 스폰.
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
-	
-	// 외곽선 4면(0:상, 1:하, 2:좌, 3:우) 중 하나 선택
-	int edge = Util::RandomRange(0, 3);
 	float spawnX = 0.0f;
 	float spawnY = 0.0f;
-
-	if (edge == 0) // 상단
+	
+	int side = Util::RandomRange(0, 3);
+	switch (side)
 	{
-		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
-		spawnY = 0.0f;
+	case 0: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = 0.0f; break;
+	case 1: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = static_cast<float>(screenHeight - 1); break;
+	case 2: spawnX = 0.0f; spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
+	case 3: spawnX = static_cast<float>(screenWidth - 1); spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
 	}
-	else if (edge == 1) // 하단
+	int type = Util::RandomRange(0, 11);
+	auto enemy = owner->SpawnActor<Enemy>(enemyType[type], spawnX, spawnY);
+	if (enemy)
 	{
-		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
-		spawnY = (float)(screenHeight - 1);
-	}
-	else if (edge == 2) // 좌측
-	{
-		spawnX = 0.0f;
-		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
-	}
-	else // 우측
-	{
-		spawnX = (float)(screenWidth - 1);
-		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
-	}
-
-	// 적 액터 생성.
-	std::shared_ptr<Level> owner = GetOwner();
-	if (owner)
-	{
-		owner->SpawnActor<Enemy>(enemyType[index], spawnX, spawnY);
+		enemy->SetMoveSpeed(5.0f * difficultyMultiplier);
 	}
 }
 
 void EnemySpawner::SpawnElite()
 {
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner == nullptr) return;
+
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
-	
-	int edge = Util::RandomRange(0, 3);
 	float spawnX = 0.0f;
 	float spawnY = 0.0f;
-
-	if (edge == 0) // 상단
+	
+	int side = Util::RandomRange(0, 3);
+	switch (side)
 	{
-		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
-		spawnY = 0.0f;
-	}
-	else if (edge == 1) // 하단
-	{
-		spawnX = (float)Util::RandomRange(0, screenWidth - 1);
-		spawnY = (float)(screenHeight - 1);
-	}
-	else if (edge == 2) // 좌측
-	{
-		spawnX = 0.0f;
-		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
-	}
-	else // 우측
-	{
-		spawnX = (float)(screenWidth - 1);
-		spawnY = (float)Util::RandomRange(0, screenHeight - 1);
+	case 0: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = 0.0f; break;
+	case 1: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = static_cast<float>(screenHeight - 1); break;
+	case 2: spawnX = 0.0f; spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
+	case 3: spawnX = static_cast<float>(screenWidth - 1); spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
 	}
 
-	std::shared_ptr<Level> owner = GetOwner();
-	if (owner)
+	auto boss = owner->SpawnActor<EliteBoss>(Vector2(static_cast<int>(spawnX), static_cast<int>(spawnY)));
+	if (boss)
 	{
-		owner->SpawnActor<EliteBoss>(Craft::Vector2((int)spawnX, (int)spawnY));
+		boss->SetMaxHp(static_cast<int>(100 * difficultyMultiplier));
+		boss->SetMoveSpeed(8.0f * difficultyMultiplier);
 	}
 }
 
 void EnemySpawner::SpawnDemon()
 {
+	std::shared_ptr<Level> owner = GetOwner();
+	if (owner == nullptr) return;
+
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
-
-	int edge = Util::RandomRange(0, 3);
-	float spawnX = static_cast<float>(screenWidth) / 2;
-	float spawnY = static_cast<float>(screenHeight) / 2;
-
 	
+	// 화면 중앙 약간 위에 스폰.
+	float spawnX = static_cast<float>(screenWidth / 2);
+	float spawnY = static_cast<float>(screenHeight / 2) - 10.0f;
 
-	std::shared_ptr<Level> owner = GetOwner();
-	if (owner)
+	auto demon = owner->SpawnActor<Demon>(Craft::Vector2((int)spawnX, (int)spawnY));
+	if (demon)
 	{
-		owner->SpawnActor<Demon>(Craft::Vector2((int)spawnX, (int)spawnY));
+		demon->SetMaxHp(static_cast<int>(100 * difficultyMultiplier));
 	}
 }
 
+void EnemySpawner::NextLoop()
+{
+	loopCount++;
+	difficultyMultiplier *= 2.0f; // 매 루프마다 난이도 배수 2배 증가
+	
+	// 최소/최대 스폰 속도 감소 (더 빠르게 쏟아짐)
+	minSpawnTime = (std::max)(0.1f, minSpawnTime * 0.7f);
+	maxSpawnTime = (std::max)(0.2f, maxSpawnTime * 0.7f);
+	timer.SetTargetTime(Util::RandomRange(minSpawnTime, maxSpawnTime));
+	
+	// 데몬 스폰 단계 초기화
+	demonSpawnStep = 0;
+	
+	// 다음 보스전은 더 빨리 오도록 (최소 60초)
+	float nextDemonTime = (std::max)(60.0f, 300.0f * std::pow(0.8f, (float)loopCount));
+	demonTimer.SetTargetTime(nextDemonTime);
+	demonTimer.Reset();
+	
+	// 엘리트 보스도 더 자주 나오도록
+	float nextEliteTime = (std::max)(15.0f, 50.0f * std::pow(0.8f, (float)loopCount));
+	eliteBossTimer.SetTargetTime(nextEliteTime);
+	eliteBossTimer.Reset();
+}

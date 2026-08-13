@@ -10,6 +10,9 @@ class Enemy : public Craft::Actor
 public:
 	Enemy(const std::string& image = "(oOo)", float x = 0.0f, float y = 5.0f);
 
+	// 스탯 설정용 Setter
+	inline void SetMoveSpeed(float speed) { moveSpeed = speed; }
+
 private:
 	// 이벤트 함수 오버라이드.
 	virtual void Tick(float deltaTime) override;
