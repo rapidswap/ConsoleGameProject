@@ -1,15 +1,19 @@
 #include "GameLevel.h"
 #include <Actor/Player.h>
 #include <Actor/EnemySpawner.h>
+#include <Actor/EliteBoss.h>
+#include <Actor/DestroyEffect.h>
+#include <Actor/DestroyEXP.h>
+#include <Actor/Demon.h>
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
 #include <Input/Input.h>
 #include <Util/Util.h>
 #include <Util/Timer.h>
 #include <Actor/Enemy.h>
-#include <Actor/EliteBoss.h>
-#include <Actor/DestroyEffect.h>
-#include <Actor/DestroyEXP.h>
+#include <Level/GameFailed.h>
+#include <Level/GameClear.h>
+
 
 #include <string>
 #include <algorithm>
@@ -36,7 +40,7 @@
 using namespace Craft;
 void GameLevel::OnInitialized()
 {
-	Level::OnInitialized();
+	super::OnInitialized();
 
 	// 플레이어 액터 추가.
 	SpawnActor<Player>();
@@ -158,14 +162,27 @@ void GameLevel::Tick(float deltaTime)
 		// Level::Tick을 호출하지 않으면 게임 내 액터들이 멈춤(Freeze).
 		return;
 	}
-
+	playTime += deltaTime;
 	// 증강 선택 창이 꺼져있을 때만 정상 게임 진행.
-	Level::Tick(deltaTime);
+	super::Tick(deltaTime);
 }
 
 void GameLevel::Draw()
 {
-	Level::Draw();
+	super::Draw();
+
+	// 현재 게임 플레이 타임.
+	int totalSeconds = static_cast<int>(playTime);
+	int minutes = totalSeconds / 60;
+	int seconds = totalSeconds % 60;
+
+	// 화면에 나올 포맷.
+	char timeBuf[16];
+	sprintf_s(timeBuf, "%02d:%02d", minutes, seconds);
+
+	// 화면 상단에 표시.
+	int screenWidth = Engine::Get().GetWidth();
+	Renderer::Get().Submit(timeBuf, Vector2(screenWidth / 2,0), Color::White,10);
 
 	// 현재 맵에 있는 플레이어를 찾아서 정보를 가져옴.
 	auto player = FindActor<Player>();
@@ -196,7 +213,7 @@ void GameLevel::Draw()
 			+ std::string(targetExpBuf);
 		
 		// 화면 최상단 중앙 즈음에 출력 (예시 좌표: x=10, y=0).
-		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan, 100);
+		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan, 0);
 	}
 
 	// 증강 선택 창이 켜져있을 때(프리즈 상태) 화면 중앙에 안내 문구 출력.
@@ -255,12 +272,34 @@ void GameLevel::Draw()
 		}
 	}
 
-	// Todo: 게임 클리어 시.
-	// 화면 게임 클리어 엔터 -> 메인 메뉴
+	auto demon = FindActor<Demon>();
+	if (demon)
+	{
+		// 비율 계산.
+		float hpRatio = static_cast<float>(demon->GetHp()) / demon->GetMaxHp();
 
-	// Todo: 게임 실패 시.
-	// 따로 메뉴 창
-	// 다시 시작, 메인 메뉴로 돌아가기, 게임 종료
+		// 체력바 문자열 만들기.
+		int barLength = 40;
+		int filledLength = static_cast<int>(hpRatio * barLength);
+		
+		std::string hpBar = "BOSS HP [";
+		for (int i = 0;i < barLength;++i)
+		{
+			if (i < filledLength) hpBar += "=";
+			else hpBar += " ";
+		}
+		hpBar += "]" 
+			+ std::to_string(demon->GetHp()) 
+			+ "/" + std::to_string(demon->GetMaxHp());
+
+		int screenWidth = Engine::Get().GetWidth();
+		int screendHeight = Engine::Get().GetHeight();
+
+		Vector2 barPos((screenWidth - hpBar.length()) / 2, screendHeight - 2);
+		Renderer::Get().Submit(hpBar, barPos, Color::Red);
+		
+	}
+
 }
 
 void GameLevel::TakeDamage()
@@ -273,15 +312,45 @@ void GameLevel::TakeDamage()
 	}
 }
 
+void GameLevel::TakeDemonDamage()
+{
+	auto demon = FindActor<Demon>();
+	if (demon)
+	{
+		demon->hpDown();
+		CheckGameClear();
+	}
+}
+
 bool GameLevel::CheckGameFailed()
 {
+	// 게임 실패 시.
+	// 따로 메뉴 창
+	// 다시 시작, 메인 메뉴로 돌아가기, 게임 종료
 	auto player = FindActor<Player>();
 	if (player && player->GetHp() <= 0)
 	{
-		Engine::Get().Quit();
+		Engine::Get().AddNewLevel<GameFailed>();
 		return true;
 	}
 
+	return false;
+}
+
+bool GameLevel::CheckGameClear()
+{
+	// 게임 클리어시.
+	// 화면 게임 클리어 엔터 -> 메인 메뉴
+	auto demon = FindActor<Demon>();
+	if (demon->GetHp() <= 20)
+	{
+		demon->DemonHurt();
+	}
+	if (demon && demon->GetHp() <= 0)
+	{
+		Engine::Get().AddNewLevel<GameClear>(playTime);
+		return true;
+	}
 	return false;
 }
 

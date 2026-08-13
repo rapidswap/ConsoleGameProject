@@ -7,6 +7,7 @@
 
 class GameLevel:public Craft::Level
 {
+	TYPE_DECLARATIONS(GameLevel,Level)
 	struct Augment
 	{
 		std::string name;
@@ -25,6 +26,8 @@ public:
 	// 외부(Player)에서 피격당했을 때 호출할 함수.
 	void TakeDamage();
 
+	void TakeDemonDamage();
+
 	// 플레이어가 레벨업했을 때 메뉴를 띄우고 게임을 프리즈시키는 함수.
 	// 여러 번 연속으로 띄워야 할 경우 times 인자에 횟수를 넘깁니다 (기본값 1).
 	void ShowLevelUpMenu(int times = 1);
@@ -35,6 +38,9 @@ public:
 private:
 	// 게임 오버 여부를 확인하는 함수.
 	bool CheckGameFailed();
+
+	// 게임 클리어 여부를 확인하는 함수.
+	bool CheckGameClear();
 
 private:
 
@@ -52,4 +58,7 @@ private:
 
 	// 추가로 선택해야 할 증강의 남은 횟수 (연속 선택을 위함).
 	int pendingAugmentCount = 0;
+
+	// 플레이 타임.
+	float playTime = 0.0f;
 };

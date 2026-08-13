@@ -10,6 +10,18 @@ class Demon:public Craft::Actor
 public:
 	Demon(const Craft::Vector2& position);
 
+	inline void hpDown() { demonHp--; }
+
+	inline void DemonHurt() { 
+		if (!isDemonHurt) {
+			isDemonHurt = true;
+			HealDemon();
+		}
+		}
+
+	// Getter.
+	inline int GetHp() const { return demonHp; }
+	inline int GetMaxHp() const { return maxDemonHp; }
 
 private:
 	virtual void Tick(float deltaTime) override;
@@ -18,9 +30,12 @@ private:
 	// 데몬의 체력 회복 패턴.
 	inline void HealDemon() { demonHp += 50; }
 
+	
+
 private:
 	// 데몬 체력.
 	int demonHp = 100;
+	int maxDemonHp = 100;
 
 	// 보스의 위치, 이동 속도.
 	float xPosition = 0.0f;
@@ -35,6 +50,9 @@ private:
 	int currentPattern = 0;
 	float currentAngle = 0.0f;
 	int patternStep = 0;
+
+	// 발악 패턴 확인용.
+	bool isDemonHurt = false;
 
 };
 

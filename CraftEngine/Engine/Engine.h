@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 // CraftEngine 프로젝트 안의 클래스는 Craft 네임 스페이스 사용.
 #include <Core/Core.h>
 #include <memory> // 스마트 포인터 사용.
@@ -44,12 +44,12 @@ namespace Craft
 		// 1. std::is_base_of 하는일이 무엇인지
 		// 2. std::enable_if_t 하는일이 무엇인지
 		// 3. typename = std::enable_if_t<std::is_base_of<Level, T>::value>>
-		template<typename T,
+		template<typename T, typename... Args,
 			typename = std::enable_if_t<std::is_base_of<Level, T>::value>>
-		void AddNewLevel()
+		void AddNewLevel(Args&&... args)
 		{
 			// 추가 요청 레벨 객체 생성.
-			nextLevel = std::make_shared<T>();
+			nextLevel = std::make_shared<T>(std::forward<Args>(args)...);
 			
 		}
 

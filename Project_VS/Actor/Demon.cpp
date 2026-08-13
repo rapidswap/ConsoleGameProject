@@ -170,17 +170,17 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 		// 총알 파괴.
 		other->Destroy();
 
-		// 체력 감소.
-		demonHp--;
-		if (demonHp <= 0)
-		{
-			Destroy();
 
-			// 게임 클리어(?)
-			if (GetOwner())
+		std::shared_ptr<Level> owner = GetOwner();
+		if (owner)
+		{
+			// 레벨을 GameLevel로 변환한 뒤 체력 깎기 처리.
+			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+			if (gameLevel)
 			{
-				QuitGame();
+				gameLevel->TakeDemonDamage();
 			}
 		}
+
 	}
 }
