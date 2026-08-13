@@ -60,14 +60,14 @@ void GameLevel::OnInitialized()
 	// 2. 조건부 증강 (공격 속도 제한).
 	ADD_COND_AUGMENT(
 		"Attack Speed Up",
-		"Attack Speed Up -0.1sec",
+		"Attack Speed Up -0.2sec",
 		player->AttackSpeedUp(),
 		player->GetAttackSpeed() > 0.5f)
 
 	// 3. 무조건 뜨는 일반 증강들
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp())
 	ADD_AUGMENT("Player Speed Up", "Speed + 1", player->PlayerSpeedUp())
-	ADD_AUGMENT("extra EXP", "extra EXP +10%", player->PlayerExpUp())
+	ADD_AUGMENT("extra EXP", "extra EXP +25%", player->PlayerExpUp())
 	ADD_AUGMENT("extra Bullet", "Bullet +1", player->AddProjectile())
 }
 
@@ -190,8 +190,16 @@ void GameLevel::Draw()
 	{
 		// 체력 텍스트 구성 및 출력 (최상단 좌측).
 		int playerHP = player->GetHp();
-		std::string hpText = "HP: " + std::to_string(playerHP);
+		std::string hpText = "HP: " + std::to_string(playerHP)
+			+"/"+std::to_string(player->GetMaxHp());
 		Renderer::Get().Submit(hpText, Vector2(0, 0), Color::White, 100);
+		
+		// 플레이어 스탯 정보 출력 (체력 바로 아래줄)
+		char statsBuf[128];
+		sprintf_s(statsBuf, "ATK Spd: %.1fs | Move: %.0f | Bullets: %d", 
+			player->GetAttackSpeed(), player->GetMoveSpeed(), player->GetBullets());
+		std::string statsText = statsBuf;
+		Renderer::Get().Submit(statsText, Vector2(0, 1), Color::White);
 		// 플레이어의 정보 읽어오기.
 		int level = player->GetLevel();
 		float exp = player->GetEXP();

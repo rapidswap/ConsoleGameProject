@@ -12,20 +12,24 @@ class Player:public Craft::Actor
 public:
 	Player();
 	
-	// GameLevel 등 외부에서 플레이어의 정보를 읽어갈 수 있도록 Getter 추가
+	// Getter.
 	inline int GetLevel() const { return playerLevel; }
 	inline float GetEXP() const { return playerEXP; }
 	inline float GetTargetEXP() const { return targetEXP; }
 	inline int GetHp() const { return playerHp; }
 	inline int GetMaxHp() const { return maxHp; }
-	inline int GetAttackSpeed() const { return autoFireInterval; }
+	inline float GetAttackSpeed() const { return autoFireInterval; }
+	inline float GetMoveSpeed() const { return moveSpeed; }
+	inline int GetBullets() const { return projectileCount; }
+
+
 	
 	// 증강으로 인한 플레이어의 정보 변경.
 	inline void PlayerSpeedUp() { moveSpeed += 1.0f; }
-	inline void PlayerExpUp() { EXP *= 1.1f; }
+	inline void PlayerExpUp() { EXP *= 1.25f; }
 	inline void AddProjectile() { projectileCount++; }
 	inline void AttackSpeedUp() {
-		autoFireInterval -= 0.5f;
+		autoFireInterval -= 0.2f;
 		timer.SetTargetTime(autoFireInterval);
 	}
 	inline void hpDown() { playerHp--; }

@@ -11,6 +11,7 @@ using namespace Craft;
 Demon::Demon(const Craft::Vector2& position)
 	:Actor("[==^DEMON^==]", position, Color::Red)
 {
+	
 	xPosition = static_cast<float>(position.x);
 	yPosition = static_cast<float>(position.y);
 

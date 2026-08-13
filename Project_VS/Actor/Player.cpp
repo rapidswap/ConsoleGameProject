@@ -76,6 +76,9 @@ void Player::Tick(float deltaTime)
 	if (Input::Get().GetKeyDown('R'))
 	{
 		bulletMode = 1 - bulletMode;
+		if (bulletMode == 1) color = Color::Green;
+		else color = Color::Red;
+			
 	}
 
 	// 무적 타이머 및 깜빡임 처리
