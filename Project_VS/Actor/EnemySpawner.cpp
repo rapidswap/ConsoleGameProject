@@ -186,7 +186,7 @@ void EnemySpawner::SpawnElite()
 	auto boss = owner->SpawnActor<EliteBoss>(Vector2(static_cast<int>(spawnX), static_cast<int>(spawnY)));
 	if (boss)
 	{
-		boss->SetMaxHp(static_cast<int>(100 * difficultyMultiplier));
+		boss->SetMaxHp(static_cast<int>(20 * difficultyMultiplier));
 		boss->SetMoveSpeed(8.0f * difficultyMultiplier);
 	}
 }

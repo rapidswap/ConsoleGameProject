@@ -411,7 +411,7 @@ bool GameLevel::CheckGameFailed()
 	auto player = FindActor<Player>();
 	if (player && player->GetHp() <= 0)
 	{
-		Engine::Get().AddNewLevel<GameFailed>();
+		Engine::Get().AddNewLevel<GameFailed>(playTime);
 		return true;
 	}
 
@@ -422,7 +422,7 @@ bool GameLevel::CheckGameClear()
 {
 	// 보스(Demon) 처치 시 무한 모드 진입 로직
 	auto demon = FindActor<Demon>();
-	if (demon->GetHp() <= 20)
+	if (demon && demon->GetHp() <= demon->GetMaxHp() * 0.2f)
 	{
 		demon->DemonHurt();
 	}

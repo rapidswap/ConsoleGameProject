@@ -67,6 +67,21 @@ void GameFailed::Draw()
 		);
 	}
 
+	// 최종 플레이 타임 출력
+	int minutes = static_cast<int>(finalPlayTime) / 60;
+	int seconds = static_cast<int>(finalPlayTime) % 60;
+	char timeBuf[32];
+	sprintf_s(timeBuf, "Survived Time: %02d:%02d", minutes, seconds);
+	
+	std::string timeStr = timeBuf;
+	Renderer::Get().Submit(
+		timeStr,
+		Vector2((screenWidth / 2) - (timeStr.length() / 2),
+			screenHeight / 2 - 3),
+		Color::Yellow,
+		100
+	);
+
 	std::string menus[2] = { "Go to Lobby","Exit Game" };
 
 	// 메뉴 그리기.

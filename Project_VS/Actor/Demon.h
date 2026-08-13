@@ -32,7 +32,7 @@ private:
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 
 	// 데몬의 체력 회복 패턴.
-	inline void HealDemon() { demonHp += 50; }
+	inline void HealDemon() { demonHp += maxDemonHp / 2; }
 
 	
 
