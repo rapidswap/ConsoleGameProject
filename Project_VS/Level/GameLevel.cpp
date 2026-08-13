@@ -182,7 +182,7 @@ void GameLevel::Draw()
 
 	// 화면 상단에 표시.
 	int screenWidth = Engine::Get().GetWidth();
-	Renderer::Get().Submit(timeBuf, Vector2(screenWidth / 2,0), Color::White,10);
+	Renderer::Get().Submit(timeBuf, Vector2(screenWidth / 2,0), Color::White);
 
 	// 현재 맵에 있는 플레이어를 찾아서 정보를 가져옴.
 	auto player = FindActor<Player>();
@@ -192,14 +192,26 @@ void GameLevel::Draw()
 		int playerHP = player->GetHp();
 		std::string hpText = "HP: " + std::to_string(playerHP)
 			+"/"+std::to_string(player->GetMaxHp());
-		Renderer::Get().Submit(hpText, Vector2(0, 0), Color::White, 100);
+		Renderer::Get().Submit(hpText, Vector2(0, 0), Color::White);
 		
-		// 플레이어 스탯 정보 출력 (체력 바로 아래줄)
+		// 플레이어 스탯 정보 출력 (체력 바로 아래줄).
 		char statsBuf[128];
 		sprintf_s(statsBuf, "ATK Spd: %.1fs | Move: %.0f | Bullets: %d", 
 			player->GetAttackSpeed(), player->GetMoveSpeed(), player->GetBullets());
 		std::string statsText = statsBuf;
 		Renderer::Get().Submit(statsText, Vector2(0, 1), Color::White);
+	
+		// "Mode: " 텍스트는 하얀색 고정.
+		std::string modeLabel = "Mode: ";
+		Renderer::Get().Submit(modeLabel, Vector2(0, 2), Color::White);
+
+		// 실제 모드 이름(Pistol/Shotgun)과 색상 결정.
+		std::string modeStr = player->GetMode();
+		Color modeColor = (modeStr == "Pistol") ? Color::Green : Color::Red;
+		
+		// "Mode: " 글자 길이만큼 X좌표를 띄워서 바로 옆에 컬러로 출력.
+		Renderer::Get().Submit(modeStr, Vector2(static_cast<int>(modeLabel.length()), 2), modeColor);
+
 		// 플레이어의 정보 읽어오기.
 		int level = player->GetLevel();
 		float exp = player->GetEXP();
@@ -221,7 +233,7 @@ void GameLevel::Draw()
 			+ std::string(targetExpBuf);
 		
 		// 화면 최상단 중앙 즈음에 출력 (예시 좌표: x=10, y=0).
-		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan, 0);
+		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan);
 	}
 
 	// 증강 선택 창이 켜져있을 때(프리즈 상태) 화면 중앙에 안내 문구 출력.
@@ -240,43 +252,58 @@ void GameLevel::Draw()
 			200
 		);
 
-		// 증강의 좌우 간격
-		int spacing = 20;
+		// 증강 카드의 가로 크기와 세로 크기.
+		int cardWidth = 24;
+		int cardHeight = 9;
+		// 카드 간격.
+		int spacing = 28; 
 		
-		// 증강들이 중앙에 오도록 좌표 계산.
-		int startX = 
-			(screenWidth / 2) 
-			- (spacing * (currentChoices.size() - 1)) / 2;
+		// 카드들이 중앙에 오도록 기준점 계산.
+		int startX = (screenWidth / 2) - (spacing * (currentChoices.size() - 1)) / 2;
+		int startY = screenHeight / 2 - (cardHeight / 2);
 
-		for (size_t i = 0;i < currentChoices.size();++i)
+		for (size_t i = 0; i < currentChoices.size(); ++i)
 		{
+			Color cardColor = Color::White; 
 			Color textColor = Color::White;
 
-			// 현재 선택된 증강은 초록색.
+			// 현재 선택된 증강 카드는 초록색으로 하이라이트.
 			if (i == seletedAugmentIndex)
 			{
+				cardColor = Color::Green;
 				textColor = Color::Green;
 			}
 
-			// 증강 출력.
+			// 1. 카드 박스 그리기.
+			int cardLeftX = startX + (i * spacing) - (cardWidth / 2);
+			
+			// 윗면.
+			Renderer::Get().Submit("+----------------------+", Vector2(cardLeftX, startY), cardColor, 200);
+			// 옆면(내부 빈 공간).
+			for (int j = 1; j < cardHeight - 1; ++j)
+			{
+				Renderer::Get().Submit("|                      |", Vector2(cardLeftX, startY + j), cardColor, 200);
+			}
+			// 아랫면
+			Renderer::Get().Submit("+----------------------+", Vector2(cardLeftX, startY + cardHeight - 1), cardColor, 200);
+
+
+			// 2. 증강 이름 텍스트 렌더링 (카드 안쪽 상단).
+			std::string nameStr = "[" + currentChoices[i].name + "]";
 			Renderer::Get().Submit(
-				currentChoices[i].name,
-				Vector2(startX + (i * spacing)
-					- (currentChoices[i].name.length() / 2), screenHeight / 2),
+				nameStr,
+				Vector2(startX + (i * spacing) - (nameStr.length() / 2), startY + 2),
 				textColor,
-				200
+				201 
 			);
 
-			// 증강 설명 출력.
+			// 3. 증강 설명 텍스트 렌더링 (카드 안쪽 하단).
 			Renderer::Get().Submit(
 				currentChoices[i].description,
-				Vector2(startX + (i * spacing)
-					- (currentChoices[i].description.length() / 2),
-					screenHeight / 2 + 2),
-				Color::White,
-				200
+				Vector2(startX + (i * spacing) - (currentChoices[i].description.length() / 2), startY + 5),
+				textColor,
+				201
 			);
-
 		}
 	}
 

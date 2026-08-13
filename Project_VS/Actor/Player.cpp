@@ -72,7 +72,30 @@ void Player::Tick(float deltaTime)
 		direction = 1.0f;
 		yMove(direction, deltaTime);
 	}
-	 
+	
+	// 텔레포트(대시) 기능
+	if (Input::Get().GetKeyDown(VK_SPACE))
+	{
+		float dashDistance = 15.0f; // 텔레포트 거리 (원하는 만큼 수정 가능)
+		float dx = 0.0f;
+		float dy = 0.0f;
+		
+		if (Input::Get().GetKey(VK_RIGHT)) dx += 1.0f;
+		if (Input::Get().GetKey(VK_LEFT)) dx -= 1.0f;
+		if (Input::Get().GetKey(VK_DOWN)) dy += 1.0f;
+		if (Input::Get().GetKey(VK_UP)) dy -= 1.0f;
+
+		// 방향키를 누른 상태에서만 해당 방향으로 텔레포트
+		if (dx != 0.0f || dy != 0.0f)
+		{
+			xPosition += dx * dashDistance;
+			yPosition += dy * dashDistance;
+			
+			// xMove, yMove에 0을 넣어서 화면 밖으로 뚫고 나가는지(경계선 체크)만 안전하게 확인 후 좌표 적용
+			xMove(0.0f, 0.0f);
+			yMove(0.0f, 0.0f);
+		}
+	}
 	if (Input::Get().GetKeyDown('R'))
 	{
 		bulletMode = 1 - bulletMode;

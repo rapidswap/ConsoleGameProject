@@ -115,8 +115,8 @@ void EnemySpawner::Tick(float deltaTime)
 	{
 		diffcultyTimer.Reset();
 
-		minSpawnTime -= 0.002f;
-		maxSpawnTime -= 0.002f;
+		minSpawnTime -= 0.005f;
+		maxSpawnTime -= 0.005f;
 
 		if (minSpawnTime < 0.05f) minSpawnTime = 0.05f;
 		if (maxSpawnTime < 0.08f) maxSpawnTime = 0.08f;

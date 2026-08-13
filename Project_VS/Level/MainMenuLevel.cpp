@@ -45,17 +45,30 @@ void MainMenuLevel::Draw()
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 
-	// 타이틀 출력.
-	std::string title = "=== PROJECT VS ===";
-	Renderer::Get().Submit(
-		title,
-		Vector2((screenWidth / 2) - (title.length() / 2),
-			screenHeight / 2 - 5),
-		Color::Yellow,
-		100
-	);
+	// 타이틀 출력 (스피드 액션 스타일)
+	std::string titleArt[4] = {
+		" ___  ___  __    _ ___ ___ _____   __   __ ___ ",
+		"| _ \\| _ \\/  \\  | | __/ __|_   _|  \\ \\ / // __|",
+		"|  _/|   / () |_| | _| (__  | |     \\ V / \\__ \\",
+		"|_|  |_|_\\\\__/\\___/___\\___| |_|      \\_/  |___/"
+	};
 
-	std::string menus[2] = { "Game Start","Exit Game" };
+	int artHeight = 4;
+	int artWidth = titleArt[0].length();
+	int startY = screenHeight / 2 - 10;
+
+	for (int i = 0; i < artHeight; ++i)
+	{
+		Renderer::Get().Submit(
+			titleArt[i],
+			Vector2((screenWidth / 2) - (artWidth / 2), startY + i),
+			Color::Yellow,
+			100
+		);
+	}
+
+	
+	std::string menus[2] = { "Game Start", "Exit Game" };
 
 	// 메뉴 그리기.
 	for (int i = 0;i < 2;++i)
@@ -66,7 +79,7 @@ void MainMenuLevel::Draw()
 		if (i == selectedMenuIndex)
 		{
 			textColor = Color::Green;
-			menus[i] = "-> " + menus[i] + " <-";
+			menus[i] = "-[ " + menus[i] + " ]-";
 		}
 
 		Renderer::Get().Submit(

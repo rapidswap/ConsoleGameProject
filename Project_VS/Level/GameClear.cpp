@@ -44,15 +44,27 @@ void GameClear::Draw()
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 
-	// 타이틀 출력.
-	std::string title = "=== Mission Complete! ===";
-	Renderer::Get().Submit(
-		title,
-		Vector2((screenWidth / 2) - (title.length() / 2),
-			screenHeight / 2 - 6),
-		Color::Cyan,
-		100
-	);
+	// 타이틀 출력 (VICTORY 아스키 아트)
+	std::string titleArt[4] = {
+		" __   __ ___  ___  _____  ___  ___  __   __ _ ",
+		" \\ \\ / /|_ _|/ __||_   _|/ _ \\| _ \\ \\ \\ / /| |",
+		"  \\ V /  | || (__   | | | (_) |   /  \\ V / |_|",
+		"   \\_/  |___|\\___|  |_|  \\___/|_|_\\   |_|  (_)"
+	};
+
+	int artHeight = 4;
+	int artWidth = titleArt[0].length();
+	int startY = screenHeight / 2 - 12;
+
+	for (int i = 0; i < artHeight; ++i)
+	{
+		Renderer::Get().Submit(
+			titleArt[i],
+			Vector2((screenWidth / 2) - (artWidth / 2), startY + i),
+			Color::Cyan,
+			100
+		);
+	}
 
 	// 최종 플레이 타임 출력
 	int minutes = static_cast<int>(finalPlayTime) / 60;
@@ -80,7 +92,7 @@ void GameClear::Draw()
 		if (i == selectedMenuIndex)
 		{
 			textColor = Color::Green;
-			menus[i] = "-> " + menus[i] + " <-";
+			menus[i] = "-[ " + menus[i] + " ]-";
 		}
 
 		Renderer::Get().Submit(

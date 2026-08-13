@@ -45,15 +45,27 @@ void GameFailed::Draw()
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 
-	// 타이틀 출력.
-	std::string title = "XXX Mission Failed! XXX";
-	Renderer::Get().Submit(
-		title,
-		Vector2((screenWidth / 2) - (title.length() / 2),
-			screenHeight / 2 - 5),
-		Color::Red,
-		100
-	);
+	// 타이틀 출력 (YOU DIED 아스키 아트)
+	std::string titleArt[4] = {
+		" __   __ ___  _   _    ___   ___  ___  ___  ",
+		" \\ \\ / // _ \\| | | |  |   \\ |_ _|| __||   \\ ",
+		"  \\ V /| (_) | |_| |  | |) | | | | _| | |) |",
+		"   |_|  \\___/ \\___/   |___/ |___||___||___/ "
+	};
+
+	int artHeight = 4;
+	int artWidth = titleArt[0].length();
+	int startY = screenHeight / 2 - 10;
+
+	for (int i = 0; i < artHeight; ++i)
+	{
+		Renderer::Get().Submit(
+			titleArt[i],
+			Vector2((screenWidth / 2) - (artWidth / 2), startY + i),
+			Color::Red,
+			100
+		);
+	}
 
 	std::string menus[2] = { "Go to Lobby","Exit Game" };
 
@@ -66,7 +78,7 @@ void GameFailed::Draw()
 		if (i == selectedMenuIndex)
 		{
 			textColor = Color::Green;
-			menus[i] = "-> " + menus[i] + " <-";
+			menus[i] = "-[ " + menus[i] + " ]-";
 		}
 
 		Renderer::Get().Submit(

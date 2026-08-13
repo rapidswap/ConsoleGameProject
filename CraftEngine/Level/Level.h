@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Core/Core.h>
 #include <Actor/Actor.h>
@@ -74,6 +74,36 @@ namespace Craft
 
 			// 못찾은 경우 null 밚환.
 			return nullptr;
+		}
+
+		// 가장 가까운 액터 검색 함수(템플릿).
+		template<typename T,
+			typename = std::enable_if_t<std::is_base_of<Actor, T>::value>>
+			std::shared_ptr<T> FindClosestActor(const Vector2& center)
+		{
+			std::shared_ptr<T> closestActor = nullptr;
+			float minDistanceSq = -1.0f;
+
+			for (const auto& actor : actorList)
+			{
+				std::shared_ptr<T> targetActor = std::dynamic_pointer_cast<T>(actor);
+				// 소멸 대기 상태가 아닌(IsActive) 살아있는 타겟만 계산
+				if (targetActor && targetActor->IsActive())
+				{
+					Vector2 pos = targetActor->GetPosition();
+					float dx = static_cast<float>(pos.x - center.x);
+					float dy = static_cast<float>(pos.y - center.y);
+					float distSq = dx * dx + dy * dy;
+
+					if (minDistanceSq < 0.0f || distSq < minDistanceSq)
+					{
+						minDistanceSq = distSq;
+						closestActor = targetActor;
+					}
+				}
+			}
+
+			return closestActor;
 		}
 
 		// Getter.

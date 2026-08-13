@@ -21,9 +21,8 @@ public:
 	inline float GetAttackSpeed() const { return autoFireInterval; }
 	inline float GetMoveSpeed() const { return moveSpeed; }
 	inline int GetBullets() const { return projectileCount; }
-
-
-	
+	inline std::string GetMode() const { return bulletMode == 1 ? "Pistol" : "Shotgun"; }
+		
 	// 증강으로 인한 플레이어의 정보 변경.
 	inline void PlayerSpeedUp() { moveSpeed += 1.0f; }
 	inline void PlayerExpUp() { EXP *= 1.25f; }
@@ -81,7 +80,7 @@ private:
 	float EXP = 1.0f;
 
 	// 한 번에 발사할 총알의 개수
-	int projectileCount = 1;
+	int projectileCount = 2;
 
 	// 발사 모드 결정.
 	int bulletMode = 1;
