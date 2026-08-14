@@ -3,17 +3,16 @@
 #include <Actor/Actor.h>
 #include <Util/Timer.h>
 
-class DestroyEXP:public Craft::Actor
+class DestroyMagnet:public Craft::Actor
 {
 	// 커스텀 RTTI 등록.
-	TYPE_DECLARATIONS(DestroyEXP,Actor)
+	TYPE_DECLARATIONS(DestroyMagnet, Actor)
 
 public:
-	DestroyEXP(const Craft::Vector2& position);
-	~DestroyEXP()=default;
+	DestroyMagnet(const Craft::Vector2& position);
+	~DestroyMagnet() = default;
 	virtual void Tick(float deltaTime) override;
 
 private:
 	Timer lifeTimer;
 };
-

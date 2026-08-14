@@ -6,6 +6,7 @@
 #include <Actor/Enemy.h>
 #include <Actor/DestroyAugmentPoint.h>
 #include <Actor/DestroyEXP.h>
+#include <Actor/DestroyMagnet.h>
 #include <Actor/EliteBoss.h>
 #include <Actor/Demon.h>
 #include <Actor/EnemyBullet.h>
@@ -382,6 +383,56 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 				if (gameLevel)
 				{
 					gameLevel->ShowLevelUpMenu();
+				}
+			}
+		}
+	}
+
+	// 자석(DestroyMagnet) 획득 처리
+	if (other->IsTypeOf<DestroyMagnet>())
+	{
+		other->Destroy();
+		std::shared_ptr<Level> owner = GetOwner();
+		if (owner)
+		{
+			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+			if (gameLevel)
+			{
+				int expLevelUps = 0;
+				// 맵 전체의 모든 경험치 수집
+				auto expList = gameLevel->FindActors<DestroyEXP>();
+				for (auto& exp : expList)
+				{
+					if (exp && exp->IsActive())
+					{
+						exp->Destroy();
+						playerEXP += EXP;
+						while (playerEXP >= targetEXP)
+						{
+							playerLevel += 1;
+							playerEXP -= targetEXP;
+							targetEXP *= 1.5f;
+							expLevelUps++;
+						}
+					}
+				}
+
+				// 맵 전체의 모든 증강 포인트 수집
+				auto augList = gameLevel->FindActors<DestroyAugmentPoint>();
+				int augCount = 0;
+				for (auto& aug : augList)
+				{
+					if (aug && aug->IsActive())
+					{
+						aug->Destroy();
+						augCount++;
+					}
+				}
+				
+				int totalMenuCount = expLevelUps + augCount;
+				if (totalMenuCount > 0)
+				{
+					gameLevel->ShowLevelUpMenu(totalMenuCount);
 				}
 			}
 		}

@@ -97,6 +97,7 @@
     <ClCompile Include="Actor\DestroyAugmentPoint.cpp" />
     <ClCompile Include="Actor\DestroyEffect.cpp" />
     <ClCompile Include="Actor\DestroyEXP.cpp" />
+    <ClCompile Include="Actor\DestroyMagnet.cpp" />
     <ClCompile Include="Actor\EliteBoss.cpp" />
     <ClCompile Include="Actor\Enemy.cpp" />
     <ClCompile Include="Actor\EnemyBullet.cpp" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Actor\DestroyAugmentPoint.h" />
     <ClInclude Include="Actor\DestroyEffect.h" />
     <ClInclude Include="Actor\DestroyEXP.h" />
+    <ClInclude Include="Actor\DestroyMagnet.h" />
     <ClInclude Include="Actor\EliteBoss.h" />
     <ClInclude Include="Actor\Enemy.h" />
     <ClInclude Include="Actor\EnemyBullet.h" />

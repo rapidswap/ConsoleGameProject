@@ -1,14 +1,13 @@
-#include "DestroyEXP.h"
+#include "DestroyMagnet.h"
 
 using namespace Craft;
-
-DestroyEXP::DestroyEXP(const Craft::Vector2& position)
-	:Actor("E", position, Color::Yellow)
+DestroyMagnet::DestroyMagnet(const Craft::Vector2& position)
+	:Actor("M", position, Color::Blue)
 {
 	lifeTimer.SetTargetTime(30.0f);
 }
 
-void DestroyEXP::Tick(float deltaTime)
+void DestroyMagnet::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 

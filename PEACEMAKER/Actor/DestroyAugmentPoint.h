@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Actor/Actor.h>
+#include <Util/Timer.h>
 
 class DestroyAugmentPoint:public Craft::Actor
 {
@@ -10,5 +11,9 @@ class DestroyAugmentPoint:public Craft::Actor
 public:
 	DestroyAugmentPoint(const Craft::Vector2& position);
 	~DestroyAugmentPoint() = default;
+	virtual void Tick(float deltaTime) override;
+
+private:
+	Timer lifeTimer;
 };
 

@@ -8,6 +8,7 @@
 #include <Actor/DestroyEffect.h>
 #include <Actor/DestroyEXP.h>
 #include <Actor/DestroyAugmentPoint.h>
+#include <Actor/DestroyMagnet.h>
 
 using namespace Craft;
 Enemy::Enemy(const std::string& image, float x, float y)
@@ -103,19 +104,26 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 			// 죽은 자리에 이펙트 생성.
 			GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
 			
-			if (random <= 99)
+			if (random > 2)
 			{
-				// 죽은 자리에 경험치 생성.
+				// 98% 확률로 경험치 생성.
 				Vector2 expPos = GetPosition();
 				expPos.x += (GetWidth() / 2);
 				GetOwner()->SpawnActor<DestroyEXP>(expPos);
 			}
-			else
+			else if (random == 1)
 			{
-				// 죽은 자리에 증강 포인트 생성.
+				// 1% 확률로 증강 포인트 생성.
 				Vector2 augPos = GetPosition();
 				augPos.x += (GetWidth() / 2);
 				GetOwner()->SpawnActor<DestroyAugmentPoint>(augPos);
+			}
+			else if (random == 2)
+			{
+				// 1% 확률로 자석(Magnet) 생성.
+				Vector2 magPos = GetPosition();
+				magPos.x += (GetWidth() / 2);
+				GetOwner()->SpawnActor<DestroyMagnet>(magPos);
 			}
 		}
 	}

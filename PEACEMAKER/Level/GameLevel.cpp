@@ -65,7 +65,7 @@ void GameLevel::OnInitialized()
 		"Attack Speed Up",
 		"Attack Speed Up -0.2sec",
 		player->AttackSpeedUp(),
-		player->GetAttackSpeed() > 0.5f, 100, Color::White)
+		player->GetAttackSpeed() > 0.5f, 50, Color::White)
 
 	ADD_COND_AUGMENT(
 		"Bouncing Bullet",
@@ -77,7 +77,7 @@ void GameLevel::OnInitialized()
 		"Death Nova",
 		"Explode into 4 bullets",
 		player->EnableDeathNova(),
-		!player->HasDeathNova(), 100, Color::Yellow)
+		!player->HasDeathNova(), 5, Color::Yellow)
 
 	// 3. 무조건 뜨는 일반 증강들
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp(), 100, Color::White)
@@ -360,7 +360,7 @@ void GameLevel::Draw()
 		int screenWidth = Engine::Get().GetWidth();
 		int screenHeight = Engine::Get().GetHeight();
 
-		std::string title = "=== LEVEL UP! CHOOSE AN AUGMENT ===";
+		std::string title = "=== CHOOSE AN AUGMENT ===";
 		Renderer::Get().Submit(
 			title,
 			Vector2(

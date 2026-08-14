@@ -22,7 +22,7 @@ void GameFailed::Tick(float deltaTime)
 	if (Input::Get().GetKeyDown(VK_DOWN))
 	{
 		selectedMenuIndex++;
-		if (selectedMenuIndex > 1)selectedMenuIndex = 0;
+		if (selectedMenuIndex > 2)selectedMenuIndex = 0;
 	}
 
 	// 엔터키 확정.
