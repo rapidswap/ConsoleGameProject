@@ -37,7 +37,7 @@ EnemySpawner::EnemySpawner()
 	eliteBossTimer.SetTargetTime(50.0f);
 
 	// 데몬 스폰 타이머 설정
-	demonTimer.SetTargetTime(10.0f);
+	demonTimer.SetTargetTime(300.0f);
 
 }
 

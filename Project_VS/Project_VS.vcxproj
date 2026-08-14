@@ -16,6 +16,7 @@
     <ProjectGuid>{51c2e28b-5bae-41f3-8e60-7fe69a2b3f2a}</ProjectGuid>
     <RootNamespace>ProjectVS</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>PEACEMAKER</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

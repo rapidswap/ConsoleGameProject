@@ -183,25 +183,7 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
 			if (gameLevel)
 			{
-				// 데몬은 게임레벨에서 관리하므로 즉사하지 않을 수 있음.
-				// 하지만 맞을때마다 파편이 터진다면 너무 사기증강이 됨.
-				// 여기서는 Demon 체력이 깎일 때 터지도록 임시 구현.
-				if (!isShrapnel)
-				{
-					auto player = owner->FindActor<Player>();
-					if (player && player->HasDeathNova())
-					{
-						Vector2 pos = GetPosition();
-						float baseAngles[4] = {45.0f, 135.0f, 225.0f, 315.0f};
-						for (int i = 0; i < 4; ++i)
-						{
-							float rad = baseAngles[i] * 3.141592f / 180.0f;
-							float dx = std::cos(rad);
-							float dy = std::sin(rad);
-							owner->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
-						}
-					}
-				}
+
 				
 				// 데몬 스스로 체력 관리
 				demonHp--;
@@ -215,6 +197,24 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 				// 체력이 0이 되어 사망 시
 				if (demonHp <= 0)
 				{
+					// 데스노바 증강 발동 (사망 시 1회만 터짐)
+					if (!isShrapnel)
+					{
+						auto player = owner->FindActor<Player>();
+						if (player && player->HasDeathNova())
+						{
+							Vector2 pos = GetPosition();
+							float baseAngles[4] = {45.0f, 135.0f, 225.0f, 315.0f};
+							for (int i = 0; i < 4; ++i)
+							{
+								float rad = baseAngles[i] * 3.141592f / 180.0f;
+								float dx = std::cos(rad);
+								float dy = std::sin(rad);
+								Vector2 spawnPos(pos.x + (dx > 0 ? 1 : -1), pos.y + (dy > 0 ? 1 : -1));
+								owner->SpawnActor<PlayerBullet>(spawnPos, dx, dy, false, true);
+							}
+						}
+					}
 					// 게임 레벨에 보스 사망 알림
 					gameLevel->OnBossDefeated();
 					

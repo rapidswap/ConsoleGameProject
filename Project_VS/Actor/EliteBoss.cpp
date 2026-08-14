@@ -88,9 +88,9 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 						float dx = std::cos(rad);
 						float dy = std::sin(rad);
 						
-						// isBouncing=false, isShrapnel=true 로 생성.
-						// 죽어서 나온 파편은 튕기면 안됨.
-						GetOwner()->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
+						// 파편이 스폰되자마자 자기 자신을 때리지 않도록 생성 좌표를 대각선으로 1칸씩 밀어줍니다.
+						Vector2 spawnPos(pos.x + (dx > 0 ? 1 : -1), pos.y + (dy > 0 ? 1 : -1));
+						GetOwner()->SpawnActor<PlayerBullet>(spawnPos, dx, dy, false, true);
 					}
 				}
 			}

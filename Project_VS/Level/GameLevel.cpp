@@ -77,7 +77,7 @@ void GameLevel::OnInitialized()
 		"Death Nova",
 		"Explode into 4 bullets",
 		player->EnableDeathNova(),
-		!player->HasDeathNova(), 5, Color::Yellow)
+		!player->HasDeathNova(), 100, Color::Yellow)
 
 	// 3. 무조건 뜨는 일반 증강들
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp(), 100, Color::White)

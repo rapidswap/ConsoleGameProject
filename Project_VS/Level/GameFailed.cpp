@@ -3,6 +3,7 @@
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
 #include <Level/MainMenuLevel.h>
+#include <Level/GameLevel.h>
 
 using namespace Craft;
 
@@ -32,6 +33,10 @@ void GameFailed::Tick(float deltaTime)
 			Engine::Get().AddNewLevel<MainMenuLevel>();
 		}
 		else if (selectedMenuIndex == 1)
+		{
+			Engine::Get().AddNewLevel<GameLevel>();
+		}
+		else if (selectedMenuIndex == 2)
 		{
 			Engine::Get().Quit();
 		}
@@ -82,10 +87,10 @@ void GameFailed::Draw()
 		100
 	);
 
-	std::string menus[2] = { "Main Menu","Exit Game" };
+	std::string menus[3] = { "Main Menu","Restart Game","Exit Game" };
 
 	// 메뉴 그리기.
-	for (int i = 0;i < 2;++i)
+	for (int i = 0;i < 3;++i)
 	{
 		Color textColor = Color::White;
 
