@@ -95,7 +95,7 @@ private:
 	float EXP = 1.0f;
 
 	// 한 번에 발사할 총알의 개수
-	int projectileCount = 10;
+	int projectileCount = 2;
 
 	// 발사 모드 결정.
 	int bulletMode = 1;

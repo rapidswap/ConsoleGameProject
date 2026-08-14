@@ -2,6 +2,10 @@
 
 // 4251 경고 끄기.
 #pragma warning(disable: 4251)
+// 4267 경고 끄기.
+#pragma warning(disable: 4267)
+// 4244 경고 끄기.
+#pragma warning(disable: 4244)
 
 
 // 빌드 모드에 따라서 변경될 값.

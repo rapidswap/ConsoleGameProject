@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Actor/Actor.h>
-#include <Util/Util.h>
 
 class DestroyEXP:public Craft::Actor
 {

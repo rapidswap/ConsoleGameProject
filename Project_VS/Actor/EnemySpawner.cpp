@@ -37,7 +37,7 @@ EnemySpawner::EnemySpawner()
 	eliteBossTimer.SetTargetTime(50.0f);
 
 	// 데몬 스폰 타이머 설정
-	demonTimer.SetTargetTime(300.0f);
+	demonTimer.SetTargetTime(10.0f);
 
 }
 
@@ -213,22 +213,22 @@ void EnemySpawner::SpawnDemon()
 void EnemySpawner::NextLoop()
 {
 	loopCount++;
-	difficultyMultiplier *= 2.0f; // 매 루프마다 난이도 배수 2배 증가
+	difficultyMultiplier *= 2.0f; // 매 루프마다 난이도 배수 2배 증가.
 	
-	// 최소/최대 스폰 속도 감소 (더 빠르게 쏟아짐)
+	// 최소/최대 스폰 속도 감소 (더 빠르게 쏟아짐).
 	minSpawnTime = (std::max)(0.1f, minSpawnTime * 0.7f);
 	maxSpawnTime = (std::max)(0.2f, maxSpawnTime * 0.7f);
 	timer.SetTargetTime(Util::RandomRange(minSpawnTime, maxSpawnTime));
 	
-	// 데몬 스폰 단계 초기화
+	// 데몬 스폰 단계 초기화.
 	demonSpawnStep = 0;
 	
-	// 다음 보스전은 더 빨리 오도록 (최소 60초)
+	// 다음 보스전은 더 빨리 오도록 (최소 60초).
 	float nextDemonTime = (std::max)(60.0f, 300.0f * std::pow(0.8f, (float)loopCount));
 	demonTimer.SetTargetTime(nextDemonTime);
 	demonTimer.Reset();
 	
-	// 엘리트 보스도 더 자주 나오도록
+	// 엘리트 보스도 더 자주 나오도록.
 	float nextEliteTime = (std::max)(15.0f, 50.0f * std::pow(0.8f, (float)loopCount));
 	eliteBossTimer.SetTargetTime(nextEliteTime);
 	eliteBossTimer.Reset();

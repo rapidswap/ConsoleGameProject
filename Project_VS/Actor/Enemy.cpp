@@ -7,6 +7,7 @@
 #include <Actor/PlayerBullet.h>
 #include <Actor/DestroyEffect.h>
 #include <Actor/DestroyEXP.h>
+#include <Actor/DestroyAugmentPoint.h>
 
 using namespace Craft;
 Enemy::Enemy(const std::string& image, float x, float y)
@@ -16,6 +17,7 @@ Enemy::Enemy(const std::string& image, float x, float y)
 	SetPosition(Vector2(static_cast<int>(xPosition), static_cast<int>(yPosition)));
 
 	color = Color::Cyan;
+	
 }
 
 void Enemy::Tick(float deltaTime)
@@ -57,13 +59,13 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	super::OnCollision(other);
 
 	// Enemy가 경험치를 떨구는 것에 대한 확률을 구하기 위한 랜덤.
-	int random = Util::RandomRange(1, 10);
+	int random = Util::RandomRange(1, 100);
 
 	// 충돌한 다른 액터가 플레이어 탄약이면 삭제.
 	// 커스텀 타입 활용.
 	if (other->IsTypeOf<PlayerBullet>())
 	{
-		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		std::shared_ptr<PlayerBullet> bullet = Cast<PlayerBullet>(other);
 		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
 
 		//  플레이어 탄약 제거.
@@ -100,12 +102,19 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 			// 죽은 자리에 이펙트 생성.
 			GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
 			
-			if (random <= 10)
+			if (random <= 99)
 			{
 				// 죽은 자리에 경험치 생성.
 				Vector2 expPos = GetPosition();
 				expPos.x += (GetWidth() / 2);
 				GetOwner()->SpawnActor<DestroyEXP>(expPos);
+			}
+			else
+			{
+				// 죽은 자리에 증강 포인트 생성.
+				Vector2 augPos = GetPosition();
+				augPos.x += (GetWidth() / 2);
+				GetOwner()->SpawnActor<DestroyAugmentPoint>(augPos);
 			}
 		}
 	}

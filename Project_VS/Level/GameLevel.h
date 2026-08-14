@@ -14,6 +14,8 @@ class GameLevel:public Craft::Level
 		std::string description;
 		std::function<void()> onSelected;
 		std::function<bool()> canShow;
+		int weight = 100; // 가중치 (기본값 100)
+		Craft::Color borderColor = Craft::Color::White; // 테두리 색상 (기본값 흰색)
 	};
 
 private:
@@ -26,7 +28,7 @@ public:
 	// 외부(Player)에서 피격당했을 때 호출할 함수.
 	void TakeDamage();
 
-	void TakeDemonDamage();
+	void OnBossDefeated();
 
 	// 플레이어가 레벨업했을 때 메뉴를 띄우고 게임을 프리즈시키는 함수.
 	// 여러 번 연속으로 띄워야 할 경우 times 인자에 횟수를 넘깁니다 (기본값 1).
@@ -39,10 +41,10 @@ private:
 	// 게임 오버 여부를 확인하는 함수.
 	bool CheckGameFailed();
 
-	// 게임 클리어 여부를 확인하는 함수.
-	bool CheckGameClear();
-
 private:
+	// ESC 일시정지 상태 및 메뉴 커서
+	bool isPaused = false;
+	int selectedPauseMenuIndex = 0;
 
 	// 레벨업 메뉴가 켜져서 게임이 멈춰 있는지 여부
 	bool isLevelUpMenuOpen = false;

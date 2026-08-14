@@ -170,7 +170,7 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 
 	if (other->IsTypeOf<PlayerBullet>())
 	{
-		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		std::shared_ptr<PlayerBullet> bullet = Cast<PlayerBullet>(other);
 		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
 
 		// 총알 파괴.
@@ -202,7 +202,28 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 						}
 					}
 				}
-				gameLevel->TakeDemonDamage();
+				
+				// 데몬 스스로 체력 관리
+				demonHp--;
+				
+				// 최대 체력의 20% 이하가 되면 발악 패턴 진입
+				if (demonHp <= maxDemonHp * 0.2f)
+				{
+					DemonHurt();
+				}
+				
+				// 체력이 0이 되어 사망 시
+				if (demonHp <= 0)
+				{
+					// 게임 레벨에 보스 사망 알림
+					gameLevel->OnBossDefeated();
+					
+					// 폭발 이펙트 스폰
+					owner->SpawnActor<DestroyEffect>(GetPosition());
+					
+					// 스스로 파괴
+					Destroy();
+				}
 			}
 		}
 

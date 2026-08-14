@@ -13,27 +13,30 @@
 #include <Actor/Enemy.h>
 #include <Level/GameFailed.h>
 #include <Level/GameClear.h>
+#include <Level/MainMenuLevel.h>
 
 
 #include <string>
 #include <algorithm>
 
 // 조건 없이 등장하는 증강.
-#define ADD_AUGMENT(Name,Desc,Logic)								\
+#define ADD_AUGMENT(Name,Desc,Logic,Weight,Color)								\
 	augmentList.push_back({											\
 		Name, Desc,													\
 			[this]() {auto player = FindActor<Player>();if (player)	\
 		{															\
 			Logic;}},												\
-			nullptr													\
+			nullptr,												\
+			Weight, Color											\
 	});
 
 // 특정 조건으로 등장하는 증강.
-#define ADD_COND_AUGMENT(Name, Desc, Logic, Cond) \
+#define ADD_COND_AUGMENT(Name, Desc, Logic, Cond, Weight, Color) \
 	augmentList.push_back({ \
 		Name, Desc, \
 		[this]() { auto player = FindActor<Player>(); if(player) { Logic; } }, \
-		[this]() { auto player = FindActor<Player>(); return player && (Cond); } \
+		[this]() { auto player = FindActor<Player>(); return player && (Cond); }, \
+		Weight, Color \
 	});
 
 
@@ -55,32 +58,32 @@ void GameLevel::OnInitialized()
 		"Heal",
 		"Heal your Hp 1",
 		player->hpUp(),
-		player->GetHp() < player->GetMaxHp())
+		player->GetHp() < player->GetMaxHp(), 100, Color::White)
 
 	// 2. 조건부 증강
 	ADD_COND_AUGMENT(
 		"Attack Speed Up",
 		"Attack Speed Up -0.2sec",
 		player->AttackSpeedUp(),
-		player->GetAttackSpeed() > 0.5f)
+		player->GetAttackSpeed() > 0.5f, 100, Color::White)
 
 	ADD_COND_AUGMENT(
 		"Bouncing Bullet",
 		"Bullets bounce off walls",
 		player->EnableBouncingBullet(),
-		!player->HasBouncingBullet())
+		!player->HasBouncingBullet(), 5, Color::Yellow)
 
 	ADD_COND_AUGMENT(
 		"Death Nova",
 		"Explode into 4 bullets",
 		player->EnableDeathNova(),
-		!player->HasDeathNova())
+		!player->HasDeathNova(), 5, Color::Yellow)
 
 	// 3. 무조건 뜨는 일반 증강들
-	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp())
-	ADD_AUGMENT("Player Speed Up", "Speed + 1", player->PlayerSpeedUp())
-	ADD_AUGMENT("extra EXP", "extra EXP +25%", player->PlayerExpUp())
-	ADD_AUGMENT("extra Bullet", "Bullet +1", player->AddProjectile())
+	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp(), 100, Color::White)
+	ADD_AUGMENT("Player Speed Up", "Speed + 1", player->PlayerSpeedUp(), 100, Color::White)
+	ADD_AUGMENT("extra EXP", "extra EXP +25%", player->PlayerExpUp(), 100, Color::White)
+	ADD_AUGMENT("extra Bullet", "Bullet +1", player->AddProjectile(), 50, Color::White)
 }
 
  void GameLevel::ShowLevelUpMenu(int times)
@@ -98,31 +101,100 @@ void GameLevel::OnInitialized()
 
 	currentChoices.clear();
 
+	std::vector<Augment> validAugments;
 	// 전체 증강 목록 중에서 조건이 없거나(!aug.canShow), 
-	// 조건을 통과한(aug.canShow()) 증강들만 이번 선택지 후보에 넣습니다.
+	// 조건을 통과한(aug.canShow()) 증강들만 유효한 후보에 넣습니다.
 	for (const auto& aug : augmentList)
 	{
 		if (!aug.canShow || aug.canShow())
 		{
-			currentChoices.push_back(aug);
+			validAugments.push_back(aug);
 		}
 	}
 
-	// 증강 목록을 섞기.
-	std::shuffle(
-		currentChoices.begin(),
-		currentChoices.end(),
-		Util::GetRandomEngine());
-
-	// 섞인 목록 중에서 앞의 3개만 보여주기.
-	if (currentChoices.size() > 3)
+	// 가중치 기반 랜덤 뽑기 (최대 3개).
+	int pickCount = (std::min)(3, static_cast<int>(validAugments.size()));
+	
+	for (int i = 0; i < pickCount; ++i)
 	{
-		currentChoices.resize(3);
+		int totalWeight = 0;
+		for (const auto& aug : validAugments)
+		{
+			totalWeight += aug.weight;
+		}
+
+		if (totalWeight <= 0) break;
+
+		int randomValue = Util::RandomRange(1, totalWeight);
+		int currentWeight = 0;
+		
+		for (auto it = validAugments.begin(); it != validAugments.end(); ++it)
+		{
+			currentWeight += it->weight;
+			if (randomValue <= currentWeight)
+			{
+				// 중복 선택 방지.
+				currentChoices.push_back(*it);
+				validAugments.erase(it); 
+				break;
+			}
+		}
 	}
 }
 
 void GameLevel::Tick(float deltaTime)
 {
+	// ESC 일시정지 처리
+	if (Input::Get().GetKeyDown(VK_ESCAPE))
+	{
+		if (isPaused)
+		{
+			isPaused = false; // 게임으로 돌아가기
+		}
+		else if (!isLevelUpMenuOpen)
+		{
+			isPaused = true;
+			selectedPauseMenuIndex = 0; // 초기 커서는 '돌아가기'
+		}
+	}
+
+	// 일시정지 상태일 때 메뉴 처리
+	if (isPaused)
+	{
+		if (Input::Get().GetKeyDown(VK_UP))
+		{
+			selectedPauseMenuIndex--;
+			if (selectedPauseMenuIndex < 0) selectedPauseMenuIndex = 2;
+		}
+		if (Input::Get().GetKeyDown(VK_DOWN))
+		{
+			selectedPauseMenuIndex++;
+			if (selectedPauseMenuIndex > 2) selectedPauseMenuIndex = 0;
+		}
+		if (Input::Get().GetKeyDown(VK_RETURN))
+		{
+			if (selectedPauseMenuIndex == 0)
+			{
+				// 게임으로 돌아가기.
+				isPaused = false; 
+			}
+			else if (selectedPauseMenuIndex == 1)
+			{
+				// 재시작.
+				Engine::Get().AddNewLevel<GameLevel>(); 
+				return;
+			}
+			else if (selectedPauseMenuIndex == 2)
+			{
+				// 메인 메뉴로 나가기.
+				Engine::Get().AddNewLevel<MainMenuLevel>(); 
+				return;
+			}
+		}
+		// 일시정지 중에는 아래 게임 로직(Tick)을 실행하지 않음.
+		return; 
+	}
+
 	// 증강 선택 창이 켜져있으면(프리즈 상태).
 	if (isLevelUpMenuOpen)
 	{
@@ -269,7 +341,7 @@ void GameLevel::Draw()
 		Renderer::Get().Submit(statText, Vector2(10, 0), Color::Cyan);
 	}
 
-	// 무한 루프 진입 텍스트 렌더링
+	// 무한 루프 진입 텍스트 렌더링.
 	if (endlessMessageTime > 0.0f)
 	{
 		int screenWidth = Engine::Get().GetWidth();
@@ -310,8 +382,8 @@ void GameLevel::Draw()
 
 		for (size_t i = 0; i < currentChoices.size(); ++i)
 		{
-			Color cardColor = Color::White; 
-			Color textColor = Color::White;
+			Color cardColor = currentChoices[i].borderColor; 
+			Color textColor = currentChoices[i].borderColor;
 
 			// 현재 선택된 증강 카드는 초록색으로 하이라이트.
 			if (i == seletedAugmentIndex)
@@ -323,9 +395,9 @@ void GameLevel::Draw()
 			// 1. 카드 박스 그리기.
 			int cardLeftX = startX + (i * spacing) - (cardWidth / 2);
 			
-			// 윗면. (28칸의 - 사용)
+			// 윗면. (28칸의 - 사용).
 			Renderer::Get().Submit("+----------------------------+", Vector2(cardLeftX, startY), cardColor, 200);
-			// 옆면(내부 빈 공간). (28칸의 공백 사용)
+			// 옆면(내부 빈 공간). (28칸의 공백 사용).
 			for (int j = 1; j < cardHeight - 1; ++j)
 			{
 				Renderer::Get().Submit("|                            |", Vector2(cardLeftX, startY + j), cardColor, 200);
@@ -381,6 +453,39 @@ void GameLevel::Draw()
 		
 	}
 
+	// ESC 일시정지 메뉴 렌더링
+	if (isPaused)
+	{
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
+
+		// 일시정지 박스 크기 및 좌표
+		int boxWidth = 30;
+		int boxHeight = 11;
+		int startX = (screenWidth - boxWidth) / 2;
+		int startY = (screenHeight - boxHeight) / 2;
+
+		// 1. 박스 그리기
+		Renderer::Get().Submit("+----------------------------+", Vector2(startX, startY), Color::White, 200);
+		for (int j = 1; j < boxHeight - 1; ++j)
+		{
+			Renderer::Get().Submit("|                            |", Vector2(startX, startY + j), Color::White, 200);
+		}
+		Renderer::Get().Submit("+----------------------------+", Vector2(startX, startY + boxHeight - 1), Color::White, 200);
+
+		// 2. 제목 그리기
+		std::string title = "PAUSE";
+		Renderer::Get().Submit(title, Vector2(startX + (boxWidth - title.length()) / 2, startY + 2), Color::Yellow, 201);
+
+		// 3. 메뉴 항목 그리기
+		std::string menus[3] = { "Return to Game", "Restart Game", "Main Menu" };
+		for (int i = 0; i < 3; ++i)
+		{
+			Color textColor = (i == selectedPauseMenuIndex) ? Color::Green : Color::White;
+			std::string menuStr = (i == selectedPauseMenuIndex) ? "-[ " + menus[i] + " ]-" : menus[i];
+			Renderer::Get().Submit(menuStr, Vector2(startX + (boxWidth - menuStr.length()) / 2, startY + 5 + i * 2), textColor, 201);
+		}
+	}
 }
 
 void GameLevel::TakeDamage()
@@ -393,21 +498,8 @@ void GameLevel::TakeDamage()
 	}
 }
 
-void GameLevel::TakeDemonDamage()
-{
-	auto demon = FindActor<Demon>();
-	if (demon)
-	{
-		demon->hpDown();
-		CheckGameClear();
-	}
-}
-
 bool GameLevel::CheckGameFailed()
 {
-	// 게임 실패 시.
-	// 따로 메뉴 창
-	// 다시 시작, 메인 메뉴로 돌아가기, 게임 종료
 	auto player = FindActor<Player>();
 	if (player && player->GetHp() <= 0)
 	{
@@ -418,31 +510,15 @@ bool GameLevel::CheckGameFailed()
 	return false;
 }
 
-bool GameLevel::CheckGameClear()
+void GameLevel::OnBossDefeated()
 {
-	// 보스(Demon) 처치 시 무한 모드 진입 로직
-	auto demon = FindActor<Demon>();
-	if (demon && demon->GetHp() <= demon->GetMaxHp() * 0.2f)
+	auto spawner = FindActor<EnemySpawner>();
+	if (spawner)
 	{
-		demon->DemonHurt();
+		spawner->NextLoop();
+		endlessLoopCount++;
+		endlessMessageTime = 5.0f; 
 	}
-	if (demon && demon->GetHp() <= 0)
-	{
-		auto spawner = FindActor<EnemySpawner>();
-		if (spawner)
-		{
-			spawner->NextLoop();
-			endlessLoopCount++;
-			endlessMessageTime = 5.0f; // 5초 동안 텍스트 표시
-		}
-		
-		// 죽은 데몬 파괴
-		demon->Destroy();
-		
-		// 더 이상 GameClear(종료) 화면으로 가지 않음.
-		// return true; 대신 무한 플레이 유지.
-	}
-	return false;
 }
 
 void GameLevel::WipeOutEnemies()

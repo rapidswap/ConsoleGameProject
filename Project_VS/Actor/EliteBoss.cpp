@@ -6,6 +6,7 @@
 #include <Actor/PlayerBullet.h>
 #include <Actor/DestroyEffect.h>
 #include <Actor/DestroyEXP.h>
+#include <Actor/DestroyAugmentPoint.h>
 #include <cmath>
 
 using namespace Craft;
@@ -55,9 +56,11 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 {
 	super::OnCollision(other);
 
+	int random = Util::RandomRange(1, 2);
+
 	if (other->IsTypeOf<PlayerBullet>())
 	{
-		std::shared_ptr<PlayerBullet> bullet = std::dynamic_pointer_cast<PlayerBullet>(other);
+		std::shared_ptr<PlayerBullet> bullet = Cast<PlayerBullet>(other);
 		bool isShrapnel = bullet ? bullet->IsShrapnel() : false;
 
 		// 총알 파괴.
@@ -67,10 +70,12 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 		eliteBossHp--;
 		if (eliteBossHp <= 0)
 		{
-			// 플레이어의 Death Nova 상태 확인
+			
+			// 죽어서 나온 파편이 아닐 시.
 			if (GetOwner() && !isShrapnel)
 			{
 				auto player = GetOwner()->FindActor<Player>();
+				// 플레이어의 Death Nova 상태 확인.
 				if (player && player->HasDeathNova())
 				{
 					Vector2 pos = GetPosition();
@@ -83,7 +88,8 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 						float dx = std::cos(rad);
 						float dy = std::sin(rad);
 						
-						// isBouncing=false, isShrapnel=true 로 생성
+						// isBouncing=false, isShrapnel=true 로 생성.
+						// 죽어서 나온 파편은 튕기면 안됨.
 						GetOwner()->SpawnActor<PlayerBullet>(pos, dx, dy, false, true);
 					}
 				}
@@ -91,6 +97,7 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 
 			Destroy();
 			
+		
 			if (GetOwner())
 			{
 				GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
@@ -98,7 +105,11 @@ void EliteBoss::OnCollision(const std::shared_ptr<Actor>& other)
 				// 경험치 다량 스폰.
 				Craft::Vector2 expPos = GetPosition();
 				expPos.x += (GetWidth() / 2);
-
+				// 50% 확률로 증강 포인트 드랍. (random 변수는 1 또는 2)
+				if (random == 1)
+				{
+					GetOwner()->SpawnActor<DestroyAugmentPoint>(Vector2(expPos.x, expPos.y));
+				}
 				for (int i = 0; i < 15; ++i)
 				{
 					int offsetX = Util::RandomRange(-4, 4);

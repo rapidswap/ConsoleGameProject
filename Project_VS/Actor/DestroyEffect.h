@@ -10,8 +10,8 @@ class DestroyEffect : public Craft::Actor
 
 		// 애니메이션 이펙트 프레임 구조체.
 		struct EffectFrame
-	{
-		EffectFrame(
+		{
+			EffectFrame(
 			const std::string& frame,
 			float playTime = 0.05f,
 			Craft::Color color = Craft::Color::Red)

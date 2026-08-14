@@ -82,7 +82,7 @@ void GameFailed::Draw()
 		100
 	);
 
-	std::string menus[2] = { "Go to Lobby","Exit Game" };
+	std::string menus[2] = { "Main Menu","Exit Game" };
 
 	// 메뉴 그리기.
 	for (int i = 0;i < 2;++i)

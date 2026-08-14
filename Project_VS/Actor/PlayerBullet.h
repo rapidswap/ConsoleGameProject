@@ -31,11 +31,12 @@ private:
 	float directionX = 0.0f;
 	float directionY = 0.0f;
 	
-	// 벽 반사(Bouncing) 기능 활성화 여부
+	// 벽 반사(Bouncing) 기능 활성화 여부.
 	bool canBounce = false;
-	int bounceLimit = 3; // 벽에 무한정 튕겨서 남아있는 것을 방지 (최대 3회 튕김)
+	// 벽에 무한정 튕겨서 남아있는 것을 방지 (최대 3회 튕김).
+	int bounceLimit = 3; 
 
-	// 파편(Shrapnel) 여부: 적이 죽어서 터져나온 총알인지 여부
+	// 파편(Shrapnel) 여부: 적이 죽어서 터져나온 총알인지 여부.
 	bool bIsShrapnel = false;
 };
 

@@ -1,15 +1,16 @@
 #include "Player.h"
 #include <Engine/Engine.h>
 #include <Input/Input.h>
-#include <Level/Level.h>
 #include <Actor/PlayerBullet.h>
 #include <Actor/DestroyEffect.h>
 #include <Actor/Enemy.h>
-#include <Level/GameLevel.h>
+#include <Actor/DestroyAugmentPoint.h>
 #include <Actor/DestroyEXP.h>
 #include <Actor/EliteBoss.h>
 #include <Actor/Demon.h>
 #include <Actor/EnemyBullet.h>
+#include <Level/GameLevel.h>
+#include <Level/Level.h>
 #include <cmath>
 
 using namespace Craft;
@@ -44,11 +45,7 @@ void Player::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// ESC 키 종료 처리.
-	if (Input::Get().GetKeyDown(VK_ESCAPE))
-	{
-		QuitGame();
-	}
+	// (GameLevel에서 ESC 처리를 담당하므로 QuitGame 로직 제거됨)
 
 	// 방향키 입력에 따른 이동 방향 설정.
 	// 오른쪽,위 방향:1 | 왼쪽,아래 방향: -1
@@ -346,6 +343,22 @@ void Player::OnCollision(const std::shared_ptr<Actor>& other)
 		invincibilityTimer.SetTargetTime(1.0f); // 피격 무적은 1.0초
 		invincibilityTimer.Reset();
 		blinkTimer.Reset();
+	}
+
+	// 부딪힌 액터가 증강 포인트(AugmentPoint)이면 획득 처리.
+	if (other->IsTypeOf<DestroyAugmentPoint>())
+	{
+		// 증강 포인트 삭제.
+		other->Destroy();
+		std::shared_ptr<Level>owner = GetOwner();
+		if (owner)
+		{
+			std::shared_ptr<GameLevel> gameLevel = Cast<GameLevel>(owner);
+			if (gameLevel)
+			{
+				gameLevel->ShowLevelUpMenu();
+			}
+		}
 	}
 
 	// 부딪힌 액터가 경험치(DestroyEXP)이면 획득 처리.
