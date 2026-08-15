@@ -37,7 +37,7 @@ EnemySpawner::EnemySpawner()
 	eliteBossTimer.SetTargetTime(50.0f);
 
 	// 데몬 스폰 타이머 설정
-	demonTimer.SetTargetTime(300.0f);
+	demonTimer.SetTargetTime(10.0f);
 
 }
 
@@ -199,9 +199,9 @@ void EnemySpawner::SpawnDemon()
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 	
-	// 화면 중앙 약간 위에 스폰.
+	// 화면 중앙에 스폰.
 	float spawnX = static_cast<float>(screenWidth / 2);
-	float spawnY = static_cast<float>(screenHeight / 2) - 10.0f;
+	float spawnY = static_cast<float>(screenHeight / 2);
 
 	auto demon = owner->SpawnActor<Demon>(Craft::Vector2((int)spawnX, (int)spawnY));
 	if (demon)
