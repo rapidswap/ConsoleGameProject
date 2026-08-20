@@ -8,6 +8,8 @@
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
 #include <Input/Input.h>
+#include <Actor/DestroyAugmentPoint.h>
+#include <Actor/DestroyMagnet.h>
 #include <Util/Util.h>
 #include <Util/Timer.h>
 #include <Actor/Enemy.h>
@@ -144,6 +146,30 @@ void GameLevel::OnInitialized()
 
 void GameLevel::Tick(float deltaTime)
 {
+	// 카메라 세팅.
+	auto player = FindActor<Player>();
+	if (player)
+	{
+		SetCameraPosition(player->GetPosition());
+	}
+
+#ifdef _DEBUG
+	// 디버그 전용 치트키
+	if (Input::Get().GetKeyDown(VK_F1))
+	{
+		auto spawner = FindActor<EnemySpawner>();
+		if (spawner) spawner->ForceSpawnDemon();
+	}
+	if (Input::Get().GetKeyDown(VK_F2))
+	{
+		if (player) SpawnActor<DestroyAugmentPoint>(player->GetPosition());
+	}
+	if (Input::Get().GetKeyDown(VK_F3))
+	{
+		if (player) SpawnActor<DestroyMagnet>(player->GetPosition());
+	}
+#endif
+
 	// ESC 일시정지 처리
 	if (Input::Get().GetKeyDown(VK_ESCAPE))
 	{
@@ -273,6 +299,12 @@ void GameLevel::Draw()
 	// 화면 상단에 표시.
 	int screenWidth = Engine::Get().GetWidth();
 	Renderer::Get().Submit(timeBuf, Vector2(screenWidth / 2,0), Color::White);
+
+#ifdef _DEBUG
+	// 디버그 치트키 HUD 우측 상단 표시
+	std::string debugText = "[F1]Boss [F2]Augment [F3]Magnet";
+	Renderer::Get().Submit(debugText, Vector2(screenWidth - (int)debugText.length() - 2, 0), Color::Yellow);
+#endif
 
 	// 현재 맵에 있는 플레이어를 찾아서 정보를 가져옴.
 	auto player = FindActor<Player>();

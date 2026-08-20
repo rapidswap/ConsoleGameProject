@@ -96,6 +96,10 @@ namespace Craft
 
 		// Getter.
 		inline bool HasInitialized() const { return hasInitialized; }
+		inline Vector2 GetCameraPosition() const { return cameraPosition; }
+
+		// Setter.
+		inline void SetCameraPosition(const Vector2& pos) { cameraPosition = pos; }
 
 	protected:
 		// 이전 프레임에 추가/제거 요청된 액터 처리 함수.
@@ -117,5 +121,9 @@ namespace Craft
 		// 현재 프레임을 모두 처리한 후에 추가 요청된 액터를 actorList로 
 		// 옮김.
 		std::vector<std::shared_ptr<Actor>> addRequestedActorList;
+
+		// 카메라 좌표 추가.
+		Vector2 cameraPosition = Vector2::Zero;
+
 	};
 }

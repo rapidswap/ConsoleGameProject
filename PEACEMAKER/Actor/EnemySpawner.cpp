@@ -233,3 +233,13 @@ void EnemySpawner::NextLoop()
 	eliteBossTimer.SetTargetTime(nextEliteTime);
 	eliteBossTimer.Reset();
 }
+
+void EnemySpawner::ForceSpawnDemon()
+{
+	if (demonSpawnStep == 0)
+	{
+		// 즉시 타이머 만료
+		demonTimer.SetTargetTime(0.01f);
+		demonTimer.Reset();
+	}
+}

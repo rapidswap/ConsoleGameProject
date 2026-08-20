@@ -194,10 +194,10 @@ void Demon::OnCollision(const std::shared_ptr<Actor>& other)
 					DemonHurt();
 				}
 				
-				// 체력이 0이 되어 사망 시
+				// 체력이 0이 되어 사망 시.
 				if (demonHp <= 0)
 				{
-					// 데스노바 증강 발동 (사망 시 1회만 터짐)
+					// 데스노바 증강 발동 (사망 시 1회만 터짐).
 					if (!isShrapnel)
 					{
 						auto player = owner->FindActor<Player>();

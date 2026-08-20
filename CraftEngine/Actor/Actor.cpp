@@ -1,6 +1,7 @@
 #include "Actor.h"
 #include <Engine/Engine.h>
 #include <Render/Renderer.h>
+#include <Level/Level.h>
 
 namespace Craft
 {
@@ -35,9 +36,22 @@ namespace Craft
 		{
 			return;
 		}
+		// 기본 렌더링 위치는 월드 좌표.
+		Vector2 screenPos = position;
+		
+		auto owner = GetOwner();
+		if (owner)
+		{
+			Vector2 camPos = owner->GetCameraPosition();
+			int screenWidth = Engine::Get().GetWidth();
+			int screenHeight = Engine::Get().GetHeight();
 
-		// 렌더러에 필요한 데이터 제출.
-		Renderer::Get().Submit(image,position,color,sortingOrder);
+			screenPos.x = position.x - camPos.x + (screenWidth / 2);
+			screenPos.y = position.y - camPos.y + (screenHeight / 2);
+		}
+
+		// 환산된 가짜(화면) 좌표를 렌더러에 제출.
+		Renderer::Get().Submit(image, screenPos, color, sortingOrder);
 	}
 
 	void Actor::OnCollision(const std::shared_ptr<Actor>& other)

@@ -23,6 +23,9 @@ private:
 	void SpawnDemon();
 
 public:
+	// 디버그용: 즉시 보스 소환
+	void ForceSpawnDemon();
+
 	// 무한 루프 진입 (보스 처치 시 호출됨)
 	void NextLoop();
 	
