@@ -71,8 +71,7 @@ namespace Craft
 
 			// 프레임 처리.
 
-			// 입력 처리.
-			ProcessInput();
+			
 
 			// 프레임 시간 계산.
 			// 1. 현재 시간 읽기.
@@ -91,6 +90,9 @@ namespace Craft
 			// 프레임 처리.
 			if (deltaTime >= oneFrameTime)
 			{
+				// 프레임 사이에 쌓인 콘솔 입력 이벤트 처리.
+				ProcessInput();
+
 				// 게임 이벤트 함수 호출.
 				OnInitialized();
 
