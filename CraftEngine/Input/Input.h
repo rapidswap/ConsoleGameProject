@@ -1,7 +1,10 @@
-﻿#pragma once
-#include <Core/Core.h>
+#pragma once
 
-namespace Craft 
+#include <Core/Core.h>
+#include <Math/Vector2.h>
+#include <Windows.h>
+
+namespace Craft
 {
 	class CRAFT_API Input
 	{
@@ -13,26 +16,27 @@ namespace Craft
 		{
 			// 현재 프레임에 키가 눌렸는지 여부.
 			bool isKeyDown = false;
-			 
+
 			// 이전 프레임에 키가 눌렸는지 여부.
 			bool wasKeyDown = false;
-
-
 		};
-		
+
 	public:
 		Input();
-		~Input()=default;
+		~Input();
 
 		// 키 눌림/해제 여부 확인 함수.
 		// 이전 프레임에 안 눌렸다가 이번 프레임에 눌리면 true 반환.
-		bool GetKeyDown(int KeyCode) const;
+		bool GetKeyDown(int keyCode) const;
 
-		// 이전 프레임에 눌렸다가 이번 프레임에 안 눌리면 true 반화.
-		bool GetKeyUp(int KeyCode) const;
+		// 이전 프레임에 눌렸다가 이번 프레임에 안 눌리면 true 반환.
+		bool GetKeyUp(int keyCode) const;
 
-		// 현재 프레임에 입력이 눌리면 반복해서 ture를 반환하는 함수.
-		bool GetKey(int KeyCode) const;
+		// 현재 프레임에 입력이 눌리면 반복해서 true를 반환하는 함수.
+		bool GetKey(int keyCode) const;
+
+		// 현재 마우스 포인터의 콘솔 셀 좌표를 반환.
+		const Vector2& GetMousePosition() const { return mousePosition; }
 
 		// 외부에서 접근이 가능하도록 해주는 함수.
 		static Input& Get();
@@ -46,16 +50,25 @@ namespace Craft
 
 	private:
 
-		// 가상 키의 수(처리할 키의 수)
+		// 가상 키의 수 (=처리할 키의 수).
 		const int keyCount = 256;
 
 		// 키 상태를 관리할 배열.
-		KeyState KeyStates[256] = {};
+		KeyState keyStates[256] = { };
 
+		// 콘솔 입력 이벤트를 읽기 위한 핸들.
+		HANDLE inputHandle = INVALID_HANDLE_VALUE;
+
+		// 프로그램 시작 시 설정되어 있던 콘솔 입력 모드.
+		DWORD originalConsoleMode = 0;
+
+		// 종료할 때 기존 콘솔 입력 모드를 복구할지 여부.
+		bool shouldRestoreConsoleMode = false;
+
+		// 현재 마우스 포인터의 콘솔 셀 좌표.
+		Vector2 mousePosition = Vector2::Zero;
 
 		// 전역 접근이 가능하도록 변수 추가.
 		static Input* instance;
-
 	};
 }
-
