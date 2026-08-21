@@ -145,16 +145,23 @@ void EnemySpawner::SpawnEnemy()
 
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
+
+	Craft::Vector2 camPos = owner->GetCameraPosition();
+	float minX = static_cast<float>(camPos.x - screenWidth / 2);
+	float maxX = static_cast<float>(camPos.x + screenWidth / 2 - 1);
+	float minY = static_cast<float>(camPos.y - screenHeight / 2);
+	float maxY = static_cast<float>(camPos.y + screenHeight / 2 - 1);
+	
 	float spawnX = 0.0f;
 	float spawnY = 0.0f;
 	
 	int side = Util::RandomRange(0, 3);
 	switch (side)
 	{
-	case 0: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = 0.0f; break;
-	case 1: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = static_cast<float>(screenHeight - 1); break;
-	case 2: spawnX = 0.0f; spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
-	case 3: spawnX = static_cast<float>(screenWidth - 1); spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
+	case 0: spawnX = static_cast<float>(Util::RandomRange((int)minX, (int)maxX)); spawnY = minY; break;
+	case 1: spawnX = static_cast<float>(Util::RandomRange((int)minX, (int)maxX)); spawnY = maxY; break;
+	case 2: spawnX = minX; spawnY = static_cast<float>(Util::RandomRange((int)minY, (int)maxY)); break;
+	case 3: spawnX = maxX; spawnY = static_cast<float>(Util::RandomRange((int)minY, (int)maxY)); break;
 	}
 	int type = Util::RandomRange(0, 11);
 	auto enemy = owner->SpawnActor<Enemy>(enemyType[type], spawnX, spawnY);
@@ -171,16 +178,23 @@ void EnemySpawner::SpawnElite()
 
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
+
+	Craft::Vector2 camPos = owner->GetCameraPosition();
+	float minX = static_cast<float>(camPos.x - screenWidth / 2);
+	float maxX = static_cast<float>(camPos.x + screenWidth / 2 - 1);
+	float minY = static_cast<float>(camPos.y - screenHeight / 2);
+	float maxY = static_cast<float>(camPos.y + screenHeight / 2 - 1);
+	
 	float spawnX = 0.0f;
 	float spawnY = 0.0f;
 	
 	int side = Util::RandomRange(0, 3);
 	switch (side)
 	{
-	case 0: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = 0.0f; break;
-	case 1: spawnX = static_cast<float>(Util::RandomRange(0, screenWidth - 1)); spawnY = static_cast<float>(screenHeight - 1); break;
-	case 2: spawnX = 0.0f; spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
-	case 3: spawnX = static_cast<float>(screenWidth - 1); spawnY = static_cast<float>(Util::RandomRange(0, screenHeight - 1)); break;
+	case 0: spawnX = static_cast<float>(Util::RandomRange((int)minX, (int)maxX)); spawnY = minY; break;
+	case 1: spawnX = static_cast<float>(Util::RandomRange((int)minX, (int)maxX)); spawnY = maxY; break;
+	case 2: spawnX = minX; spawnY = static_cast<float>(Util::RandomRange((int)minY, (int)maxY)); break;
+	case 3: spawnX = maxX; spawnY = static_cast<float>(Util::RandomRange((int)minY, (int)maxY)); break;
 	}
 
 	auto boss = owner->SpawnActor<EliteBoss>(Vector2(static_cast<int>(spawnX), static_cast<int>(spawnY)));

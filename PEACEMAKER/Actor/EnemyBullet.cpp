@@ -1,5 +1,6 @@
 #include "EnemyBullet.h"
 #include <Engine/Engine.h>
+#include <Level/Level.h>
 
 using namespace Craft;
 EnemyBullet::EnemyBullet(const Vector2& position, float dirX, float dirY, float moveSpeed)
@@ -23,8 +24,15 @@ void EnemyBullet::Tick(float deltaTime)
 	// 좌표 검사 (화면 밖으로 나가면 파괴).
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
+	
+	Craft::Vector2 camPos = Craft::Vector2::Zero;
+	if (GetOwner()) camPos = GetOwner()->GetCameraPosition();
+	float minX = static_cast<float>(camPos.x - screenWidth / 2);
+	float maxX = static_cast<float>(camPos.x + screenWidth / 2 - 1);
+	float minY = static_cast<float>(camPos.y - screenHeight / 2);
+	float maxY = static_cast<float>(camPos.y + screenHeight / 2 - 1);
 
-	if (yPosition >= screenHeight - 1 || yPosition < 0 || xPosition >= screenWidth || xPosition < 0)
+	if (yPosition >= maxY || yPosition < minY || xPosition >= maxX || xPosition < minX)
 	{
 		Destroy();
 		return;

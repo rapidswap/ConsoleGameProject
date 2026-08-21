@@ -1,5 +1,6 @@
 #include "PlayerBullet.h"
 #include <Engine/Engine.h>
+#include <Level/Level.h>
 
 using namespace Craft;
 PlayerBullet::PlayerBullet(const Craft::Vector2& position, float dirX, float dirY, bool isBouncing, bool isShrapnel)
@@ -26,24 +27,31 @@ void PlayerBullet::Tick(float deltaTime)
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 
-	if (xPosition < 0.0f || xPosition >= screenWidth ||
-		yPosition < 0.0f || yPosition >= screenHeight)
+	Craft::Vector2 camPos = Craft::Vector2::Zero;
+	if (GetOwner()) camPos = GetOwner()->GetCameraPosition();
+	float minX = static_cast<float>(camPos.x - screenWidth / 2);
+	float maxX = static_cast<float>(camPos.x + screenWidth / 2 - 1);
+	float minY = static_cast<float>(camPos.y - screenHeight / 2);
+	float maxY = static_cast<float>(camPos.y + screenHeight / 2 - 1);
+
+	if (xPosition < minX || xPosition >= maxX ||
+		yPosition < minY || yPosition >= maxY)
 	{
 		if (canBounce && bounceLimit > 0)
 		{
-			// 벽에 부딪혔을 때 방향 반전
-			if (xPosition < 0.0f || xPosition >= screenWidth)
+			// 벽에 부딪혔을 때 방향 반전.
+			if (xPosition < minX || xPosition >= maxX)
 			{
 				directionX *= -1.0f;
-				// 뚫고 나가지 않게 좌표 보정
-				xPosition = (xPosition < 0.0f) ? 0.0f : (screenWidth - 1.0f);
+				// 뚫고 나가지 않게 좌표 보정.
+				xPosition = (xPosition < minX) ? minX : maxX;
 			}
 			
-			if (yPosition < 0.0f || yPosition >= screenHeight)
+			if (yPosition < minY || yPosition >= maxY)
 			{
 				directionY *= -1.0f;
-				// 뚫고 나가지 않게 좌표 보정
-				yPosition = (yPosition < 0.0f) ? 0.0f : (screenHeight - 1.0f);
+				// 뚫고 나가지 않게 좌표 보정.
+				yPosition = (yPosition < minY) ? minY : maxY;
 			}
 			bounceLimit--;
 		}
