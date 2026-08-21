@@ -47,7 +47,6 @@ void Player::Tick(float deltaTime)
 	super::Tick(deltaTime);
 
 	// (GameLevel에서 ESC 처리를 담당하므로 QuitGame 로직 제거됨)
-
 	// 방향키 입력에 따른 이동 방향 설정.
 	// 오른쪽,위 방향:1 | 왼쪽,아래 방향: -1
 	float direction = 0.0f;
@@ -96,15 +95,15 @@ void Player::Tick(float deltaTime)
 			xPosition += dx * dashDistance;
 			yPosition += dy * dashDistance;
 
-			// xMove, yMove에 0을 넣어서 화면 밖으로 뚫고 나가는지(경계선 체크)만 안전하게 확인 후 좌표 적용
+			// xMove, yMove에 0을 넣어서 화면 밖으로 뚫고 나가는지(경계선 체크)만 안전하게 확인 후 좌표 적용.
 			xMove(0.0f, 0.0f);
 			yMove(0.0f, 0.0f);
 
-			// 대시를 성공적으로 썼을 때 쿨타임 리셋 및 0.5초 무적(i-frame) 부여
+			// 대시를 성공적으로 썼을 때 쿨타임 리셋 및 0.5초 무적(i-frame) 부여.
 			flashTimer.Reset();
 			isInvincible = true;
-			isBlinking = false; // 대시 무적은 깜빡이지 않음
-			invincibilityTimer.SetTargetTime(0.5f); // 대시 무적은 0.5초
+			isBlinking = false; // 대시 무적은 깜빡이지 않음.
+			invincibilityTimer.SetTargetTime(0.5f); // 대시 무적은 0.5초.
 			invincibilityTimer.Reset();
 			blinkTimer.Reset();
 		}
@@ -128,7 +127,7 @@ void Player::Tick(float deltaTime)
 
 			if (blinkTimer.IsTimeOut())
 			{
-				isVisible = !isVisible; // 깜빡임 토글
+				isVisible = !isVisible; // 깜빡임 토글.
 				blinkTimer.Reset();
 			}
 		}
@@ -137,7 +136,7 @@ void Player::Tick(float deltaTime)
 		{
 			isInvincible = false;
 			isBlinking = false;
-			isVisible = true; // 무적 끝나면 확실히 보이게
+			isVisible = true; // 무적 끝나면 확실히 보이게.
 		}
 	}
 
@@ -188,7 +187,7 @@ void Player::Tick(float deltaTime)
 
 				if (bulletMode == 1)
 				{
-					// 일직선 발사 모드: 연사를 위해 대기 총알 수 설정
+					// 일직선 발사 모드: 연사를 위해 대기 총알 수 설정.
 					// 첫 발은 즉시 나가도록 타이머를 0.0f로 설정합니다.
 					pendingBullets = projectileCount;
 					burstTimer.SetTargetTime(0.0f);
@@ -196,7 +195,7 @@ void Player::Tick(float deltaTime)
 				}
 				else 
 				{
-					// 기존 부채꼴 발사 모드 (동시 발사)
+					// 기존 부채꼴 발사 모드 (동시 발사).
 					float spreadAngle = 15.0f;
 					for (int i = 0; i < projectileCount; ++i)
 					{
@@ -220,7 +219,7 @@ void Player::Tick(float deltaTime)
 		}
 	}
 
-	// 일직선 연사 모드 처리 (매 프레임마다 검사)
+	// 일직선 연사 모드 처리 (매 프레임마다 검사).
 	if (pendingBullets > 0)
 	{	
 		burstTimer.Tick(deltaTime);
@@ -448,19 +447,6 @@ void Player::xMove(float direction, float deltaTime)
 	// 동속도 운동: 이동 거리 = 기존의 위치 + 이동 방향 x 빠르기 x 시간.
 	xPosition += direction * moveSpeed * deltaTime;
 
-	// 화면 왼쪽 벗어나지 않도록 처리
-	if (xPosition < 0)
-	{
-		xPosition = 0.0f;
-	}
-
-	// 화면 오른쪽 벗어나지 않도록 처리.
-	if (xPosition + width >= Engine::Get().GetWidth())
-	{
-		xPosition = static_cast<float>(Engine::Get().GetWidth() - width);
-	}
-
-
 	// 위치 업데이트.
 	Vector2 newPosition = GetPosition();
 	// float 값을 int로 형변환할 때 소숫점 값은 버림 처리된다는 점 주의
@@ -475,19 +461,6 @@ void Player::yMove(float direction, float deltaTime)
 	// 이동 방향(direction) / 빠르기(moveSpeed) /  시간.
 	// 동속도 운동: 이동 거리 = 기존의 위치 + 이동 방향 x 빠르기 x 시간.
 	yPosition += direction * moveSpeed * deltaTime;
-
-
-	// 화면 위쪽 벗어나지 않도록 처리
-	if (yPosition < 0)
-	{
-		yPosition = 0.0f;
-	}
-
-	// 화면 아래쪽 벗어나지 않도록 처리.
-	if (yPosition + 1 >= Engine::Get().GetHeight())
-	{
-		yPosition = static_cast<float>(Engine::Get().GetHeight() - 1);
-	}
 
 
 	// 위치 업데이트.

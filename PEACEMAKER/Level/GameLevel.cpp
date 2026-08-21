@@ -62,7 +62,7 @@ void GameLevel::OnInitialized()
 		player->hpUp(),
 		player->GetHp() < player->GetMaxHp(), 100, Color::White)
 
-	// 2. 조건부 증강
+	// 2. 조건부 증강.
 	ADD_COND_AUGMENT(
 		"Attack Speed Up",
 		"Attack Speed Up -0.2sec",
@@ -81,7 +81,7 @@ void GameLevel::OnInitialized()
 		player->EnableDeathNova(),
 		!player->HasDeathNova(), 5, Color::Yellow)
 
-	// 3. 무조건 뜨는 일반 증강들
+	// 3. 무조건 뜨는 일반 증강들.
 	ADD_AUGMENT("Max Hp Up", "Max Hp +1 & Heal +1", player->MaxHpUp(), 100, Color::White)
 	ADD_AUGMENT("Player Speed Up", "Speed + 1", player->PlayerSpeedUp(), 100, Color::White)
 	ADD_AUGMENT("extra EXP", "extra EXP +25%", player->PlayerExpUp(), 100, Color::White)
@@ -146,12 +146,7 @@ void GameLevel::OnInitialized()
 
 void GameLevel::Tick(float deltaTime)
 {
-	// 카메라 세팅.
 	auto player = FindActor<Player>();
-	if (player)
-	{
-		SetCameraPosition(player->GetPosition());
-	}
 
 #ifdef _DEBUG
 	// 디버그 전용 치트키
@@ -175,16 +170,16 @@ void GameLevel::Tick(float deltaTime)
 	{
 		if (isPaused)
 		{
-			isPaused = false; // 게임으로 돌아가기
+			isPaused = false; // 게임으로 돌아가기.
 		}
 		else if (!isLevelUpMenuOpen)
 		{
 			isPaused = true;
-			selectedPauseMenuIndex = 0; // 초기 커서는 '돌아가기'
+			selectedPauseMenuIndex = 0; // 초기 커서는 돌아가기.
 		}
 	}
 
-	// 일시정지 상태일 때 메뉴 처리
+	// 일시정지 상태일 때 메뉴 처리.
 	if (isPaused)
 	{
 		if (Input::Get().GetKeyDown(VK_UP))
@@ -281,6 +276,13 @@ void GameLevel::Tick(float deltaTime)
 	playTime += deltaTime;
 	// 증강 선택 창이 꺼져있을 때만 정상 게임 진행.
 	super::Tick(deltaTime);
+
+	// 카메라 갱신 (액터 이동 연산이 모두 끝난 후 세팅해야 화면 떨림 현상이 사라짐).
+	auto playerAfterMove = FindActor<Player>();
+	if (playerAfterMove)
+	{
+		SetCameraPosition(playerAfterMove->GetPosition());
+	}
 }
 
 void GameLevel::Draw()
