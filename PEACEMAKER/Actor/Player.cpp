@@ -46,33 +46,43 @@ void Player::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
-	// (GameLevel에서 ESC 처리를 담당하므로 QuitGame 로직 제거됨)
-	// 방향키 입력에 따른 이동 방향 설정.
-	// 오른쪽,위 방향:1 | 왼쪽,아래 방향: -1
-	float direction = 0.0f;
+
+	// 1. 방향키 입력을 하나로 모읍니다.
+	float dx = 0.0f;
+	float dy = 0.0f;
 
 	// 이동 함수 호출.
 	if (Input::Get().GetKey(VK_RIGHT))
 	{
-		direction = 1.0f;
-		xMove(direction, deltaTime);
+		dx = 1.0f;
 	}
 	if (Input::Get().GetKey(VK_LEFT))
 	{
-		direction = -1.0f;
-		xMove(direction, deltaTime);
+		dx = -1.0f;
 	}
 	if (Input::Get().GetKey(VK_UP))
 	{
-		direction = -1.0f;
-		yMove(direction, deltaTime);
+		dy = -0.5f;
 	}
 	if (Input::Get().GetKey(VK_DOWN))
 	{
-		direction = 1.0f;
-		yMove(direction, deltaTime);
+		dy = 0.5f;
 	}
 	
+	// 2. 키 입력이 있었다면, 대각선 속도를 일정하게 깎습니다 (정규화)
+	if (dx != 0.0f || dy != 0.0f)
+	{
+		float length = std::sqrt(dx * dx + dy * dy);
+		if (length > 0.0f)
+		{
+			dx /= length;
+			dy /= length;
+		}
+		// 3. 정규화된(다듬어진) 방향으로 이동을 실행합니다.
+		xMove(dx, deltaTime);
+		yMove(dy, deltaTime);
+	}
+
 	// 대시 쿨타임 타이머 업데이트.
 	flashTimer.Tick(deltaTime);
 
@@ -87,7 +97,14 @@ void Player::Tick(float deltaTime)
 		if (Input::Get().GetKey(VK_RIGHT)) dx += 1.0f;
 		if (Input::Get().GetKey(VK_LEFT)) dx -= 1.0f;
 		if (Input::Get().GetKey(VK_DOWN)) dy += 0.5f;
-		if (Input::Get().GetKey(VK_UP)) dy -= 0.5f;
+		if (Input::Get().GetKey(VK_UP)) dy -= 0.5f;	
+
+		float length = std::sqrt(dx * dx + dy * dy);
+		if (length > 0.0f)
+		{
+			dx /= length;
+			dy /= length;
+		}
 
 		// 방향키를 누른 상태에서만 해당 방향으로 텔레포트.
 		if (dx != 0.0f || dy != 0.0f)
@@ -173,11 +190,13 @@ void Player::Tick(float deltaTime)
 				float length = std::sqrt(baseDx * baseDx + baseDy * baseDy);
 				if (length > 0.0f)
 				{
+					// 날아가는 속도를 일정하게.
 					baseDx /= length;
 					baseDy /= length;
 				}
 				else
 				{
+					// length가 0이면 default는 위 발사.
 					baseDx = 0.0f;
 					baseDy = -1.0f;
 				}
