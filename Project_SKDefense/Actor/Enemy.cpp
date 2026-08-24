@@ -4,6 +4,7 @@
 #include <Level/DefenseLevel.h>
 #include <Algorithm/AStar.h>
 #include <Algorithm/Node.h>
+#include <cmath>
 
 Enemy::Enemy(const Craft::Vector2& position)
 	: Craft::Actor("Z", position, Craft::Color::Red)
@@ -14,19 +15,25 @@ Enemy::Enemy(const Craft::Vector2& position)
 void Enemy::BeginPlay()
 {
 	Craft::Actor::BeginPlay();
+	RecalculatePath();
+}
 
+void Enemy::RecalculatePath()
+{
 	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
 	if (defenseLevel)
 	{
 		AStar astar;
-		Craft::Vector2 spawn = defenseLevel->GetSpawnPoint();
+		// 현재 위치를 정수로 변환하여 시작점으로 사용 (정확한 칸 맞춤)
+		Craft::Vector2 spawn = position; 
 		Craft::Vector2 target = defenseLevel->GetTargetPoint();
 
-		Node* startNode = new Node(static_cast<int>(spawn.x), static_cast<int>(spawn.y));
-		Node* goalNode = new Node(static_cast<int>(target.x), static_cast<int>(target.y));
+		Node* startNode = new Node(static_cast<int>(std::round(spawn.x)), static_cast<int>(std::round(spawn.y)));
+		Node* goalNode = new Node(static_cast<int>(std::round(target.x)), static_cast<int>(std::round(target.y)));
 
 		std::vector<Node*> nodePath = astar.FindPath(startNode, goalNode, defenseLevel->GetMapGrid());
 
+		path.clear();
 		// 길찾기 결과 복사 (시작 노드는 보통 현재 위치이므로 제외)
 		for (size_t i = 1; i < nodePath.size(); ++i)
 		{
@@ -34,6 +41,9 @@ void Enemy::BeginPlay()
 		}
 		
 		currentPathIndex = 0;
+		moveAccumulator = 0.0f; // 이동 진행도 초기화
+		
+		delete goalNode;
 	}
 }
 
@@ -54,7 +64,7 @@ void Enemy::Tick(float deltaTime)
 	}
 	else
 	{
-		// 경로 끝 도착 처리 (예: 아지트 데미지 입히고 파괴)
+		// Todo: 경로 끝 도착 처리 (예: 아지트 데미지 입히고 파괴)
 	}
 }
 

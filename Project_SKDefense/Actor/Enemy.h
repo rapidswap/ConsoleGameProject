@@ -18,9 +18,13 @@ private:
 	// 이벤트 함수 오버라이드.
 	virtual void BeginPlay() override;
 	virtual void Tick(float deltaTime) override;
+	virtual void Draw() override;
 
-	virtual void Draw();
+public:
+	// 터렛이 설치될 때마다 경로를 갱신하기 위한 함수
+	void RecalculatePath();
 
+private:
 	// 충돌 처리 함수 오버라이드.
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 

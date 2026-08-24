@@ -105,8 +105,8 @@ std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<
 				continue;
 			}
 
-			// 이동할 위치가 장애물인 경우에는 무시.
-			if (grid[newY][newX] == 1)
+			// 이동할 위치가 장애물(1: 벽, 2: 터렛)인 경우에는 무시.
+			if (grid[newY][newX] == 1 || grid[newY][newX] == 2)
 			{
 				continue;
 			}

@@ -5,6 +5,8 @@
 #include <Actor/Ground.h>
 #include <Actor/Wall.h>
 #include <Actor/Agit.h>
+#include <Actor/Turret.h>
+#include <Actor/Enemy.h>
 #include <fstream>
 #include <iostream>
 #include <cassert>
@@ -181,10 +183,6 @@ void DefenseLevel::LoadMap(const std::string& filename)
 	file = nullptr;
 }
 
-
-#include <Actor/Turret.h>
-#include <Actor/Enemy.h>
-
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
 	// 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
@@ -243,6 +241,18 @@ void DefenseLevel::Tick(float deltaTime)
 			mapGrid[worldPos.y][worldPos.x + 1] = 2;
 			mapGrid[worldPos.y + 1][worldPos.x] = 2;
 			mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+			
+			// 맵이 변경되었으므로 모든 적들에게 경로 재탐색 지시
+			for (const std::shared_ptr<Actor>& actor : actorList)
+			{
+				if (!actor->IsActive()) continue;
+				
+				auto enemy = Craft::Cast<Enemy>(actor);
+				if (enemy)
+				{
+					enemy->RecalculatePath();
+				}
+			}
 		}
 	}
 	wasLButtonDown = isLButtonDown;
