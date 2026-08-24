@@ -22,9 +22,35 @@ EnemySpawner::EnemySpawner()
 	timer.SetTargetTime(1.0f);
 }
 
+void EnemySpawner::BeginPlay()
+{
+	Craft::Actor::BeginPlay();
+
+	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+	if (defenseLevel)
+	{
+		// 오브젝트 풀링: 미리 maxPerWave(30) 마리의 적을 생성해서 비활성화 상태로 보관
+		for (int i = 0; i < maxPerWave; ++i)
+		{
+			// 생성과 동시에 비활성화 (보이지 않고 Tick도 안 돎)
+			auto enemy = defenseLevel->SpawnActor<Enemy>(defenseLevel->GetSpawnPoint());
+			enemy->SetActive(false);
+			
+			// 풀(Pool) 리스트에 등록
+			enemyPool.push_back(enemy);
+		}
+	}
+}
+
 void EnemySpawner::Tick(float deltaTime)
 {
-	super::Tick(deltaTime);
+	Craft::Actor::Tick(deltaTime);
+
+	// 이번 웨이브에 목표량(30마리)을 다 소환했다면 더 이상 타이머 안 돌림
+	if (spawnedCount >= maxPerWave)
+	{
+		return;
+	}
 
 	// 타이머 업데이트.
 	timer.Tick(deltaTime);
@@ -44,21 +70,22 @@ void EnemySpawner::Tick(float deltaTime)
 
 void EnemySpawner::SpawnEnemy()
 {
-	// 적 생성 처리.
-
-	// 적 이미지 배열의 길이 확인.
-	//const int length = sizeof(enemyType) / sizeof(enemyType[0]);
-
-	// 랜덤 인덱스.
-	//const int index = Util::RandomRange(0, length - 1);
-
-	// 생성 y 위치(랜덤)
-	//int yPosition = Util::RandomRange(1, 10);
-
-	// 적 액터 생성.
 	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
-	if (defenseLevel)
+	if (!defenseLevel) return;
+
+	// 풀(Pool)에서 현재 사용 중이지 않은(비활성화된) 몬스터 하나 찾기
+	for (auto& weakEnemy : enemyPool)
 	{
-		defenseLevel->SpawnActor<Enemy>(defenseLevel->GetSpawnPoint());
+		auto enemy = weakEnemy.lock();
+		if (enemy && !enemy->IsActive())
+		{
+			// 찾았다면! 다시 깨워서 출발선에 세움
+			enemy->SetPosition(defenseLevel->GetSpawnPoint());
+			enemy->SetActive(true);
+			enemy->RecalculatePath(); // 깨어날 때 최신 맵 기준으로 길 찾기
+			
+			spawnedCount++; // 스폰 횟수 증가
+			break; // 한 마리만 깨우고 끝
+		}
 	}
 }
