@@ -24,6 +24,10 @@ private:
 	// 맵 데이터 (0: 빈공간/바닥, 1: 벽, 2: 터렛, 3: 아지트)
 	std::vector<std::vector<int>> mapGrid;
 
+	// 스폰 지점(S)과 목표 지점(D)
+	Craft::Vector2 spawnPoint;
+	Craft::Vector2 targetPoint;
+
 public:
 	bool CanBuildTurret(int x, int y);
 };

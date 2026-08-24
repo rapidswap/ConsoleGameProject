@@ -139,7 +139,16 @@ void DefenseLevel::LoadMap(const std::string& filename)
 			currentRow.push_back(0);
 			break;
 
+			// 스폰 지점.
+		case 'S':
+			spawnPoint = position;
+			SpawnActor<Ground>(position);
+			currentRow.push_back(0);
+			break;
+
+			// 아지트.
 		case 'D':
+			targetPoint = position;
 			SpawnActor<Agit>(position);
 			currentRow.push_back(3);
 			break;
@@ -174,6 +183,7 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 
 #include <Actor/Turret.h>
+#include <Actor/Enemy.h>
 
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
@@ -233,6 +243,15 @@ void DefenseLevel::Tick(float deltaTime)
 		}
 	}
 	wasLButtonDown = isLButtonDown;
+
+	// 테스트용: E 키를 누르면 스폰 포인트(S)에서 적 생성
+	static bool wasEDown = false;
+	bool isEDown = Input::Get().GetKey('E');
+	if (isEDown && !wasEDown)
+	{
+		SpawnActor<Enemy>(spawnPoint);
+	}
+	wasEDown = isEDown;
 }
 
 void DefenseLevel::Draw()
