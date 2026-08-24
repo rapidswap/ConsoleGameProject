@@ -135,30 +135,7 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
 
-	// 버그가 많은 콘솔 이벤트를 우회하여 OS 물리 마우스 상태 직접 가져오기
-	POINT pt;
-	GetCursorPos(&pt);
-	ScreenToClient(GetConsoleWindow(), &pt);
-	int screenWidth = Engine::Get().GetWidth();
-	int screenHeight = Engine::Get().GetHeight();
-
-	int mouseX = 0, mouseY = 0;
-	RECT clientRect;
-	if (GetClientRect(GetConsoleWindow(), &clientRect))
-	{
-		int clientWidth = clientRect.right - clientRect.left;
-		int clientHeight = clientRect.bottom - clientRect.top;
-		
-		if (screenWidth > 0 && screenHeight > 0 && clientWidth > 0 && clientHeight > 0)
-		{
-			float fontWidth = (float)clientWidth / screenWidth;
-			float fontHeight = (float)clientHeight / screenHeight;
-
-			mouseX = static_cast<int>(pt.x / fontWidth);
-			mouseY = static_cast<int>(pt.y / fontHeight);
-		}
-	}
-	Vector2 realMousePos(mouseX, mouseY);
+	Vector2 realMousePos = Input::Get().GetMousePosition();
 
 	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
 	static bool wasLButtonDown = false;
@@ -183,32 +160,8 @@ void DefenseLevel::Draw()
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
 
-	// OS 물리 마우스 상태 다시 계산 (렌더링용)
-	POINT pt;
-	GetCursorPos(&pt);
-	ScreenToClient(GetConsoleWindow(), &pt);
-	int screenWidth = Engine::Get().GetWidth();
-	int screenHeight = Engine::Get().GetHeight();
-
-	int mouseX = 0, mouseY = 0;
-	RECT clientRect;
-	if (GetClientRect(GetConsoleWindow(), &clientRect))
-	{
-		int clientWidth = clientRect.right - clientRect.left;
-		int clientHeight = clientRect.bottom - clientRect.top;
-		
-		if (screenWidth > 0 && screenHeight > 0 && clientWidth > 0 && clientHeight > 0)
-		{
-			float fontWidth = (float)clientWidth / screenWidth;
-			float fontHeight = (float)clientHeight / screenHeight;
-
-			mouseX = static_cast<int>(pt.x / fontWidth);
-			mouseY = static_cast<int>(pt.y / fontHeight);
-		}
-	}
-	Vector2 realMousePos(mouseX, mouseY);
-	
 	// 2. 터렛 2x2 미리보기 렌더링
+	Vector2 realMousePos = Input::Get().GetMousePosition();
 	Color previewColor = Color::Green;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
