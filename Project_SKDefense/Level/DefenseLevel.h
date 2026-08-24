@@ -20,4 +20,10 @@ private:
 private:
 	int mapWidth = 0;
 	int mapHeight = 0;
+
+	// 맵 데이터 (0: 빈공간/바닥, 1: 벽, 2: 터렛, 3: 아지트)
+	std::vector<std::vector<int>> mapGrid;
+
+public:
+	bool CanBuildTurret(int x, int y);
 };

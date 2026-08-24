@@ -99,6 +99,10 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 	// 액터 생성에 사용할 위치 값.
 	Vector2 position;
+	
+	mapGrid.clear();
+	std::vector<int> currentRow;
+
 	// 종료 조건 - 읽는 위치가 파일의 크기를 넘으면 종료.
 	while (index < fileSize)
 	{
@@ -115,6 +119,8 @@ void DefenseLevel::LoadMap(const std::string& filename)
 			if (position.x > mapWidth) mapWidth = position.x;
 			++position.y;
 			position.x = 0;
+			mapGrid.push_back(currentRow);
+			currentRow.clear();
 			continue;
 		}
 
@@ -123,26 +129,33 @@ void DefenseLevel::LoadMap(const std::string& filename)
 		{
 			// 벽.
 		case '#':
-			// 벽 액터 생성.
 			SpawnActor<Wall>(position);
+			currentRow.push_back(1);
 			break;
 
 			// 바닥(땅).
 		case '.':
-			// 바닥 액터 생성.
 			SpawnActor<Ground>(position);
+			currentRow.push_back(0);
 			break;
 
 		case 'D':
-			// 아지트 액터 생성.
 			SpawnActor<Agit>(position);
+			currentRow.push_back(3);
 			break;
-
+		
+		default:
+			currentRow.push_back(0); // 알 수 없는 문자는 빈 공간 처리
+			break;
 		}
-
 
 		// x 위치 업데이트.
 		++position.x;
+	}
+	
+	if (!currentRow.empty())
+	{
+		mapGrid.push_back(currentRow);
 	}
 	
 	mapHeight = position.y + 1;
@@ -161,6 +174,27 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 
 #include <Actor/Turret.h>
+
+bool DefenseLevel::CanBuildTurret(int x, int y)
+{
+	// 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
+	for (int i = 0; i < 2; ++i)
+	{
+		for (int j = 0; j < 2; ++j)
+		{
+			int cx = x + i;
+			int cy = y + j;
+			
+			// 맵 경계선 체크
+			if (cy < 0 || cy >= mapGrid.size()) return false;
+			if (cx < 0 || cx >= mapGrid[cy].size()) return false;
+			
+			// 벽(1), 기존 터렛(2), 아지트(3)가 있으면 설치 불가
+			if (mapGrid[cy][cx] != 0) return false;
+		}
+	}
+	return true;
+}
 
 void DefenseLevel::Tick(float deltaTime)
 {
@@ -186,8 +220,17 @@ void DefenseLevel::Tick(float deltaTime)
 		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-		// TODO: 설치 가능 여부 검사 (벽, 기존 터렛 등)
-		SpawnActor<Turret>(worldPos);
+		// 설치 가능 여부 검사 (맵 바깥, 벽, 기존 터렛 등)
+		if (CanBuildTurret(worldPos.x, worldPos.y))
+		{
+			SpawnActor<Turret>(worldPos);
+			
+			// 설치된 타일을 터렛(2)으로 마킹하여 이후 겹쳐 짓기나 적의 이동을 차단
+			mapGrid[worldPos.y][worldPos.x] = 2;
+			mapGrid[worldPos.y][worldPos.x + 1] = 2;
+			mapGrid[worldPos.y + 1][worldPos.x] = 2;
+			mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+		}
 	}
 	wasLButtonDown = isLButtonDown;
 }
@@ -199,7 +242,16 @@ void DefenseLevel::Draw()
 
 	// 2. 터렛 2x2 미리보기 렌더링
 	Vector2 realMousePos = GetRealMousePos();
-	Color previewColor = Color::Green;
+	
+	// 화면 좌표를 월드 좌표로 변환하여 설치 가능 여부 확인
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	Vector2 previewWorldPos;
+	previewWorldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+	previewWorldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
+
+	// 설치 가능하면 초록색, 불가능하면 빨간색
+	Color previewColor = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) ? Color::Green : Color::Red;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
 	Renderer::Get().Submit("TT", realMousePos, previewColor, previewSortingOrder);
@@ -207,12 +259,7 @@ void DefenseLevel::Draw()
 
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
-	int screenWidth = Engine::Get().GetWidth();
-	int screenHeight = Engine::Get().GetHeight();
-	Vector2 worldPos;
-	worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
-	worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
-	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, worldPos.x, worldPos.y);
+	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
 	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
 }
 
