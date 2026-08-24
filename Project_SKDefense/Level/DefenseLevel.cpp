@@ -139,14 +139,24 @@ void DefenseLevel::Tick(float deltaTime)
 	POINT pt;
 	GetCursorPos(&pt);
 	ScreenToClient(GetConsoleWindow(), &pt);
-	CONSOLE_FONT_INFO fontInfo;
-	GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &fontInfo);
-	
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+
 	int mouseX = 0, mouseY = 0;
-	if (fontInfo.dwFontSize.X > 0 && fontInfo.dwFontSize.Y > 0)
+	RECT clientRect;
+	if (GetClientRect(GetConsoleWindow(), &clientRect))
 	{
-		mouseX = pt.x / fontInfo.dwFontSize.X;
-		mouseY = pt.y / fontInfo.dwFontSize.Y;
+		int clientWidth = clientRect.right - clientRect.left;
+		int clientHeight = clientRect.bottom - clientRect.top;
+		
+		if (screenWidth > 0 && screenHeight > 0 && clientWidth > 0 && clientHeight > 0)
+		{
+			float fontWidth = (float)clientWidth / screenWidth;
+			float fontHeight = (float)clientHeight / screenHeight;
+
+			mouseX = static_cast<int>(pt.x / fontWidth);
+			mouseY = static_cast<int>(pt.y / fontHeight);
+		}
 	}
 	Vector2 realMousePos(mouseX, mouseY);
 
@@ -156,8 +166,6 @@ void DefenseLevel::Tick(float deltaTime)
 
 	if (isLButtonDown && !wasLButtonDown)
 	{
-		int screenWidth = Engine::Get().GetWidth();
-		int screenHeight = Engine::Get().GetHeight();
 		
 		// 화면 좌표를 월드 좌표로 변환
 		Vector2 worldPos;
@@ -179,14 +187,24 @@ void DefenseLevel::Draw()
 	POINT pt;
 	GetCursorPos(&pt);
 	ScreenToClient(GetConsoleWindow(), &pt);
-	CONSOLE_FONT_INFO fontInfo;
-	GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &fontInfo);
-	
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+
 	int mouseX = 0, mouseY = 0;
-	if (fontInfo.dwFontSize.X > 0 && fontInfo.dwFontSize.Y > 0)
+	RECT clientRect;
+	if (GetClientRect(GetConsoleWindow(), &clientRect))
 	{
-		mouseX = pt.x / fontInfo.dwFontSize.X;
-		mouseY = pt.y / fontInfo.dwFontSize.Y;
+		int clientWidth = clientRect.right - clientRect.left;
+		int clientHeight = clientRect.bottom - clientRect.top;
+		
+		if (screenWidth > 0 && screenHeight > 0 && clientWidth > 0 && clientHeight > 0)
+		{
+			float fontWidth = (float)clientWidth / screenWidth;
+			float fontHeight = (float)clientHeight / screenHeight;
+
+			mouseX = static_cast<int>(pt.x / fontWidth);
+			mouseY = static_cast<int>(pt.y / fontHeight);
+		}
 	}
 	Vector2 realMousePos(mouseX, mouseY);
 	
@@ -199,8 +217,6 @@ void DefenseLevel::Draw()
 
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
-	int screenWidth = Engine::Get().GetWidth();
-	int screenHeight = Engine::Get().GetHeight();
 	Vector2 worldPos;
 	worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 	worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
