@@ -208,6 +208,9 @@ bool DefenseLevel::CanBuildTurret(int x, int y)
 
 void DefenseLevel::Tick(float deltaTime)
 {
+	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
+	Level::Tick(deltaTime);
+
 	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동).
 	if (Input::Get().GetKey('W')) cameraPosition.y -= 1;
 	if (Input::Get().GetKey('S')) cameraPosition.y += 1;
