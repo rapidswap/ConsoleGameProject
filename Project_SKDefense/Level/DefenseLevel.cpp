@@ -143,6 +143,8 @@ void DefenseLevel::Tick(float deltaTime)
 
 	if (isLButtonDown && !wasLButtonDown)
 	{
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
 		
 		// 화면 좌표를 월드 좌표로 변환
 		Vector2 worldPos;
@@ -170,6 +172,8 @@ void DefenseLevel::Draw()
 
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
 	Vector2 worldPos;
 	worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 	worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
