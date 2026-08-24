@@ -18,14 +18,7 @@ void DefenseLevel::OnInitialized()
 	// 파일을 읽어서 맵 로드 (mapWidth, mapHeight가 계산됨).
 	LoadMap("SK_Defense_Map.txt");
 
-	// 윈도우 터미널(Windows Terminal) 등에서 클릭하지 않은 마우스 이동 이벤트를 
-	// 강제로 발생시키기 위해 VT(Virtual Terminal) 시퀀스를 출력합니다.
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD outMode = 0;
-	GetConsoleMode(hOut, &outMode);
-	SetConsoleMode(hOut, outMode | 0x0004); // ENABLE_VIRTUAL_TERMINAL_PROCESSING
-	printf("\x1b[?1003h\x1b[?1015h\x1b[?1006h");
-
+	// 카메라를 맵의 정중앙에 위치시킴.
 	cameraPosition = Vector2(mapWidth / 2, mapHeight / 2);
 }
 
