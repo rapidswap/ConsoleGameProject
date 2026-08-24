@@ -135,21 +135,39 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
 
-	// 마우스 클릭 시 터렛 설치
-	if (Input::Get().GetKeyDown(VK_LBUTTON))
+	// 버그가 많은 콘솔 이벤트를 우회하여 OS 물리 마우스 상태 직접 가져오기
+	POINT pt;
+	GetCursorPos(&pt);
+	ScreenToClient(GetConsoleWindow(), &pt);
+	CONSOLE_FONT_INFO fontInfo;
+	GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &fontInfo);
+	
+	int mouseX = 0, mouseY = 0;
+	if (fontInfo.dwFontSize.X > 0 && fontInfo.dwFontSize.Y > 0)
 	{
-		Vector2 mousePos = Input::Get().GetMousePosition();
+		mouseX = pt.x / fontInfo.dwFontSize.X;
+		mouseY = pt.y / fontInfo.dwFontSize.Y;
+	}
+	Vector2 realMousePos(mouseX, mouseY);
+
+	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
+	static bool wasLButtonDown = false;
+	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+
+	if (isLButtonDown && !wasLButtonDown)
+	{
 		int screenWidth = Engine::Get().GetWidth();
 		int screenHeight = Engine::Get().GetHeight();
 		
 		// 화면 좌표를 월드 좌표로 변환
 		Vector2 worldPos;
-		worldPos.x = mousePos.x + cameraPosition.x - (screenWidth / 2);
-		worldPos.y = mousePos.y + cameraPosition.y - (screenHeight / 2);
+		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
 		// TODO: 설치 가능 여부 검사 (벽, 기존 터렛 등)
 		SpawnActor<Turret>(worldPos);
 	}
+	wasLButtonDown = isLButtonDown;
 }
 
 void DefenseLevel::Draw()
@@ -157,24 +175,36 @@ void DefenseLevel::Draw()
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
 
-	// 2. 터렛 2x2 미리보기 렌더링 (마우스 커서 위치에 바로 출력)
-	Vector2 mousePos = Input::Get().GetMousePosition();
+	// OS 물리 마우스 상태 다시 계산 (렌더링용)
+	POINT pt;
+	GetCursorPos(&pt);
+	ScreenToClient(GetConsoleWindow(), &pt);
+	CONSOLE_FONT_INFO fontInfo;
+	GetCurrentConsoleFont(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &fontInfo);
 	
-	// 설치 가능한 상태라고 가정하고 초록색(미리보기)으로 렌더링
+	int mouseX = 0, mouseY = 0;
+	if (fontInfo.dwFontSize.X > 0 && fontInfo.dwFontSize.Y > 0)
+	{
+		mouseX = pt.x / fontInfo.dwFontSize.X;
+		mouseY = pt.y / fontInfo.dwFontSize.Y;
+	}
+	Vector2 realMousePos(mouseX, mouseY);
+	
+	// 2. 터렛 2x2 미리보기 렌더링
 	Color previewColor = Color::Green;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
-	Renderer::Get().Submit("TT", mousePos, previewColor, previewSortingOrder);
-	Renderer::Get().Submit("TT", Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT", realMousePos, previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT", Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
 
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 	Vector2 worldPos;
-	worldPos.x = mousePos.x + cameraPosition.x - (screenWidth / 2);
-	worldPos.y = mousePos.y + cameraPosition.y - (screenHeight / 2);
-	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", mousePos.x, mousePos.y, worldPos.x, worldPos.y);
+	worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+	worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
+	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, worldPos.x, worldPos.y);
 	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
 }
 
