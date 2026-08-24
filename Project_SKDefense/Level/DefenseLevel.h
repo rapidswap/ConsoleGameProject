@@ -11,6 +11,7 @@ public:
 
 	virtual void OnInitialized();
 	virtual void Tick(float deltaTime) override;
+	virtual void Draw() override;
 
 private:
 	void LoadMap(const std::string& filename);

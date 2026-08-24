@@ -3,6 +3,7 @@
 #include <Render/Renderer.h>
 #include <Actor/Ground.h>
 #include <Actor/Wall.h>
+#include <Actor/Agit.h>
 #include <fstream>
 #include <iostream>
 #include <cassert>
@@ -96,7 +97,13 @@ void DefenseLevel::LoadMap(const std::string& filename)
 			SpawnActor<Ground>(position);
 			break;
 
+		case 'D':
+			// 아지트 액터 생성.
+			SpawnActor<Agit>(position);
+			break;
+
 		}
+
 
 		// x 위치 업데이트.
 		++position.x;
@@ -117,6 +124,8 @@ void DefenseLevel::LoadMap(const std::string& filename)
 }
 
 
+#include <Actor/Turret.h>
+
 void DefenseLevel::Tick(float deltaTime)
 {
 	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동)
@@ -124,4 +133,37 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Craft::Input::Get().GetKey('S')) cameraPosition.y += 1;
 	if (Craft::Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Craft::Input::Get().GetKey('D')) cameraPosition.x += 1;
+
+	// 마우스 클릭 시 터렛 설치
+	if (Craft::Input::Get().GetKeyDown(VK_LBUTTON))
+	{
+		Craft::Vector2 mousePos = Craft::Input::Get().GetMousePosition();
+		int screenWidth = Craft::Engine::Get().GetWidth();
+		int screenHeight = Craft::Engine::Get().GetHeight();
+		
+		// 화면 좌표를 월드 좌표로 변환
+		Craft::Vector2 worldPos;
+		worldPos.x = mousePos.x + cameraPosition.x - (screenWidth / 2);
+		worldPos.y = mousePos.y + cameraPosition.y - (screenHeight / 2);
+
+		// TODO: 설치 가능 여부 검사 (벽, 기존 터렛 등)
+		SpawnActor<Turret>(worldPos);
+	}
 }
+
+void DefenseLevel::Draw()
+{
+	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
+	Level::Draw();
+
+	// 2. 터렛 2x2 미리보기 렌더링 (마우스 커서 위치에 바로 출력)
+	Craft::Vector2 mousePos = Craft::Input::Get().GetMousePosition();
+	
+	// 설치 가능한 상태라고 가정하고 초록색(미리보기)으로 렌더링
+	Craft::Color previewColor = Craft::Color::Green;
+	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
+
+	Craft::Renderer::Get().Submit("TT", mousePos, previewColor, previewSortingOrder);
+	Craft::Renderer::Get().Submit("TT", Craft::Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
+}
+
