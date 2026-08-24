@@ -30,4 +30,8 @@ private:
 
 public:
 	bool CanBuildTurret(int x, int y);
+	
+	std::vector<std::vector<int>>& GetMapGrid() { return mapGrid; }
+	Craft::Vector2 GetSpawnPoint() const { return spawnPoint; }
+	Craft::Vector2 GetTargetPoint() const { return targetPoint; }
 };

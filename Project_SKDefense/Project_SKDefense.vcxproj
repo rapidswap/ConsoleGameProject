@@ -98,10 +98,12 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor\Enemy.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Actor\Agit.cpp" />
     <ClCompile Include="Actor\Enemy.cpp" />
     <ClCompile Include="Actor\Ground.cpp" />
+    <ClCompile Include="Algorithm\AStar.cpp" />
     <ClCompile Include="Actor\Turret.cpp" />
     <ClCompile Include="Actor\Wall.cpp" />
     <ClCompile Include="Level\DefenseLevel.cpp" />
@@ -109,7 +111,10 @@
   <ItemGroup>
     <ClInclude Include="Actor\Agit.h" />
     <ClInclude Include="Actor\Enemy.h" />
+    <ClInclude Include="Actor\Enemy.h" />
     <ClInclude Include="Actor\Ground.h" />
+    <ClInclude Include="Algorithm\AStar.h" />
+    <ClInclude Include="Algorithm\Node.h" />
     <ClInclude Include="Actor\Turret.h" />
     <ClInclude Include="Actor\Wall.h" />
     <ClInclude Include="Level\DefenseLevel.h" />
