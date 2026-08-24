@@ -11,14 +11,13 @@ using namespace Craft;
 
 void DefenseLevel::OnInitialized()
 {
-	
 	Level::OnInitialized();
 
-	cameraPosition = Craft::Vector2(0, 0);
-
-	// 파일을 읽어서 맵 로드.
+	// 파일을 읽어서 맵 로드 (mapWidth, mapHeight가 계산됨).
 	LoadMap("SK_Defense_Map.txt");
 
+	// 카메라를 맵의 정중앙에 위치시킴.
+	cameraPosition = Craft::Vector2(mapWidth / 2, mapHeight / 2);
 }
 
 void DefenseLevel::LoadMap(const std::string& filename)
