@@ -14,6 +14,7 @@ public:
 	virtual void Draw() override;
 
 private:
+	Craft::Vector2 GetRealMousePos();
 	void LoadMap(const std::string& filename);
 
 private:

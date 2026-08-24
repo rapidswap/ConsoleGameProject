@@ -22,6 +22,41 @@ void DefenseLevel::OnInitialized()
 	cameraPosition = Vector2(mapWidth / 2, mapHeight / 2);
 }
 
+Craft::Vector2 DefenseLevel::GetRealMousePos()
+{
+	HWND hwnd = GetConsoleWindow();
+	if (hwnd == NULL)
+	{
+		// 윈도우 터미널(가상 콘솔) 등에서 핸들을 얻지 못한 경우 기존 이벤트 버퍼 좌표 반환
+		return Input::Get().GetMousePosition();
+	}
+
+	POINT pt;
+	GetCursorPos(&pt);
+	ScreenToClient(hwnd, &pt);
+
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+
+	int mouseX = 0, mouseY = 0;
+	RECT clientRect;
+	if (GetClientRect(hwnd, &clientRect))
+	{
+		int clientWidth = clientRect.right - clientRect.left;
+		int clientHeight = clientRect.bottom - clientRect.top;
+
+		if (screenWidth > 0 && screenHeight > 0 && clientWidth > 0 && clientHeight > 0)
+		{
+			float fontWidth = (float)clientWidth / screenWidth;
+			float fontHeight = (float)clientHeight / screenHeight;
+
+			mouseX = static_cast<int>(pt.x / fontWidth);
+			mouseY = static_cast<int>(pt.y / fontHeight);
+		}
+	}
+	return Craft::Vector2(mouseX, mouseY);
+}
+
 void DefenseLevel::LoadMap(const std::string& filename)
 {
 	// 최종 경로 조립.
@@ -135,7 +170,7 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
 
-	Vector2 realMousePos = Input::Get().GetMousePosition();
+	Vector2 realMousePos = GetRealMousePos();
 
 	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
 	static bool wasLButtonDown = false;
@@ -163,7 +198,7 @@ void DefenseLevel::Draw()
 	Level::Draw();
 
 	// 2. 터렛 2x2 미리보기 렌더링
-	Vector2 realMousePos = Input::Get().GetMousePosition();
+	Vector2 realMousePos = GetRealMousePos();
 	Color previewColor = Color::Green;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
