@@ -120,22 +120,9 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 void DefenseLevel::Tick(float deltaTime)
 {
-	// WASD 카메라 이동 로직
+	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동)
 	if (Craft::Input::Get().GetKey('W')) cameraPosition.y -= 1;
 	if (Craft::Input::Get().GetKey('S')) cameraPosition.y += 1;
 	if (Craft::Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Craft::Input::Get().GetKey('D')) cameraPosition.x += 1;
-
-	// 카메라 좌표가 음수가 되지 않도록 제한 (옵션)
-	if (cameraPosition.x < 0) cameraPosition.x = 0;
-	if (cameraPosition.y < 0) cameraPosition.y = 0;
-	
-	// 최대 카메라 좌표 제한 (맵 사이즈 기반)
-	int maxCamX = mapWidth - 30; // 화면 가로 크기 대략 30으로 가정
-	int maxCamY = mapHeight - 20; // 화면 세로 크기 대략 20으로 가정
-	if (maxCamX < 0) maxCamX = 0;
-	if (maxCamY < 0) maxCamY = 0;
-
-	if (cameraPosition.x > maxCamX) cameraPosition.x = maxCamX;
-	if (cameraPosition.y > maxCamY) cameraPosition.y = maxCamY;
 }
