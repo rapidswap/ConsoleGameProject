@@ -135,11 +135,8 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
 
-	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
-	static bool wasLButtonDown = false;
-	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-
-	if (isLButtonDown && !wasLButtonDown)
+	// 마우스 클릭 시 터렛 설치
+	if (Input::Get().GetKeyDown(VK_LBUTTON))
 	{
 		Vector2 mousePos = Input::Get().GetMousePosition();
 		int screenWidth = Engine::Get().GetWidth();
@@ -153,7 +150,6 @@ void DefenseLevel::Tick(float deltaTime)
 		// TODO: 설치 가능 여부 검사 (벽, 기존 터렛 등)
 		SpawnActor<Turret>(worldPos);
 	}
-	wasLButtonDown = isLButtonDown;
 }
 
 void DefenseLevel::Draw()
@@ -169,6 +165,16 @@ void DefenseLevel::Draw()
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
 	Renderer::Get().Submit("TT", mousePos, previewColor, previewSortingOrder);
-	Renderer::Get().Submit("TT",Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT", Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
+
+	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
+	char debugStr[256];
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	Vector2 worldPos;
+	worldPos.x = mousePos.x + cameraPosition.x - (screenWidth / 2);
+	worldPos.y = mousePos.y + cameraPosition.y - (screenHeight / 2);
+	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", mousePos.x, mousePos.y, worldPos.x, worldPos.y);
+	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
 }
 
