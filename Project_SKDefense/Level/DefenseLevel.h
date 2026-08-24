@@ -28,6 +28,9 @@ private:
 	Craft::Vector2 spawnPoint;
 	Craft::Vector2 targetPoint;
 
+	// 웨이브 관리를 위한 스포너 참조
+	std::weak_ptr<class EnemySpawner> enemySpawner;
+
 public:
 	bool CanBuildTurret(int x, int y);
 	

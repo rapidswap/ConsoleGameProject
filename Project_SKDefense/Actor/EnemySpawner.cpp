@@ -19,7 +19,10 @@ using namespace Craft;
 EnemySpawner::EnemySpawner()
 {
 	// 적 생성 타이머 설정.
-	timer.SetTargetTime(1.0f);
+	spawnTimer.SetTargetTime(1.0f);
+
+	// 웨이브 타이머 설정.
+	waveTimer.SetTargetTime(30.0f);
 }
 
 void EnemySpawner::BeginPlay()
@@ -42,30 +45,49 @@ void EnemySpawner::BeginPlay()
 	}
 }
 
+float EnemySpawner::GetRemainingWaveTime() const
+{
+	return waveTimer.GetRemainingTime();
+}
+
 void EnemySpawner::Tick(float deltaTime)
 {
 	Craft::Actor::Tick(deltaTime);
 
-	// 이번 웨이브에 목표량(30마리)을 다 소환했다면 더 이상 타이머 안 돌림
-	if (spawnedCount >= maxPerWave)
+	if (!isWaveActive)
 	{
-		return;
+		// 1. 대기 시간(쉬는 시간) 처리
+		waveTimer.Tick(deltaTime);
+		if (waveTimer.IsTimeOut())
+		{
+			// 타이머 종료 -> 웨이브 시작!
+			isWaveActive = true;
+			spawnedCount = 0; // 스폰 카운트 리셋
+			spawnTimer.Reset();
+		}
 	}
-
-	// 타이머 업데이트.
-	timer.Tick(deltaTime);
-
-	// 경과 시간 확인.
-	if (!timer.IsTimeOut())
+	else
 	{
-		return;
+		// 2. 웨이브 진행 중 (몬스터 스폰)
+		if (spawnedCount >= maxPerWave)
+		{
+			// 이번 웨이브의 목표량 달성 -> 웨이브 종료 및 다음 웨이브 준비
+			isWaveActive = false;
+			currentWave++;
+			
+			// 다음 웨이브부터는 90초 대기
+			waveTimer.SetTargetTime(90.0f);
+			waveTimer.Reset();
+			return;
+		}
+
+		spawnTimer.Tick(deltaTime);
+		if (spawnTimer.IsTimeOut())
+		{
+			spawnTimer.Reset();
+			SpawnEnemy();
+		}
 	}
-
-	// 타이머 초기화.
-	timer.Reset();
-
-	// 적 생성.
-	SpawnEnemy();
 }
 
 void EnemySpawner::SpawnEnemy()

@@ -7,9 +7,12 @@
 #include <Actor/Agit.h>
 #include <Actor/Turret.h>
 #include <Actor/Enemy.h>
+#include <Actor/EnemySpawner.h>
+#include <Util/Timer.h>
 #include <fstream>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 using namespace Craft;
 
@@ -22,6 +25,10 @@ void DefenseLevel::OnInitialized()
 
 	// 카메라를 맵의 정중앙에 위치시킴.
 	cameraPosition = Vector2(mapWidth / 2, mapHeight / 2);
+
+	// 적 생성기 액터 추가.
+	enemySpawner = SpawnActor<EnemySpawner>();
+
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()
@@ -293,5 +300,25 @@ void DefenseLevel::Draw()
 	char debugStr[256];
 	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
 	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
-}
 
+	// 웨이브 상태 표시
+	auto spawner = enemySpawner.lock();
+	if (spawner)
+	{
+		char waveStr[256];
+		if (spawner->IsWaveActive())
+		{
+			sprintf_s(waveStr, "Wave %d : In Progress!", spawner->GetCurrentWave());
+			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Red, 100);
+		}
+		else
+		{
+			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
+			int minutes = remainTime / 60;
+			int seconds = remainTime % 60;
+			
+			sprintf_s(waveStr, "Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), minutes, seconds);
+			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Yellow, 100);
+		}
+	}
+}
