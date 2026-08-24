@@ -19,7 +19,7 @@ void DefenseLevel::OnInitialized()
 	LoadMap("SK_Defense_Map.txt");
 
 	// 카메라를 맵의 정중앙에 위치시킴.
-	cameraPosition = Craft::Vector2(mapWidth / 2, mapHeight / 2);
+	cameraPosition = Vector2(mapWidth / 2, mapHeight / 2);
 }
 
 void DefenseLevel::LoadMap(const std::string& filename)
@@ -141,12 +141,12 @@ void DefenseLevel::Tick(float deltaTime)
 
 	if (isLButtonDown && !wasLButtonDown)
 	{
-		Craft::Vector2 mousePos = Craft::Input::Get().GetMousePosition();
-		int screenWidth = Craft::Engine::Get().GetWidth();
-		int screenHeight = Craft::Engine::Get().GetHeight();
+		Vector2 mousePos = Input::Get().GetMousePosition();
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
 		
 		// 화면 좌표를 월드 좌표로 변환
-		Craft::Vector2 worldPos;
+		Vector2 worldPos;
 		worldPos.x = mousePos.x + cameraPosition.x - (screenWidth / 2);
 		worldPos.y = mousePos.y + cameraPosition.y - (screenHeight / 2);
 
