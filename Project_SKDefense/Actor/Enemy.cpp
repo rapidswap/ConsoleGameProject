@@ -4,7 +4,7 @@
 #include <Level/Level.h>
 
 Enemy::Enemy(const Craft::Vector2& position)
-	: Craft::Actor("E", position, Craft::Color::Red)
+	: Craft::Actor("Z", position, Craft::Color::Red)
 {
 	sortingOrder = 15;
 }
@@ -32,4 +32,9 @@ void Enemy::Draw()
 	}
 
 	Craft::Renderer::Get().Submit(image, screenPos, color, sortingOrder);
+}
+
+void Enemy::OnCollision(const std::shared_ptr<Craft::Actor>& other)
+{
+	Craft::Actor::OnCollision(other);
 }
