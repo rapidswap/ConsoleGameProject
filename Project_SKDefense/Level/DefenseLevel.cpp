@@ -1,4 +1,5 @@
 #include "DefenseLevel.h"
+#include <Engine/Engine.h>
 #include <Input/Input.h>
 #include <Render/Renderer.h>
 #include <Actor/Ground.h>
@@ -128,14 +129,17 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 void DefenseLevel::Tick(float deltaTime)
 {
-	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동)
-	if (Craft::Input::Get().GetKey('W')) cameraPosition.y -= 1;
-	if (Craft::Input::Get().GetKey('S')) cameraPosition.y += 1;
-	if (Craft::Input::Get().GetKey('A')) cameraPosition.x -= 1;
-	if (Craft::Input::Get().GetKey('D')) cameraPosition.x += 1;
+	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동).
+	if (Input::Get().GetKey('W')) cameraPosition.y -= 1;
+	if (Input::Get().GetKey('S')) cameraPosition.y += 1;
+	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
+	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
 
-	// 마우스 클릭 시 터렛 설치
-	if (Craft::Input::Get().GetKeyDown(VK_LBUTTON))
+	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
+	static bool wasLButtonDown = false;
+	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+
+	if (isLButtonDown && !wasLButtonDown)
 	{
 		Craft::Vector2 mousePos = Craft::Input::Get().GetMousePosition();
 		int screenWidth = Craft::Engine::Get().GetWidth();
@@ -149,6 +153,7 @@ void DefenseLevel::Tick(float deltaTime)
 		// TODO: 설치 가능 여부 검사 (벽, 기존 터렛 등)
 		SpawnActor<Turret>(worldPos);
 	}
+	wasLButtonDown = isLButtonDown;
 }
 
 void DefenseLevel::Draw()
@@ -157,13 +162,13 @@ void DefenseLevel::Draw()
 	Level::Draw();
 
 	// 2. 터렛 2x2 미리보기 렌더링 (마우스 커서 위치에 바로 출력)
-	Craft::Vector2 mousePos = Craft::Input::Get().GetMousePosition();
+	Vector2 mousePos = Input::Get().GetMousePosition();
 	
 	// 설치 가능한 상태라고 가정하고 초록색(미리보기)으로 렌더링
-	Craft::Color previewColor = Craft::Color::Green;
+	Color previewColor = Color::Green;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
-	Craft::Renderer::Get().Submit("TT", mousePos, previewColor, previewSortingOrder);
-	Craft::Renderer::Get().Submit("TT", Craft::Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT", mousePos, previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT",Vector2(mousePos.x, mousePos.y + 1), previewColor, previewSortingOrder);
 }
 
