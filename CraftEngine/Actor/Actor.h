@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Core/Core.h>
 #include <Math/Color.h>
@@ -46,6 +46,7 @@ namespace Craft
 		// Getter/Setter
 		inline bool HasBeganPlay() const { return hasBeganPlay; }
 		inline bool IsActive() const { return isActive && !hasExpired; }
+		inline void SetActive(bool active) { isActive = active; }
 		inline bool HasExpired() const { return hasExpired; }
 
 		inline std::shared_ptr<Level> GetOwner() const { return owner.lock(); }
