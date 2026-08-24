@@ -8,17 +8,14 @@
 class DefenseLevel : public Craft::Level
 {
 public:
-	DefenseLevel();
-	~DefenseLevel() = default;
 
+	virtual void OnInitialized();
 	virtual void Tick(float deltaTime) override;
-	virtual void Draw() override;
 
 private:
-	// 맵 로드 함수
-	void LoadMap();
+	void LoadMap(const std::string& filename);
 
 private:
-	// 맵 데이터
-	std::vector<std::string> mapData;
+	int mapWidth = 0;
+	int mapHeight = 0;
 };
