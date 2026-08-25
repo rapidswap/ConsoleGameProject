@@ -4,6 +4,7 @@
 #include <Level/DefenseLevel.h>
 #include <Algorithm/AStar.h>
 #include <Algorithm/Node.h>
+#include <Actor/TurretBullet.h>
 #include <cmath>
 
 using namespace Craft;
@@ -91,23 +92,23 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 {
 	super::OnCollision(other);
 
-	//// 터렛 총알에 맞았다면.
-	//if (other->IsTypeOf<TurretBullet>())
-	//{
-	//	// 총알 파괴.
-	//	other->Destroy();
+	// 터렛 총알에 맞았다면.
+	if (other->IsTypeOf<TurretBullet>())
+	{
+		// 총알 파괴.
+		other->Destroy();
 
-	//	// enemy 체력 다운.
-	//	--enemyHealth;
-	//}
+		// enemy 체력 다운.
+		--enemyHealth;
+	}
 
-	//if (enemyHealth <= 0)
-	//{
-	//	// 죽었다면 이펙트 스폰.
-	//	GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
-	//	// 체력이 0이라면 그대로 파괴.
-	//	Destroy();
-	//}
+	if (enemyHealth <= 0)
+	{
+		// 죽었다면 이펙트 스폰.
+		//GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
+		// 체력이 0이라면 그대로 파괴.
+		Destroy();
+	}
 
 	
 }
