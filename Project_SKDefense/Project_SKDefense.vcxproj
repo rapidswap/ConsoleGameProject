@@ -100,6 +100,7 @@
   <ItemGroup>
     <ClCompile Include="Actor\Enemy.cpp" />
     <ClCompile Include="Actor\EnemySpawner.cpp" />
+    <ClCompile Include="Actor\TurretBullet.cpp" />
     <ClCompile Include="Algorithm\AStar.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Actor\Agit.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="Actor\EnemySpawner.h" />
     <ClInclude Include="Actor\Ground.h" />
     <ClInclude Include="Actor\Turret.h" />
+    <ClInclude Include="Actor\TurretBullet.h" />
     <ClInclude Include="Actor\Wall.h" />
     <ClInclude Include="Algorithm\AStar.h" />
     <ClInclude Include="Algorithm\Node.h" />
