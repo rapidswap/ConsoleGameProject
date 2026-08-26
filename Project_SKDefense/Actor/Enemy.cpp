@@ -5,6 +5,7 @@
 #include <Algorithm/AStar.h>
 #include <Algorithm/Node.h>
 #include <Actor/TurretBullet.h>
+#include <Actor/Agit.h>
 #include <cmath>
 
 using namespace Craft;
@@ -107,7 +108,24 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	{
 		// 죽었다면 이펙트 스폰.
 		//GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
+		
+		// 골드 획득 (예: 1마리당 10골드)
+		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+		if (defenseLevel)
+		{
+			defenseLevel->AddGold(10);
+		}
+
 		// 오브젝트 풀링을 위해 파괴 대신 비활성화
+		SetActive(false);
+	}
+
+	// 아지트에 도달했다면.
+	if (other->IsTypeOf<Agit>())
+	{
+		// 아지트 체력은 다운.
+		auto agitOther = Cast<Agit>(other);
+		agitOther->AgitHealthDown();
 		SetActive(false);
 	}
 

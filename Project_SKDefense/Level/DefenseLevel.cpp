@@ -2,12 +2,14 @@
 #include <Engine/Engine.h>
 #include <Input/Input.h>
 #include <Render/Renderer.h>
+#include <Game/Game.h>
 #include <Actor/Ground.h>
 #include <Actor/Wall.h>
 #include <Actor/Agit.h>
 #include <Actor/Turret.h>
 #include <Actor/Enemy.h>
 #include <Actor/EnemySpawner.h>
+#include <Actor/Agit.h>
 #include <Util/Timer.h>
 #include <fstream>
 #include <iostream>
@@ -29,6 +31,193 @@ void DefenseLevel::OnInitialized()
 	// 적 생성기 액터 추가.
 	enemySpawner = SpawnActor<EnemySpawner>();
 
+}
+
+void DefenseLevel::Tick(float deltaTime)
+{
+	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
+	Level::Tick(deltaTime);
+
+	// 입력 처리(위/아래 방향키, 엔터, ESC 키).
+	if (Input::Get().GetKeyDown(VK_ESCAPE))
+	{
+		Game& game = dynamic_cast<Game&>(Engine::Get());
+		game.ToggleMenu(State::ESCMENU);
+
+	}
+
+	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동).
+	if (Input::Get().GetKey('W')) cameraPosition.y -= 1;
+	if (Input::Get().GetKey('S')) cameraPosition.y += 1;
+	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
+	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
+
+	Vector2 realMousePos = GetRealMousePos();
+
+	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
+	static bool wasLButtonDown = false;
+	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+
+	if (isLButtonDown && !wasLButtonDown)
+	{
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
+
+		// 화면 좌표를 월드 좌표로 변환
+		Vector2 worldPos;
+		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
+
+		// 설치 가능 여부 및 골드 검사
+		if (CanBuildTurret(worldPos.x, worldPos.y))
+		{
+			if (SpendGold(turretCost))
+			{
+				SpawnActor<Turret>(worldPos);
+
+				// 설치된 타일을 터렛(2)으로 마킹하여 이후 겹쳐 짓기나 적의 이동을 차단
+				mapGrid[worldPos.y][worldPos.x] = 2;
+				mapGrid[worldPos.y][worldPos.x + 1] = 2;
+				mapGrid[worldPos.y + 1][worldPos.x] = 2;
+				mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+
+				// 맵이 변경되었으므로 모든 적들에게 경로 재탐색 지시
+				for (const std::shared_ptr<Actor>& actor : actorList)
+				{
+					if (!actor->IsActive()) continue;
+
+					auto enemy = Craft::Cast<Enemy>(actor);
+					if (enemy)
+					{
+						enemy->RecalculatePath();
+					}
+				}
+			}
+		}
+	}
+	wasLButtonDown = isLButtonDown;
+
+	// 치트키: G 키를 누르면 1000 골드 추가
+	if (Input::Get().GetKeyDown('G'))
+	{
+		AddGold(1000);
+	}
+
+	// 치트/디버그용: F2 키를 누르면 게임 클리어 판정.
+	if (Input::Get().GetKeyDown(VK_F2))
+	{
+		GameClear();
+	}
+	
+
+	// 치트/디버그용: F1 키를 누르면 다음 웨이브 즉시 시작
+
+	if (Input::Get().GetKeyDown(VK_F1))
+	{
+		auto spawner = enemySpawner.lock();
+		if (spawner)
+		{
+			spawner->SkipWave();
+		}
+	}
+
+	auto agit = FindActor<Agit>();
+	if (agit)
+	{
+		if (agit->GetHealth() <= 0)
+		{
+			GameOver();
+		}
+	}
+}
+
+void DefenseLevel::Draw()
+{
+
+	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
+	Level::Draw();
+
+	// 아지트 체력 렌더링.
+	auto agit = FindActor<Agit>();
+	if (agit)
+	{
+		// 비율 계산.
+		float hpRatio = static_cast<float>(agit->GetHealth()) / 100;
+
+		// 체력바 문자열 만들기.
+		int barLength = 40;
+		int filledLength = static_cast<int>(hpRatio * barLength);
+
+		std::string hpBar = "Agit HP [";
+		for (int i = 0;i < barLength;++i)
+		{
+			if (i < filledLength)
+			{
+				hpBar += "=";
+			}
+			else
+			{
+				hpBar += " ";
+			}
+		}
+		hpBar += "]"
+			+ std::to_string(agit->GetHealth()) + "/" + "100";
+
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
+
+		Vector2 barPos((screenWidth - hpBar.length()) / 2, screenHeight - 2);
+		Renderer::Get().Submit(hpBar, barPos, Color::Green);
+	}
+	// 2. 터렛 2x2 미리보기 렌더링
+	Vector2 realMousePos = GetRealMousePos();
+
+	// 화면 좌표를 월드 좌표로 변환하여 설치 가능 여부 확인
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	Vector2 previewWorldPos;
+	previewWorldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+	previewWorldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
+
+	// 설치 가능 여부 및 골드 조건 확인
+	bool canBuild = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) && (currentGold >= turretCost);
+	// 설치 가능하면 초록색, 불가능하면 빨간색
+	Color previewColor = canBuild ? Color::Green : Color::Red;
+	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
+
+	Renderer::Get().Submit("TT", realMousePos, previewColor, previewSortingOrder);
+	Renderer::Get().Submit("TT", Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
+
+	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
+	char debugStr[256];
+	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
+	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
+
+	// 골드 표시
+	char goldStr[256];
+	sprintf_s(goldStr, "Gold: %d (Turret Cost: %d)", currentGold, turretCost);
+	Renderer::Get().Submit(goldStr, Vector2(0, 2), Color::Yellow, 100);
+
+	// 웨이브 상태 표시
+	auto spawner = enemySpawner.lock();
+	if (spawner)
+	{
+		char waveStr[256];
+		if (spawner->IsWaveActive())
+		{
+			sprintf_s(waveStr, "Wave %d : In Progress!", spawner->GetCurrentWave());
+			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Red, 100);
+		}
+		else
+		{
+			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
+			int minutes = remainTime / 60;
+			int seconds = remainTime % 60;
+
+			sprintf_s(waveStr, "Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), minutes, seconds);
+			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Yellow, 100);
+		}
+	}
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()
@@ -190,6 +379,18 @@ void DefenseLevel::LoadMap(const std::string& filename)
 	file = nullptr;
 }
 
+void DefenseLevel::GameOver()
+{
+	Game& game = dynamic_cast<Game&>(Engine::Get());
+	game.ToggleMenu(State::GAMEOVER);
+}
+
+void DefenseLevel::GameClear()
+{
+	Game& game = dynamic_cast<Game&>(Engine::Get());
+	game.ToggleMenu(State::GAMECLEAR);
+}
+
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
 	// 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
@@ -211,127 +412,4 @@ bool DefenseLevel::CanBuildTurret(int x, int y)
 	return true;
 }
 
-void DefenseLevel::Tick(float deltaTime)
-{
-	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
-	Level::Tick(deltaTime);
 
-	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동).
-	if (Input::Get().GetKey('W')) cameraPosition.y -= 1;
-	if (Input::Get().GetKey('S')) cameraPosition.y += 1;
-	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
-	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
-
-	Vector2 realMousePos = GetRealMousePos();
-
-	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
-	static bool wasLButtonDown = false;
-	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
-
-	if (isLButtonDown && !wasLButtonDown)
-	{
-		int screenWidth = Engine::Get().GetWidth();
-		int screenHeight = Engine::Get().GetHeight();
-		
-		// 화면 좌표를 월드 좌표로 변환
-		Vector2 worldPos;
-		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
-		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
-
-		// 설치 가능 여부 검사 (맵 바깥, 벽, 기존 터렛 등)
-		if (CanBuildTurret(worldPos.x, worldPos.y))
-		{
-			SpawnActor<Turret>(worldPos);
-			
-			// 설치된 타일을 터렛(2)으로 마킹하여 이후 겹쳐 짓기나 적의 이동을 차단
-			mapGrid[worldPos.y][worldPos.x] = 2;
-			mapGrid[worldPos.y][worldPos.x + 1] = 2;
-			mapGrid[worldPos.y + 1][worldPos.x] = 2;
-			mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
-			
-			// 맵이 변경되었으므로 모든 적들에게 경로 재탐색 지시
-			for (const std::shared_ptr<Actor>& actor : actorList)
-			{
-				if (!actor->IsActive()) continue;
-				
-				auto enemy = Craft::Cast<Enemy>(actor);
-				if (enemy)
-				{
-					enemy->RecalculatePath();
-				}
-			}
-		}
-	}
-	wasLButtonDown = isLButtonDown;
-
-	// 테스트용: E 키를 누르면 스폰 포인트(S)에서 적 생성
-	static bool wasEDown = false;
-	bool isEDown = Input::Get().GetKey('E');
-	if (isEDown && !wasEDown)
-	{
-		SpawnActor<Enemy>(spawnPoint);
-	}
-	wasEDown = isEDown;
-
-	// 치트/디버그용: F1 키를 누르면 다음 웨이브 즉시 시작
-	static bool wasF1Down = false;
-	bool isF1Down = Input::Get().GetKey(VK_F1);
-	if (isF1Down && !wasF1Down)
-	{
-		auto spawner = enemySpawner.lock();
-		if (spawner)
-		{
-			spawner->SkipWave();
-		}
-	}
-	wasF1Down = isF1Down;
-}
-
-void DefenseLevel::Draw()
-{
-	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
-	Level::Draw();
-
-	// 2. 터렛 2x2 미리보기 렌더링
-	Vector2 realMousePos = GetRealMousePos();
-	
-	// 화면 좌표를 월드 좌표로 변환하여 설치 가능 여부 확인
-	int screenWidth = Engine::Get().GetWidth();
-	int screenHeight = Engine::Get().GetHeight();
-	Vector2 previewWorldPos;
-	previewWorldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
-	previewWorldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
-
-	// 설치 가능하면 초록색, 불가능하면 빨간색
-	Color previewColor = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) ? Color::Green : Color::Red;
-	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
-
-	Renderer::Get().Submit("TT", realMousePos, previewColor, previewSortingOrder);
-	Renderer::Get().Submit("TT", Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
-
-	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
-	char debugStr[256];
-	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
-	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
-
-	// 웨이브 상태 표시
-	auto spawner = enemySpawner.lock();
-	if (spawner)
-	{
-		char waveStr[256];
-		if (spawner->IsWaveActive())
-		{
-			sprintf_s(waveStr, "Wave %d : In Progress!", spawner->GetCurrentWave());
-			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Red, 100);
-		}
-		else
-		{
-			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
-			int minutes = remainTime / 60;
-			int seconds = remainTime % 60;
-			
-			sprintf_s(waveStr, "Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), minutes, seconds);
-			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Yellow, 100);
-		}
-	}
-}

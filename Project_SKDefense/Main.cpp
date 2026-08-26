@@ -1,6 +1,8 @@
 #include <Engine/Engine.h>
 #include <Level/DefenseLevel.h>
+#include <Game/Game.h>
 #include <Windows.h>
+
 
 int main()
 {
@@ -8,7 +10,6 @@ int main()
 	SetConsoleTitleA("SK Defense");
 
 	// 엔진 객체 생성 및 실행.
-	Craft::Engine engine;
-	engine.AddNewLevel<DefenseLevel>();
-	engine.Run();
+	Game game;
+	game.Run();
 }

@@ -10,6 +10,7 @@
 #include <Actor/DestroyAugmentPoint.h>
 #include <Actor/DestroyMagnet.h>
 
+
 using namespace Craft;
 Enemy::Enemy(const std::string& image, float x, float y)
 	: Actor(image), xPosition(x), yPosition(y)

@@ -78,6 +78,33 @@ void EnemySpawner::Tick(float deltaTime)
 			SpawnEnemy();
 		}
 	}
+
+	// 만약 3웨이브가 끝났다면 (currentWave가 4로 넘어간 상태)
+	if (currentWave > 3)
+	{
+		bool isAllDead = true;
+
+		// 30마리 모두 검사.
+		for (auto& weakEnemy : enemyPool)
+		{
+			auto enemy = weakEnemy.lock();
+			// 한 마리라도 살아 돌아다닌다면 클리어 아님.
+			if (enemy && enemy->IsActive())
+			{
+				isAllDead = false;
+				break;
+			}
+		}
+
+		if (isAllDead)
+		{
+			auto defenseLevel = Cast<DefenseLevel>(GetOwner());
+			if (defenseLevel)
+			{
+				defenseLevel->GameClear();
+			}
+		}
+	}
 }
 
 void EnemySpawner::SpawnEnemy()

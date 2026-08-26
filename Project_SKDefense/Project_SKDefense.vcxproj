@@ -102,6 +102,11 @@
     <ClCompile Include="Actor\EnemySpawner.cpp" />
     <ClCompile Include="Actor\TurretBullet.cpp" />
     <ClCompile Include="Algorithm\AStar.cpp" />
+    <ClCompile Include="Game\Game.cpp" />
+    <ClCompile Include="Level\EscMenu.cpp" />
+    <ClCompile Include="Level\GameClearLevel.cpp" />
+    <ClCompile Include="Level\GameOverLevel.cpp" />
+    <ClCompile Include="Level\MainMenuLevel.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Actor\Agit.cpp" />
     <ClCompile Include="Actor\Ground.cpp" />
@@ -120,7 +125,12 @@
     <ClInclude Include="Actor\Wall.h" />
     <ClInclude Include="Algorithm\AStar.h" />
     <ClInclude Include="Algorithm\Node.h" />
+    <ClInclude Include="Game\Game.h" />
     <ClInclude Include="Level\DefenseLevel.h" />
+    <ClInclude Include="Level\EscMenu.h" />
+    <ClInclude Include="Level\GameClearLevel.h" />
+    <ClInclude Include="Level\GameOverLevel.h" />
+    <ClInclude Include="Level\MainMenuLevel.h" />
     <ClInclude Include="Util\Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

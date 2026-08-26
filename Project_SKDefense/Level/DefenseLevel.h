@@ -16,6 +16,10 @@ public:
 private:
 	Craft::Vector2 GetRealMousePos();
 	void LoadMap(const std::string& filename);
+	void GameOver();
+
+public:
+	void GameClear();
 
 private:
 	int mapWidth = 0;
@@ -34,7 +38,31 @@ private:
 public:
 	bool CanBuildTurret(int x, int y);
 	
-	std::vector<std::vector<int>>& GetMapGrid() { return mapGrid; }
-	Craft::Vector2 GetSpawnPoint() const { return spawnPoint; }
+	// 타겟 지점 접근용.
 	Craft::Vector2 GetTargetPoint() const { return targetPoint; }
+	const std::vector<std::vector<int>>& GetMapGrid() const { return mapGrid; }
+	std::vector<std::vector<int>>& GetMapGrid() { return mapGrid; }
+
+	// 골드 시스템 접근용
+	int GetTurretCost() const { return turretCost; }
+	int GetGold() const { return currentGold; }
+	void AddGold(int amount) { currentGold += amount; }
+	bool SpendGold(int amount) 
+	{ 
+		if (currentGold >= amount) 
+		{
+			currentGold -= amount;
+			return true;
+		}
+		return false;
+	}
+
+private:
+	// 재화 (골드)
+	int currentGold = 1000;
+	// 터렛 설치 비용
+	const int turretCost = 50;
+
+public:
+	Craft::Vector2 GetSpawnPoint() const { return spawnPoint; }
 };

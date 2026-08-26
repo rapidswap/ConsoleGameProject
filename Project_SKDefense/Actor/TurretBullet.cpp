@@ -6,7 +6,7 @@
 
 using namespace Craft;
 TurretBullet::TurretBullet(const Craft::Vector2& position, float dirX, float dirY)
-	:Actor("-", position, Color::Yellow),
+	:Actor("-", position, Color::Green),
 	xPosition(static_cast<float>(position.x)), yPosition(static_cast<float>(position.y)),
 	directionX(dirX), directionY(dirY),
 	startPosition(position)

@@ -46,6 +46,6 @@ private:
 	float moveAccumulator = 0.0f;
 
 	// 적의 체력.
-	float enemyHealth = 5.0f;
+	float enemyHealth = 3.0f;
 };
 
