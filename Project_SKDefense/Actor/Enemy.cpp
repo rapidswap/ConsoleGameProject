@@ -66,7 +66,8 @@ void Enemy::Tick(float deltaTime)
 	}
 	else
 	{
-		// Todo: 경로 끝 도착 처리 (예: 아지트 데미지 입히고 파괴)
+		// 경로 끝(아지트) 도착 처리: 아지트 데미지를 입히고 사라짐(비활성화)
+		SetActive(false);
 	}
 }
 
@@ -106,8 +107,8 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	{
 		// 죽었다면 이펙트 스폰.
 		//GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
-		// 체력이 0이라면 그대로 파괴.
-		Destroy();
+		// 오브젝트 풀링을 위해 파괴 대신 비활성화
+		SetActive(false);
 	}
 
 	

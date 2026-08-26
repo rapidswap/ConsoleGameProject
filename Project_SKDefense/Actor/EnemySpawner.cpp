@@ -6,16 +6,6 @@
 
 using namespace Craft;
 
-// 생성할 적 이미지 타입 배열.
-//static std::string enemyType[] =
-//{
-//	";:^:;",
-//	"zZwZz",
-//	"oO@Oo",
-//	"<-=->",
-//	")qOp(",
-//};
-
 EnemySpawner::EnemySpawner()
 {
 	// 적 생성 타이머 설정.
@@ -102,6 +92,9 @@ void EnemySpawner::SpawnEnemy()
 		if (enemy && !enemy->IsActive())
 		{
 			// 찾았다면! 다시 깨워서 출발선에 세움
+			// 웨이브가 오를 때마다 몬스터 체력 증가 (기본 5 * 웨이브 수)
+			enemy->SetHealth(5.0f * currentWave);
+			
 			enemy->SetPosition(defenseLevel->GetSpawnPoint());
 			enemy->SetActive(true);
 			enemy->RecalculatePath(); // 깨어날 때 최신 맵 기준으로 길 찾기
@@ -122,4 +115,3 @@ void EnemySpawner::SkipWave()
 		spawnTimer.Reset();
 	}
 }
-

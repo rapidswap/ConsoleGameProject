@@ -33,7 +33,7 @@ private:
 	float bulletDamage=1.0f;
 
 	// 공격 사거리.
-	float bulletRange = 10.0f;
+	float bulletRange = 5.0f;
 		
 
 };
