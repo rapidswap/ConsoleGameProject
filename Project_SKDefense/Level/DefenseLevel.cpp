@@ -272,6 +272,19 @@ void DefenseLevel::Tick(float deltaTime)
 		SpawnActor<Enemy>(spawnPoint);
 	}
 	wasEDown = isEDown;
+
+	// 치트/디버그용: F1 키를 누르면 다음 웨이브 즉시 시작
+	static bool wasF1Down = false;
+	bool isF1Down = Input::Get().GetKey(VK_F1);
+	if (isF1Down && !wasF1Down)
+	{
+		auto spawner = enemySpawner.lock();
+		if (spawner)
+		{
+			spawner->SkipWave();
+		}
+	}
+	wasF1Down = isF1Down;
 }
 
 void DefenseLevel::Draw()

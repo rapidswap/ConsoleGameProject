@@ -111,3 +111,15 @@ void EnemySpawner::SpawnEnemy()
 		}
 	}
 }
+
+void EnemySpawner::SkipWave()
+{
+	// 대기 중일 때만 스킵하여 즉시 웨이브 시작
+	if (!isWaveActive)
+	{
+		isWaveActive = true;
+		spawnedCount = 0;
+		spawnTimer.Reset();
+	}
+}
+

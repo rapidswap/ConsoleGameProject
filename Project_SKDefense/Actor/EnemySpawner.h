@@ -25,6 +25,9 @@ public:
 	float GetRemainingWaveTime() const;
 	bool IsWaveActive() const { return isWaveActive; }
 
+	// 치트/디버그용: 웨이브 타이머 스킵
+	void SkipWave();
+
 private:
 	// 몬스터 소환 타이머.
 	Timer spawnTimer;
