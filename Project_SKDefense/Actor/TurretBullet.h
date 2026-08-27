@@ -9,6 +9,8 @@ class TurretBullet: public Craft::Actor
 
 public:
 	TurretBullet(const Craft::Vector2& position, float dirX, float dirY);
+	// 총알 범위 설정.
+	inline void SetBulletRange(float range) { bulletRange = range; }
 private:
 	// 이벤트 함수 오버라이딩.
 	virtual void Tick(float deltaTime) override;
@@ -35,7 +37,6 @@ private:
 	// 공격 사거리.
 	float bulletRange = 5.0f;
 		
-	// 총알 범위 설정.
-	inline void SetBulletRange(float range) { bulletRange = range; }
+
 };
 
