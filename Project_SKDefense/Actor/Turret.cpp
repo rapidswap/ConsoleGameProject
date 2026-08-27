@@ -9,7 +9,7 @@
 using namespace Craft;
 static int globalTurretSpawnCounter = 0;
 
-Turret::Turret(const Craft::Vector2& position)
+Turret::Turret(const Craft::Vector2& position, TurretType type)
 	: Craft::Actor("TT", position, Craft::Color::Yellow)
 {
 	// 터렛은 다른 물체 위에 그려지도록 우선순위 상향
@@ -18,8 +18,8 @@ Turret::Turret(const Craft::Vector2& position)
 	// 고유 생성 번호 부여 (먼저 지어진 터렛 식별용)
 	spawnOrder = ++globalTurretSpawnCounter;
 
-	// 랜덤 타입 결정 (0: 화염, 1: 얼음, 2: 전기)
-	turretType = static_cast<TurretType>(rand() % 3);
+	// 외부에서 주입된 타입 사용
+	turretType = type;
 	starTier = 1;
 
 	// 속성 초기화

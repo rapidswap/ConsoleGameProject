@@ -131,6 +131,7 @@
     <ClInclude Include="Level\GameClearLevel.h" />
     <ClInclude Include="Level\GameOverLevel.h" />
     <ClInclude Include="Level\MainMenuLevel.h" />
+    <ClInclude Include="Level\MenuItem.h" />
     <ClInclude Include="Util\Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

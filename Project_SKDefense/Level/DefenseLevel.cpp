@@ -11,10 +11,15 @@
 #include <Actor/EnemySpawner.h>
 #include <Actor/Agit.h>
 #include <Util/Timer.h>
+#include <Algorithm/AStar.h>
+#include <Algorithm/Node.h>
 #include <fstream>
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <map>
+#include <algorithm>
+#include <utility>
 
 using namespace Craft;
 
@@ -30,6 +35,9 @@ void DefenseLevel::OnInitialized()
 
 	// 적 생성기 액터 추가.
 	enemySpawner = SpawnActor<EnemySpawner>();
+
+	// 게임 시작 시 첫 번째로 지어질 터렛 타입 랜덤 결정
+	nextTurretType = static_cast<TurretType>(rand() % 3);
 
 }
 
@@ -73,13 +81,19 @@ void DefenseLevel::Tick(float deltaTime)
 		{
 			if (SpendGold(turretCost))
 			{
-				SpawnActor<Turret>(worldPos);
+				SpawnActor<Turret>(worldPos, nextTurretType);
+
+				// 설치 후 다음 터렛 타입 랜덤 변경
+				nextTurretType = static_cast<TurretType>(rand() % 3);
 
 				// 설치된 타일을 터렛(2)으로 마킹하여 이후 겹쳐 짓기나 적의 이동을 차단
 				mapGrid[worldPos.y][worldPos.x] = 2;
 				mapGrid[worldPos.y][worldPos.x + 1] = 2;
 				mapGrid[worldPos.y + 1][worldPos.x] = 2;
 				mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+
+				// 3개 이상 모였는지 자동 3-Merge 검사 및 승급!
+				CheckTurretMerge();
 
 				// 맵이 변경되었으므로 모든 적들에게 경로 재탐색 지시
 				for (const std::shared_ptr<Actor>& actor : actorList)
@@ -97,6 +111,50 @@ void DefenseLevel::Tick(float deltaTime)
 	}
 	wasLButtonDown = isLButtonDown;
 
+	static bool wasRButtonDown = false;
+	bool isRButtonDown = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+
+	if (isRButtonDown && !wasRButtonDown)
+	{
+		int screenWidth = Engine::Get().GetWidth();
+		int screenHeight = Engine::Get().GetHeight();
+
+		Vector2 worldPos;
+		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
+		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
+
+		
+		for (auto turret : FindActors<Turret>())
+		{
+			Vector2 tPos = turret->GetPosition();
+			if (worldPos.x >= tPos.x && worldPos.x <= tPos.x + 1 &&
+				worldPos.y >= tPos.y && worldPos.y <= tPos.y + 1)
+			{
+				// 3. 맵 그리드 4칸을 다시 빈 땅(0)으로 복구
+				mapGrid[tPos.y][tPos.x] = 0;
+				mapGrid[tPos.y][tPos.x + 1] = 0;
+				mapGrid[tPos.y + 1][tPos.x] = 0;
+				mapGrid[tPos.y + 1][tPos.x + 1] = 0;
+
+				// 4. 골드 환불 (성급에 비례하여 환불: 1성 25G, 2성 75G, 3성 225G)
+				int refundMultiplier = 1;
+				if (turret->GetStarTier() == 2) refundMultiplier = 3;
+				else if (turret->GetStarTier() == 3) refundMultiplier = 9;
+				AddGold((turretCost / 2) * refundMultiplier);
+
+				// 5. 터렛 삭제
+				turret->Destroy();
+				// 6. 길이 뚫렸으므로 몬스터 경로 재계산
+				for (auto enemy : FindActors<Enemy>())
+				{
+					if (enemy->IsActive()) enemy->RecalculatePath();
+				}
+				break;
+			}
+		}
+	}
+	wasRButtonDown = isRButtonDown;
+
 	// 치트키: G 키를 누르면 1000 골드 추가
 	if (Input::Get().GetKeyDown('G'))
 	{
@@ -109,6 +167,7 @@ void DefenseLevel::Tick(float deltaTime)
 		GameClear();
 	}
 	
+
 
 	// 치트/디버그용: F1 키를 누르면 다음 웨이브 즉시 시작
 
@@ -181,12 +240,30 @@ void DefenseLevel::Draw()
 
 	// 설치 가능 여부 및 골드 조건 확인
 	bool canBuild = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) && (currentGold >= turretCost);
-	// 설치 가능하면 초록색, 불가능하면 빨간색
-	Color previewColor = canBuild ? Color::Green : Color::Red;
+	// 다음 설치될 터렛의 심볼 및 색상 결정
+	std::string previewSymbol = "TT";
+	Color typeColor = Color::Yellow;
+	switch (nextTurretType)
+	{
+	case TurretType::FLAME: previewSymbol = "FF"; typeColor = Color::Red; break;
+	case TurretType::ICE:   previewSymbol = "II"; typeColor = Color::Cyan; break;
+	case TurretType::STORM: previewSymbol = "TT"; typeColor = Color::Yellow; break;
+	}
+
+	// 설치 가능하면 해당 터렛의 색상, 불가능하면 어두운 회색 (또는 빨간색)
+	// 빨간색(Red)은 화염 터렛과 색이 겹치므로, 설치 불가 시 약간 다른 색(Magenta 등)을 써도 좋음.
+	// 이번엔 설치 불가능을 쉽게 알 수 있도록 배경색을 씌우거나 어두운 빨강, 혹은 심볼을 XX로 바꿀 수 있음.
+	if (!canBuild) 
+	{
+		previewSymbol = "XX";
+		typeColor = Color::Red;
+	}
+	
+	Color previewColor = typeColor;
 	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
 
-	Renderer::Get().Submit("TT", realMousePos, previewColor, previewSortingOrder);
-	Renderer::Get().Submit("TT", Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
+	Renderer::Get().Submit(previewSymbol, realMousePos, previewColor, previewSortingOrder);
+	Renderer::Get().Submit(previewSymbol, Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
 
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
@@ -393,7 +470,7 @@ void DefenseLevel::GameClear()
 
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
-	// 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
+	// 1. 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
 	for (int i = 0; i < 2; ++i)
 	{
 		for (int j = 0; j < 2; ++j)
@@ -402,14 +479,152 @@ bool DefenseLevel::CanBuildTurret(int x, int y)
 			int cy = y + j;
 			
 			// 맵 경계선 체크
-			if (cy < 0 || cy >= mapGrid.size()) return false;
-			if (cx < 0 || cx >= mapGrid[cy].size()) return false;
+			if (cy < 0 || cy >= static_cast<int>(mapGrid.size())) return false;
+			if (cx < 0 || cx >= static_cast<int>(mapGrid[cy].size())) return false;
 			
 			// 벽(1), 기존 터렛(2), 아지트(3)가 있으면 설치 불가
 			if (mapGrid[cy][cx] != 0) return false;
 		}
 	}
-	return true;
+
+	// 2. 가상 시뮬레이션: 임시로 4칸에 터렛(2)을 가상 설치
+	mapGrid[y][x] = 2;
+	mapGrid[y][x + 1] = 2;
+	mapGrid[y + 1][x] = 2;
+	mapGrid[y + 1][x + 1] = 2;
+
+	bool canReach = true;
+
+	// (A) 스폰 지점(S)에서 아지트(D)까지 경로가 여전히 존재하는지 확인
+	{
+		AStar astar;
+		Node* startNode = new Node(static_cast<int>(std::round(spawnPoint.x)), static_cast<int>(std::round(spawnPoint.y)));
+		Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
+
+		std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
+		delete goalNode;
+
+		if (path.empty())
+		{
+			canReach = false;
+		}
+	}
+
+	// (B) 현재 맵에 살아있는(Active) 몬스터들이 있다면, 그 몬스터들도 아지트에 갈 수 있는지 확인 (갇힘 방지)
+	if (canReach)
+	{
+		for (const auto& actor : actorList)
+		{
+			if (!actor->IsActive()) continue;
+			auto enemy = Craft::Cast<Enemy>(actor);
+			if (enemy)
+			{
+				AStar astar;
+				Vector2 enemyPos = enemy->GetPosition();
+				Node* startNode = new Node(static_cast<int>(std::round(enemyPos.x)), static_cast<int>(std::round(enemyPos.y)));
+				Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
+
+				std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
+				delete goalNode;
+
+				if (path.empty())
+				{
+					canReach = false;
+					break;
+				}
+			}
+		}
+	}
+
+	// 3. 임시 설치했던 터렛을 다시 빈 바닥(0)으로 롤백(복구)
+	mapGrid[y][x] = 0;
+	mapGrid[y][x + 1] = 0;
+	mapGrid[y + 1][x] = 0;
+	mapGrid[y + 1][x + 1] = 0;
+
+	return canReach;
 }
+
+void DefenseLevel::CheckTurretMerge()
+{
+	bool hasMerged = false;
+
+	// 연쇄 합성(1성 3개 -> 2성 승급 -> 마침 2성이 3개가 되어 3성으로 연쇄 승급)을 위해 반복 검사
+	do
+	{
+		hasMerged = false;
+
+		// 1. 현재 활성화된 모든 터렛 수집 (배치된 목록 + 생성 요청 대기 목록)
+		std::vector<std::shared_ptr<Turret>> allTurrets;
+		for (const auto& actor : actorList)
+		{
+			auto turret = Craft::Cast<Turret>(actor);
+			if (turret && turret->IsActive() && !turret->HasExpired())
+			{
+				allTurrets.push_back(turret);
+			}
+		}
+		for (const auto& actor : addRequestedActorList)
+		{
+			auto turret = Craft::Cast<Turret>(actor);
+			if (turret && turret->IsActive() && !turret->HasExpired())
+			{
+				allTurrets.push_back(turret);
+			}
+		}
+
+		// 2. (타입, 성급)별로 그룹화 (3성은 이미 최고 등급이므로 1성과 2성만 대상)
+		std::map<std::pair<TurretType, int>, std::vector<std::shared_ptr<Turret>>> groups;
+
+		for (auto turret : allTurrets)
+		{
+			if (turret->GetStarTier() < 3)
+			{
+				groups[{turret->GetTurretType(), turret->GetStarTier()}].push_back(turret);
+			}
+		}
+
+		// 3. 같은 종류 & 같은 성급이 3개 이상 모인 그룹 탐색
+		for (auto& groupPair : groups)
+		{
+			auto& turretList = groupPair.second;
+			if (turretList.size() >= 3)
+			{
+				// 설치 순서(spawnOrder) 기준 오름차순 정렬 (가장 먼저 지어진 터렛이 0번 인덱스)
+				std::sort(turretList.begin(), turretList.end(), [](const std::shared_ptr<Turret>& a, const std::shared_ptr<Turret>& b) {
+					return a->GetSpawnOrder() < b->GetSpawnOrder();
+				});
+
+				// (1) 가장 먼저 지어진 1번 터렛: 성급 업그레이드! (1성 -> 2성, 또는 2성 -> 3성)
+				turretList[0]->UpgradeStar();
+
+				// (2) 나머지 2개 터렛 (1번, 2번 인덱스): 타일 4칸을 빈 땅(0)으로 복구하고 파괴
+				for (int i = 1; i <= 2; ++i)
+				{
+					Vector2 tPos = turretList[i]->GetPosition();
+					mapGrid[tPos.y][tPos.x] = 0;
+					mapGrid[tPos.y][tPos.x + 1] = 0;
+					mapGrid[tPos.y + 1][tPos.x] = 0;
+					mapGrid[tPos.y + 1][tPos.x + 1] = 0;
+
+					turretList[i]->Destroy();
+				}
+
+				// 2개의 터렛이 사라져서 길이 넓어졌으므로 몬스터 경로 재계산
+				for (auto enemy : FindActors<Enemy>())
+				{
+					if (enemy && enemy->IsActive())
+					{
+						enemy->RecalculatePath();
+					}
+				}
+
+				hasMerged = true;
+				break; // 한 번 합성했으면 상태가 바뀌었으므로 다시 루프 돌면서 연쇄 합성 확인
+			}
+		}
+	} while (hasMerged);
+}
+
 
 

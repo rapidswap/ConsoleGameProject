@@ -4,6 +4,7 @@
 #include <Math/Vector2.h>
 #include <vector>
 #include <string>
+#include <Actor/Turret.h>
 
 class DefenseLevel : public Craft::Level
 {
@@ -17,6 +18,7 @@ private:
 	Craft::Vector2 GetRealMousePos();
 	void LoadMap(const std::string& filename);
 	void GameOver();
+	void CheckTurretMerge();
 
 public:
 	void GameClear();
@@ -57,11 +59,13 @@ public:
 		return false;
 	}
 
-private:
 	// 재화 (골드)
 	int currentGold = 1000;
 	// 터렛 설치 비용
 	const int turretCost = 50;
+
+	// 다음에 설치될 터렛의 타입
+	TurretType nextTurretType = TurretType::FLAME;
 
 public:
 	Craft::Vector2 GetSpawnPoint() const { return spawnPoint; }
