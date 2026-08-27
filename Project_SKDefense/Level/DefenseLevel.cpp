@@ -265,6 +265,42 @@ void DefenseLevel::Draw()
 	Renderer::Get().Submit(previewSymbol, realMousePos, previewColor, previewSortingOrder);
 	Renderer::Get().Submit(previewSymbol, Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
 
+	// 사거리 표시 렌더링
+	float atkRange = 10.0f;
+	switch (nextTurretType)
+	{
+	case TurretType::FLAME: atkRange = 9.0f; break;
+	case TurretType::ICE:   atkRange = 12.0f; break;
+	case TurretType::STORM: atkRange = 10.0f; break;
+	}
+
+	// 중앙점 (터렛의 중심) - 스크린 좌표 기준
+	int centerScrX = realMousePos.x + 1;
+	int centerScrY = realMousePos.y; 
+	
+	// 사거리 원 테두리 그리기
+	int rangeInt = static_cast<int>(atkRange);
+	for (int y = -rangeInt; y <= rangeInt; ++y)
+	{
+		for (int x = -rangeInt; x <= rangeInt; ++x)
+		{
+			float dist = std::sqrt(static_cast<float>(x * x + y * y));
+			// 사거리의 테두리 부분(외곽선)만 그리기 위해 오차 범위를 줌 (0.5f 정도)
+			if (std::abs(dist - atkRange) <= 0.5f)
+			{
+				Vector2 rangePos(centerScrX + x, centerScrY + y);
+				// 화면 밖을 벗어나지 않게 처리
+				if (rangePos.x >= 0 && rangePos.x < screenWidth &&
+					rangePos.y >= 0 && rangePos.y < screenHeight)
+				{
+					// 배경과 겹치지 않게 어두운 색상이나 특정 문자로 렌더링
+					// 미리보기보다 바로 아래 단계인 19번 우선순위 사용
+					Renderer::Get().Submit(".", rangePos, Color::DarkGray, 19);
+				}
+			}
+		}
+	}
+
 	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
 	char debugStr[256];
 	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
