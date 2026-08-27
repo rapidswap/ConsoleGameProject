@@ -7,14 +7,64 @@
 #include <cmath>
 
 using namespace Craft;
+static int globalTurretSpawnCounter = 0;
+
 Turret::Turret(const Craft::Vector2& position)
 	: Craft::Actor("TT", position, Craft::Color::Yellow)
 {
 	// 터렛은 다른 물체 위에 그려지도록 우선순위 상향
 	sortingOrder = 10;
 
-	// 자동 공격 타이머
+	// 고유 생성 번호 부여 (먼저 지어진 터렛 식별용)
+	spawnOrder = ++globalTurretSpawnCounter;
+
+	// 랜덤 타입 결정 (0: 화염, 1: 얼음, 2: 전기)
+	turretType = static_cast<TurretType>(rand() % 3);
+	starTier = 1;
+
+	// 속성 초기화
+	UpdateStats();
+}
+
+void Turret::UpdateStats()
+{
+	// 타입 및 성급에 따른 외형, 색상, 스펙 설정
+	switch (turretType)
+	{
+	case TurretType::FLAME:
+		color = Craft::Color::Red;
+		if (starTier == 1) { displaySymbol = "FF"; atkSpeed = 1.2f; atkRange = 9.0f; }
+		else if (starTier == 2) { displaySymbol = "F+"; atkSpeed = 0.7f; atkRange = 11.5f; }
+		else { displaySymbol = "F*"; atkSpeed = 0.35f; atkRange = 14.0f; }
+		break;
+
+	case TurretType::ICE:
+		color = Craft::Color::Cyan;
+		if (starTier == 1) { displaySymbol = "II"; atkSpeed = 1.5f; atkRange = 12.0f; }
+		else if (starTier == 2) { displaySymbol = "I+"; atkSpeed = 0.9f; atkRange = 15.0f; }
+		else { displaySymbol = "I*"; atkSpeed = 0.5f; atkRange = 18.0f; }
+		break;
+
+	case TurretType::STORM:
+	default:
+		color = Craft::Color::Yellow;
+		if (starTier == 1) { displaySymbol = "TT"; atkSpeed = 1.0f; atkRange = 10.0f; }
+		else if (starTier == 2) { displaySymbol = "T+"; atkSpeed = 0.55f; atkRange = 12.5f; }
+		else { displaySymbol = "T*"; atkSpeed = 0.25f; atkRange = 15.0f; }
+		break;
+	}
+
 	autoFireInterval.SetTargetTime(atkSpeed);
+	autoFireInterval.Reset();
+}
+
+void Turret::UpgradeStar()
+{
+	if (starTier < 3)
+	{
+		starTier++;
+		UpdateStats();
+	}
 }
 
 void Turret::Draw()
@@ -33,10 +83,10 @@ void Turret::Draw()
 	}
 
 	// 2x2 크기 렌더링
-	Renderer::Get().Submit("TT", screenPos, color, sortingOrder);
+	Renderer::Get().Submit(displaySymbol, screenPos, color, sortingOrder);
 	
 	screenPos.y += 1;
-	Renderer::Get().Submit("TT", screenPos, color, sortingOrder);
+	Renderer::Get().Submit(displaySymbol, screenPos, color, sortingOrder);
 }
 
 void Turret::Tick(float deltaTime)
@@ -83,14 +133,17 @@ void Turret::Tick(float deltaTime)
 				Vector2 tPos = GetPosition();
 				Vector2 ePos = targetEnemy->GetPosition();
 
-				// 적을 향하는 기본 방향 벡터 계산
-				float baseDx = static_cast<float>(ePos.x) - tPos.x;
-				float baseDy = static_cast<float>(ePos.y) - tPos.y;
+				// 총알 생성 위치 (터렛의 중심)
+				Vector2 bulletPosition(tPos.x + (width / 2), tPos.y);
+
+				// 총알 위치에서 적을 향하는 방향 벡터 계산
+				float baseDx = static_cast<float>(ePos.x) - bulletPosition.x;
+				float baseDy = static_cast<float>(ePos.y) - bulletPosition.y;
 
 				float length = std::sqrt(baseDx * baseDx + baseDy * baseDy);
 				if (length > 0.0f)
 				{
-					// 정규화(길이를 1로 만듦)하여 방향만 추출 (유도탄 방지)
+					// 정규화(길이를 1로 만듦)하여 방향만 추출
 					baseDx /= length;
 					baseDy /= length;
 				}
@@ -100,9 +153,9 @@ void Turret::Tick(float deltaTime)
 					baseDy = -1.0f;
 				}
 
-				// 총알 생성 및 발사 (터렛의 중심에서 발사)
-				Vector2 bulletPosition(tPos.x + (width / 2), tPos.y);
-				owner->SpawnActor<TurretBullet>(bulletPosition, baseDx, baseDy);
+				// 총알 생성 및 발사
+				auto bullet = owner->SpawnActor<TurretBullet>(bulletPosition, baseDx, baseDy);
+				bullet->SetBulletRange(atkRange); // 터렛의 사거리를 총알에 적용
 
 				// 3. 발사 후 타이머 리셋
 				autoFireInterval.Reset();
@@ -110,3 +163,4 @@ void Turret::Tick(float deltaTime)
 		}
 	}
 }
+

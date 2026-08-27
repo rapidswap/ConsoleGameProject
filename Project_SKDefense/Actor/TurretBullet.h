@@ -35,6 +35,7 @@ private:
 	// 공격 사거리.
 	float bulletRange = 5.0f;
 		
-
+	// 총알 범위 설정.
+	inline void SetBulletRange(float range) { bulletRange = range; }
 };
 
