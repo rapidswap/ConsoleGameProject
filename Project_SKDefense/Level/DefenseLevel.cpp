@@ -210,38 +210,7 @@ void DefenseLevel::Draw()
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
 
-	// 아지트 체력 렌더링.
-	auto agit = FindActor<Agit>();
-	if (agit)
-	{
-		// 비율 계산.
-		float hpRatio = static_cast<float>(agit->GetHealth()) / 100;
-
-		// 체력바 문자열 만들기.
-		int barLength = 40;
-		int filledLength = static_cast<int>(hpRatio * barLength);
-
-		std::string hpBar = "Agit HP [";
-		for (int i = 0;i < barLength;++i)
-		{
-			if (i < filledLength)
-			{
-				hpBar += "=";
-			}
-			else
-			{
-				hpBar += " ";
-			}
-		}
-		hpBar += "]"
-			+ std::to_string(agit->GetHealth()) + "/" + "100";
-
-		int screenWidth = Engine::Get().GetWidth();
-		int screenHeight = Engine::Get().GetHeight();
-
-		Vector2 barPos((screenWidth - hpBar.length()) / 2, screenHeight - 2);
-		Renderer::Get().Submit(hpBar, barPos, Color::Green);
-	}
+	// 아지트 체력 렌더링 (우측 UI 패널로 이동됨)
 	// 2. 터렛 2x2 미리보기 렌더링
 	Vector2 realMousePos = GetRealMousePos();
 
@@ -309,48 +278,89 @@ void DefenseLevel::Draw()
 				{
 					// 배경과 겹치지 않게 어두운 색상이나 특정 문자로 렌더링
 					// 미리보기보다 바로 아래 단계인 19번 우선순위 사용
-					Renderer::Get().Submit("+", rangePos, Color::DarkGray, 19);
+					Renderer::Get().Submit("+", rangePos, Color::Green, 9);
 				}
 			}
 		}
 	}
 
-	// 디버그용: 현재 마우스 스크린 좌표와 월드 좌표 출력
-	char debugStr[256];
-	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
-	Renderer::Get().Submit(debugStr, Vector2(0, 0), Color::White, 100);
+	// ====== UI 패널 렌더링 (우측 화면) ======
+	int uiX = 52; // 맵이 가로 50칸이므로 그 우측에 배치
+	int uiY = 1;
+	
+	Renderer::Get().Submit("================================================================", Vector2(uiX, uiY++), Color::White, 100);
+	Renderer::Get().Submit("                          SK DEFENSE                            ", Vector2(uiX, uiY++), Color::Cyan, 100);
+	Renderer::Get().Submit("================================================================", Vector2(uiX, uiY++), Color::White, 100);
+	uiY++;
 
-	// 골드 표시
-	char goldStr[256];
-	sprintf_s(goldStr, "Gold: %d (Turret Cost: %d)", currentGold, turretCost);
-	Renderer::Get().Submit(goldStr, Vector2(0, 2), Color::Yellow, 100);
+	// 1. 아지트 체력
+	auto agit = FindActor<Agit>();
+	if (agit)
+	{
+		Renderer::Get().Submit(" [ AGIT STATUS ]", Vector2(uiX, uiY++), Color::Green, 100);
+		float hpRatio = static_cast<float>(agit->GetHealth()) / 100;
+		int barLength = 20;
+		int filledLength = static_cast<int>(hpRatio * barLength);
+		std::string hpBar = " HP: [";
+		for (int i = 0; i < barLength; ++i)
+		{
+			hpBar += (i < filledLength) ? "#" : ".";
+		}
+		hpBar += "] " + std::to_string(agit->GetHealth()) + " / 100";
+		Renderer::Get().Submit(hpBar, Vector2(uiX, uiY++), Color::Green, 100);
+	}
+	uiY++;
 
-	// 웨이브 상태 표시
+	// 2. 웨이브 상태
 	auto spawner = enemySpawner.lock();
 	if (spawner)
 	{
+		Renderer::Get().Submit(" [ WAVE INFO ]", Vector2(uiX, uiY++), Color::Yellow, 100);
 		char waveStr[256];
 		if (spawner->IsWaveActive())
 		{
-			sprintf_s(waveStr, "Wave %d : In Progress!", spawner->GetCurrentWave());
-			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Red, 100);
+			sprintf_s(waveStr, " Wave %d : In Progress!", spawner->GetCurrentWave());
+			Renderer::Get().Submit(waveStr, Vector2(uiX, uiY++), Color::Red, 100);
 		}
 		else
 		{
 			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
-			int minutes = remainTime / 60;
-			int seconds = remainTime % 60;
-
-			sprintf_s(waveStr, "Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), minutes, seconds);
-			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Yellow, 100);
+			sprintf_s(waveStr, " Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), remainTime / 60, remainTime % 60);
+			Renderer::Get().Submit(waveStr, Vector2(uiX, uiY++), Color::Yellow, 100);
 		}
 	}
+	uiY++;
 
-	// 업그레이드 상태 표시
-	char upgStr[256];
-	sprintf_s(upgStr, "Upg(100G) - [Z]Flame:+%d | [X]Ice:+%d | [C]Storm:+%d", 
-		Turret::upgradeLevelFlame, Turret::upgradeLevelIce, Turret::upgradeLevelStorm);
-	Renderer::Get().Submit(upgStr, Vector2(0, 3), Color::White, 100);
+	// 3. 자원 (골드)
+	Renderer::Get().Submit(" [ RESOURCE ]", Vector2(uiX, uiY++), Color::Yellow, 100);
+	char goldStr[256];
+	sprintf_s(goldStr, " Gold: %d G  (Turret Cost: %d G)", currentGold, turretCost);
+	Renderer::Get().Submit(goldStr, Vector2(uiX, uiY++), Color::Yellow, 100);
+	uiY++;
+
+	// 4. 업그레이드 상태
+	Renderer::Get().Submit(" [ UPGRADE STATUS (Cost: 100G) ]", Vector2(uiX, uiY++), Color::White, 100);
+	char upgFlameStr[256], upgIceStr[256], upgStormStr[256];
+	sprintf_s(upgFlameStr, "  [Z] 화염 (Flame) : +%d", Turret::upgradeLevelFlame);
+	sprintf_s(upgIceStr,   "  [X] 얼음 (Ice)   : +%d", Turret::upgradeLevelIce);
+	sprintf_s(upgStormStr, "  [C] 전기 (Storm) : +%d", Turret::upgradeLevelStorm);
+	
+	Renderer::Get().Submit(upgFlameStr, Vector2(uiX, uiY++), Color::Red, 100);
+	Renderer::Get().Submit(upgIceStr,   Vector2(uiX, uiY++), Color::Cyan, 100);
+	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 100);
+
+	// 5. 하단 6칸 컨트롤 패널
+	int panelY = 22; // 콘솔 높이가 30이므로 하단 쪽에 배치
+	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
+	Renderer::Get().Submit(" [F12] 게임 설명       | [T] 골드 도박       | [R] 랜덤 강화    ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("----------------------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
+	Renderer::Get().Submit(" [Z] 화염 터렛 강화    | [X] 얼음 터렛 강화  | [C] 전기 터렛 강화", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
+	
+	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)
+	char debugStr[256];
+	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
+	Renderer::Get().Submit(debugStr, Vector2(uiX, 28), Color::DarkGray, 100);
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()
