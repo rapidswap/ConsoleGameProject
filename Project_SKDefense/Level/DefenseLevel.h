@@ -24,6 +24,9 @@ private:
 	void HandleCameraInput();
 	void HandleMouseInput();
 	void HandleUIInput();
+	
+	void RandomUpgrade();
+	void Gamble();
 
 public:
 	void GameClear();
@@ -31,6 +34,11 @@ public:
 private:
 	int mapWidth = 0;
 	int mapHeight = 0;
+
+	bool isGambling = false;
+	float gambleTimer = 0.0f;
+	int gambleResults[3] = {0, 0, 0};
+	void DrawGambleAnimation();
 
 	// 맵 데이터 (0: 빈공간/바닥, 1: 벽, 2: 터렛, 3: 아지트)
 	std::vector<std::vector<int>> mapGrid;
@@ -49,6 +57,7 @@ public:
 	Craft::Vector2 GetTargetPoint() const { return targetPoint; }
 	const std::vector<std::vector<int>>& GetMapGrid() const { return mapGrid; }
 	std::vector<std::vector<int>>& GetMapGrid() { return mapGrid; }
+
 
 	// 골드 시스템 접근용
 	int GetTurretCost() const { return turretCost; }

@@ -47,6 +47,20 @@ void DefenseLevel::OnInitialized()
 
 void DefenseLevel::Tick(float deltaTime)
 {
+	// 도박 진행 중이면 게임 정지 (Pause) 상태로 애니메이션만 처리
+	if (isGambling)
+	{
+		gambleTimer += deltaTime;
+		// 5초가 지나면 팝업 닫고 보상 지급
+		if (gambleTimer >= 5.0f)
+		{
+			int reward = 10 * gambleResults[0] * gambleResults[1] * gambleResults[2];
+			AddGold(reward);
+			isGambling = false;
+		}
+		return; // 아래 게임 로직 무시
+	}
+
 	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
 	Level::Tick(deltaTime);
 
@@ -194,7 +208,14 @@ void DefenseLevel::HandleUIInput()
 			RandomUpgrade();
 		}
 	}
+
+	if (Input::Get().GetKeyDown('T'))
+	{
+		Gamble();
+	}
 }
+
+
 
 void DefenseLevel::RandomUpgrade()
 {
@@ -213,6 +234,62 @@ void DefenseLevel::RandomUpgrade()
 	case 3:
 		Turret::upgradeLevelStorm++;
 		break;
+	}
+}
+
+void DefenseLevel::Gamble()
+{
+	if (isGambling) return; // 이미 진행 중이면 무시
+	if (!SpendGold(50)) return; // 참가비 50골드
+
+	isGambling = true;
+	gambleTimer = 0.0f;
+	
+	// 난수 3개 미리 생성
+	for (int i = 0; i < 3; ++i)
+	{
+		gambleResults[i] = Util::RandomRange(1, 6);
+	}
+}
+
+void DefenseLevel::DrawGambleAnimation()
+{
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	
+	// 화면 중앙 좌표
+	int cx = screenWidth / 2;
+	int cy = screenHeight / 2;
+	
+	// 검은색 반투명(또는 단색) 팝업 배경
+	for(int y = cy - 5; y <= cy + 5; ++y)
+	{
+		Renderer::Get().Submit("                                        ", Vector2(cx - 20, y), Color::Black, 150);
+	}
+	
+	// 테두리
+	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy - 5), Color::Yellow, 151);
+	Renderer::Get().Submit("            SLOT MACHINE                ", Vector2(cx - 20, cy - 3), Color::White, 151);
+	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy + 5), Color::Yellow, 151);
+
+	// 주사위 3개 그리기
+	char slotStr[256];
+	
+	// 시간에 따라 첫 번째, 두 번째, 세 번째 숫자를 공개
+	// (0~1초: 전부 ?, 1~2초: 1개 공개, 2~3초: 2개 공개, 3초 이상: 3개 공개)
+	const char* s1 = (gambleTimer > 1.0f) ? std::to_string(gambleResults[0]).c_str() : "?";
+	const char* s2 = (gambleTimer > 2.0f) ? std::to_string(gambleResults[1]).c_str() : "?";
+	const char* s3 = (gambleTimer > 3.0f) ? std::to_string(gambleResults[2]).c_str() : "?";
+	
+	sprintf_s(slotStr, "    [ %s ]      [ %s ]      [ %s ]    ", s1, s2, s3);
+	Renderer::Get().Submit(slotStr, Vector2(cx - 20, cy), Color::Cyan, 151);
+
+	if (gambleTimer > 4.0f) // 4초가 넘어가면 결과 출력
+	{
+		int reward = 10 * gambleResults[0] * gambleResults[1] * gambleResults[2];
+		char resultStr[256];
+		sprintf_s(resultStr, "      WINNER! +%d GOLD!      ", reward);
+		Renderer::Get().Submit(resultStr, Vector2(cx - 20, cy + 3), Color::Green, 151);
 	}
 }
 
@@ -381,6 +458,12 @@ void DefenseLevel::Draw()
 	char debugStr[256];
 	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
 	Renderer::Get().Submit(debugStr, Vector2(uiX, 28), Color::DarkGray, 100);
+
+	// 도박(Gamble) 진행 중이면 팝업창(애니메이션) 띄우기
+	if (isGambling)
+	{
+		DrawGambleAnimation();
+	}
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()
