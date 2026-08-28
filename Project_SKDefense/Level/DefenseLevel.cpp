@@ -49,12 +49,37 @@ void DefenseLevel::Tick(float deltaTime)
 	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
 	Level::Tick(deltaTime);
 
-	// 입력 처리(위/아래 방향키, 엔터, ESC 키).
+	// 게임 오버 체크
+	auto agit = FindActor<Agit>();
+	if (agit && agit->GetHealth() <= 0)
+	{
+		GameOver();
+		return;
+	}
+
+	// 기능별 입력 처리 분리
+	HandleCameraInput();
+	HandleMouseInput();
+	HandleUIInput();
+
+#ifdef _DEBUG
+	// 치트/디버그용 단축키 처리
+	if (Input::Get().GetKeyDown(VK_F2)) GameClear();
+	if (Input::Get().GetKeyDown('G')) AddGold(1000);
+	if (Input::Get().GetKeyDown(VK_F1))
+	{
+		auto spawner = enemySpawner.lock();
+		if (spawner) spawner->SkipWave();
+	}
+#endif
+}
+
+void DefenseLevel::HandleCameraInput()
+{
 	if (Input::Get().GetKeyDown(VK_ESCAPE))
 	{
 		Game& game = dynamic_cast<Game&>(Engine::Get());
 		game.ToggleMenu(State::ESCMENU);
-
 	}
 
 	// WASD 카메라 이동 로직 (제한 없이 자유롭게 이동).
@@ -62,10 +87,13 @@ void DefenseLevel::Tick(float deltaTime)
 	if (Input::Get().GetKey('S')) cameraPosition.y += 1;
 	if (Input::Get().GetKey('A')) cameraPosition.x -= 1;
 	if (Input::Get().GetKey('D')) cameraPosition.x += 1;
+}
 
+void DefenseLevel::HandleMouseInput()
+{
 	Vector2 realMousePos = GetRealMousePos();
 
-	// 마우스 클릭 시 터렛 설치 (빠른 클릭 누락 방지를 위해 GetAsyncKeyState 사용)
+	// 좌클릭: 터렛 설치
 	static bool wasLButtonDown = false;
 	bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 
@@ -74,46 +102,32 @@ void DefenseLevel::Tick(float deltaTime)
 		int screenWidth = Engine::Get().GetWidth();
 		int screenHeight = Engine::Get().GetHeight();
 
-		// 화면 좌표를 월드 좌표로 변환
 		Vector2 worldPos;
 		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-		// 설치 가능 여부 및 골드 검사
-		if (CanBuildTurret(worldPos.x, worldPos.y))
+		if (CanBuildTurret(worldPos.x, worldPos.y) && SpendGold(turretCost))
 		{
-			if (SpendGold(turretCost))
+			SpawnActor<Turret>(worldPos, nextTurretType);
+			nextTurretType = static_cast<TurretType>(rand() % 3);
+
+			mapGrid[worldPos.y][worldPos.x] = 2;
+			mapGrid[worldPos.y][worldPos.x + 1] = 2;
+			mapGrid[worldPos.y + 1][worldPos.x] = 2;
+			mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+
+			CheckTurretMerge();
+
+			for (const auto& actor : actorList)
 			{
-				SpawnActor<Turret>(worldPos, nextTurretType);
-
-				// 설치 후 다음 터렛 타입 랜덤 변경
-				nextTurretType = static_cast<TurretType>(rand() % 3);
-
-				// 설치된 타일을 터렛(2)으로 마킹하여 이후 겹쳐 짓기나 적의 이동을 차단
-				mapGrid[worldPos.y][worldPos.x] = 2;
-				mapGrid[worldPos.y][worldPos.x + 1] = 2;
-				mapGrid[worldPos.y + 1][worldPos.x] = 2;
-				mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
-
-				// 3개 이상 모였는지 자동 3-Merge 검사 및 승급!
-				CheckTurretMerge();
-
-				// 맵이 변경되었으므로 모든 적들에게 경로 재탐색 지시
-				for (const std::shared_ptr<Actor>& actor : actorList)
-				{
-					if (!actor->IsActive()) continue;
-
-					auto enemy = Craft::Cast<Enemy>(actor);
-					if (enemy)
-					{
-						enemy->RecalculatePath();
-					}
-				}
+				if (!actor->IsActive()) continue;
+				if (auto enemy = Craft::Cast<Enemy>(actor)) enemy->RecalculatePath();
 			}
 		}
 	}
 	wasLButtonDown = isLButtonDown;
 
+	// 우클릭: 터렛 판매
 	static bool wasRButtonDown = false;
 	bool isRButtonDown = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
 
@@ -126,28 +140,22 @@ void DefenseLevel::Tick(float deltaTime)
 		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-		
 		for (auto turret : FindActors<Turret>())
 		{
 			Vector2 tPos = turret->GetPosition();
 			if (worldPos.x >= tPos.x && worldPos.x <= tPos.x + 1 &&
 				worldPos.y >= tPos.y && worldPos.y <= tPos.y + 1)
 			{
-				// 3. 맵 그리드 4칸을 다시 빈 땅(0)으로 복구
 				mapGrid[tPos.y][tPos.x] = 0;
 				mapGrid[tPos.y][tPos.x + 1] = 0;
 				mapGrid[tPos.y + 1][tPos.x] = 0;
 				mapGrid[tPos.y + 1][tPos.x + 1] = 0;
 
-				// 4. 골드 환불 (성급에 비례하여 환불: 1성 25G, 2성 75G, 3성 225G)
-				int refundMultiplier = 1;
-				if (turret->GetStarTier() == 2) refundMultiplier = 3;
-				else if (turret->GetStarTier() == 3) refundMultiplier = 9;
+				int refundMultiplier = (turret->GetStarTier() == 3) ? 9 : (turret->GetStarTier() == 2) ? 3 : 1;
 				AddGold((turretCost / 2) * refundMultiplier);
 
-				// 5. 터렛 삭제
 				turret->Destroy();
-				// 6. 길이 뚫렸으므로 몬스터 경로 재계산
+
 				for (auto enemy : FindActors<Enemy>())
 				{
 					if (enemy->IsActive()) enemy->RecalculatePath();
@@ -157,13 +165,10 @@ void DefenseLevel::Tick(float deltaTime)
 		}
 	}
 	wasRButtonDown = isRButtonDown;
+}
 
-	// 치트키: G 키를 누르면 1000 골드 추가
-	if (Input::Get().GetKeyDown('G'))
-	{
-		AddGold(1000);
-	}
-
+void DefenseLevel::HandleUIInput()
+{
 	// 단축키 Z, X, C로 속성별 업그레이드 진행 (비용: 100골드)
 	if (Input::Get().GetKeyDown('Z'))
 	{
@@ -177,34 +182,8 @@ void DefenseLevel::Tick(float deltaTime)
 	{
 		if (SpendGold(100)) Turret::upgradeLevelStorm++;
 	}
-
-	// 치트/디버그용: F2 키를 누르면 게임 클리어 판정.
-	if (Input::Get().GetKeyDown(VK_F2))
-	{
-		GameClear();
-	}
 	
-
-
-	// 치트/디버그용: F1 키를 누르면 다음 웨이브 즉시 시작
-
-	if (Input::Get().GetKeyDown(VK_F1))
-	{
-		auto spawner = enemySpawner.lock();
-		if (spawner)
-		{
-			spawner->SkipWave();
-		}
-	}
-
-	auto agit = FindActor<Agit>();
-	if (agit)
-	{
-		if (agit->GetHealth() <= 0)
-		{
-			GameOver();
-		}
-	}
+	// 랜덤 업그레이드 및 골드 도박 기능 추가 예정
 }
 
 void DefenseLevel::Draw()

@@ -20,6 +20,11 @@ private:
 	void GameOver();
 	void CheckTurretMerge();
 
+	// Tick 함수 정리를 위한 입력 처리 분리
+	void HandleCameraInput();
+	void HandleMouseInput();
+	void HandleUIInput();
+
 public:
 	void GameClear();
 
