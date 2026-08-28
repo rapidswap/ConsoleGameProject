@@ -289,6 +289,32 @@ void DefenseLevel::Draw()
 
 	// ====== UI 패널 렌더링 (우측 화면) ======
 	int uiX = 52; // 맵이 가로 50칸이므로 그 우측에 배치
+	
+	// UI 영역 전체를 검은색 배경(공백)으로 덮어서 맵이 관통되어 보이지 않게 처리
+	std::string blackCover(68, ' ');
+	for (int i = 0; i < screenHeight; ++i)
+	{
+		Renderer::Get().Submit(blackCover, Vector2(uiX, i), Color::Black, 90);
+	}
+
+	// [ WAVE INFO ] : 좌측 상단(맵 위)으로 이동
+	auto spawner = enemySpawner.lock();
+	if (spawner)
+	{
+		char waveStr[256];
+		if (spawner->IsWaveActive())
+		{
+			sprintf_s(waveStr, " Wave %d : In Progress! ", spawner->GetCurrentWave());
+			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Red, 100);
+		}
+		else
+		{
+			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
+			sprintf_s(waveStr, " Next Wave %d in: %d:%02d ", spawner->GetCurrentWave(), remainTime / 60, remainTime % 60);
+			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Yellow, 100);
+		}
+	}
+
 	int uiY = 1;
 	
 	Renderer::Get().Submit("================================================================", Vector2(uiX, uiY++), Color::White, 100);
@@ -311,26 +337,6 @@ void DefenseLevel::Draw()
 		}
 		hpBar += "] " + std::to_string(agit->GetHealth()) + " / 100";
 		Renderer::Get().Submit(hpBar, Vector2(uiX, uiY++), Color::Green, 100);
-	}
-	uiY++;
-
-	// 2. 웨이브 상태
-	auto spawner = enemySpawner.lock();
-	if (spawner)
-	{
-		Renderer::Get().Submit(" [ WAVE INFO ]", Vector2(uiX, uiY++), Color::Yellow, 100);
-		char waveStr[256];
-		if (spawner->IsWaveActive())
-		{
-			sprintf_s(waveStr, " Wave %d : In Progress!", spawner->GetCurrentWave());
-			Renderer::Get().Submit(waveStr, Vector2(uiX, uiY++), Color::Red, 100);
-		}
-		else
-		{
-			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
-			sprintf_s(waveStr, " Next Wave %d in: %d:%02d", spawner->GetCurrentWave(), remainTime / 60, remainTime % 60);
-			Renderer::Get().Submit(waveStr, Vector2(uiX, uiY++), Color::Yellow, 100);
-		}
 	}
 	uiY++;
 
