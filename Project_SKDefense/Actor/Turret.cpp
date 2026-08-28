@@ -9,6 +9,11 @@
 using namespace Craft;
 static int globalTurretSpawnCounter = 0;
 
+// static 멤버 변수 초기화
+int Turret::upgradeLevelFlame = 0;
+int Turret::upgradeLevelIce = 0;
+int Turret::upgradeLevelStorm = 0;
+
 Turret::Turret(const Craft::Vector2& position, TurretType type)
 	: Craft::Actor("TT", position, Craft::Color::Yellow)
 {
@@ -156,7 +161,14 @@ void Turret::Tick(float deltaTime)
 				// 총알 생성 및 발사
 				auto bullet = owner->SpawnActor<TurretBullet>(bulletPosition, baseDx, baseDy);
 				bullet->SetBulletRange(atkRange); // 터렛의 사거리를 총알에 적용
-				bullet->SetBulletDamage(static_cast<float>(starTier)); // 성급에 비례한 데미지 적용
+
+				// 기본 데미지(성급) + 터렛 속성별 업그레이드 수치 합산
+				float finalDamage = static_cast<float>(starTier);
+				if (turretType == TurretType::FLAME) finalDamage += upgradeLevelFlame;
+				else if (turretType == TurretType::ICE) finalDamage += upgradeLevelIce;
+				else if (turretType == TurretType::STORM) finalDamage += upgradeLevelStorm;
+				
+				bullet->SetBulletDamage(finalDamage);
 
 				// 3. 발사 후 타이머 리셋
 				autoFireInterval.Reset();

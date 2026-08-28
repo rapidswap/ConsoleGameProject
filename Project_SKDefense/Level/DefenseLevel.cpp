@@ -161,6 +161,20 @@ void DefenseLevel::Tick(float deltaTime)
 		AddGold(1000);
 	}
 
+	// 단축키 Z, X, C로 속성별 업그레이드 진행 (비용: 100골드)
+	if (Input::Get().GetKeyDown('Z'))
+	{
+		if (SpendGold(100)) Turret::upgradeLevelFlame++;
+	}
+	if (Input::Get().GetKeyDown('X'))
+	{
+		if (SpendGold(100)) Turret::upgradeLevelIce++;
+	}
+	if (Input::Get().GetKeyDown('C'))
+	{
+		if (SpendGold(100)) Turret::upgradeLevelStorm++;
+	}
+
 	// 치트/디버그용: F2 키를 누르면 게임 클리어 판정.
 	if (Input::Get().GetKeyDown(VK_F2))
 	{
@@ -331,6 +345,12 @@ void DefenseLevel::Draw()
 			Renderer::Get().Submit(waveStr, Vector2(0, 1), Color::Yellow, 100);
 		}
 	}
+
+	// 업그레이드 상태 표시
+	char upgStr[256];
+	sprintf_s(upgStr, "Upg(100G) - [Z]Flame:+%d | [X]Ice:+%d | [C]Storm:+%d", 
+		Turret::upgradeLevelFlame, Turret::upgradeLevelIce, Turret::upgradeLevelStorm);
+	Renderer::Get().Submit(upgStr, Vector2(0, 3), Color::White, 100);
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()

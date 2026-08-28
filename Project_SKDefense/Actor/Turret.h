@@ -22,6 +22,11 @@ public:
 	// 성급 업그레이드 (1성 -> 2성 -> 3성)
 	void UpgradeStar();
 
+	// 전역(공통) 속성별 업그레이드 수치 (static)
+	static int upgradeLevelFlame;
+	static int upgradeLevelIce;
+	static int upgradeLevelStorm;
+
 	// Getter
 	TurretType GetTurretType() const { return turretType; }
 	int GetStarTier() const { return starTier; }
