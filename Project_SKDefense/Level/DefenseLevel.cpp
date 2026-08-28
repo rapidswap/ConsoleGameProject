@@ -288,10 +288,10 @@ void DefenseLevel::Draw()
 	}
 
 	// ====== UI 패널 렌더링 (우측 화면) ======
-	int uiX = 52; // 맵이 가로 50칸이므로 그 우측에 배치
+	int uiX = 65; // 맵(50) 우측에 15칸 여백을 두고 홀쭉하게 배치
 	
 	// UI 영역 전체를 검은색 배경(공백)으로 덮어서 맵이 관통되어 보이지 않게 처리
-	std::string blackCover(68, ' ');
+	std::string blackCover(55, ' ');
 	for (int i = 0; i < screenHeight; ++i)
 	{
 		Renderer::Get().Submit(blackCover, Vector2(uiX, i), Color::Black, 90);
@@ -317,9 +317,9 @@ void DefenseLevel::Draw()
 
 	int uiY = 1;
 	
-	Renderer::Get().Submit("================================================================", Vector2(uiX, uiY++), Color::White, 100);
-	Renderer::Get().Submit("                          SK DEFENSE                            ", Vector2(uiX, uiY++), Color::Cyan, 100);
-	Renderer::Get().Submit("================================================================", Vector2(uiX, uiY++), Color::White, 100);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 100);
+	Renderer::Get().Submit("                    SK DEFENSE                    ", Vector2(uiX, uiY++), Color::Cyan, 100);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 100);
 	uiY++;
 
 	// 1. 아지트 체력
@@ -343,7 +343,7 @@ void DefenseLevel::Draw()
 	// 3. 자원 (골드)
 	Renderer::Get().Submit(" [ RESOURCE ]", Vector2(uiX, uiY++), Color::Yellow, 100);
 	char goldStr[256];
-	sprintf_s(goldStr, " Gold: %d G  (Turret Cost: %d G)", currentGold, turretCost);
+	sprintf_s(goldStr, " Gold: %d G  (Turret: %d G)", currentGold, turretCost);
 	Renderer::Get().Submit(goldStr, Vector2(uiX, uiY++), Color::Yellow, 100);
 	uiY++;
 
@@ -360,11 +360,11 @@ void DefenseLevel::Draw()
 
 	// 5. 하단 6칸 컨트롤 패널
 	int panelY = 22; // 콘솔 높이가 30이므로 하단 쪽에 배치
-	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
-	Renderer::Get().Submit(" [F12] Game Info       | [T] Gold Gamble     | [R] Random Upg   ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("----------------------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
-	Renderer::Get().Submit(" [Z] Upgrade Flame     | [X] Upgrade Ice     | [C] Upgrade Storm", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
+	Renderer::Get().Submit(" [F12] Info   | [T] Gamble   | [R] Random Upg   ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("--------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
+	Renderer::Get().Submit(" [Z] Upg Flame| [X] Upg Ice  | [C] Upg Storm    ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
 	
 	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)
 	char debugStr[256];
