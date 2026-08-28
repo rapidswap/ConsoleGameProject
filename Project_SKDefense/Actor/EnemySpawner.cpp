@@ -118,9 +118,9 @@ void EnemySpawner::SpawnEnemy()
 		auto enemy = weakEnemy.lock();
 		if (enemy && !enemy->IsActive())
 		{
-			// 찾았다면! 다시 깨워서 출발선에 세움
-			// 웨이브가 오를 때마다 몬스터 체력 증가 (기본 1 * 웨이브 수)
-			enemy->SetHealth(1.0f * currentWave);
+			// 찾았다면 다시 깨워서 출발선에 세움
+			// 웨이브가 오를 때마다 몬스터 체력 증가 
+			enemy->SetHealth(3.0f * currentWave);
 			
 			enemy->SetPosition(defenseLevel->GetSpawnPoint());
 			enemy->SetActive(true);

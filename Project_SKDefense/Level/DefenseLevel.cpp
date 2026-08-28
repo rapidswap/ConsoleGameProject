@@ -240,7 +240,7 @@ void DefenseLevel::RandomUpgrade()
 void DefenseLevel::Gamble()
 {
 	if (isGambling) return; // 이미 진행 중이면 무시
-	if (!SpendGold(50)) return; // 참가비 50골드
+	if (!SpendGold(300)) return; // 참가비 50골드
 
 	isGambling = true;
 	gambleTimer = 0.0f;
@@ -445,13 +445,15 @@ void DefenseLevel::Draw()
 	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 100);
 
 	// 5. 하단 6칸 컨트롤 패널
-	int panelY = 20; // 두 줄씩 들어가므로 시작 위치를 약간 위로 올림
+	int panelY = 18; // 두 줄씩 들어가므로 시작 위치를 약간 위로 올림
 	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
 	Renderer::Get().Submit("   [   F12   ]  |   [    T    ]  |   [    R    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("   [Game Info]  |   [ Gamble  ]  |   [RandomUpg]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [Game Rule]  |   [ Gamble  ]  |   [RandomUpg]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [---------]  |   [   300G  ]  |   [   80G   ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("--------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
 	Renderer::Get().Submit("   [    Z    ]  |   [    X    ]  |   [    C    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("   [Upg Flame]  |   [ Upg Ice ]  |   [Upg Storm]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [   100G  ]  |   [   100G  ]  |   [   100G  ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
 	
 	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)

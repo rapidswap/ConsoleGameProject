@@ -9,13 +9,14 @@ class TurretBullet: public Craft::Actor
 
 public:
 	TurretBullet(const Craft::Vector2& position, float dirX, float dirY);
+
+	// Getter.
+	inline float GetBulletDamage() { return bulletDamage; }
+
 	// 총알 범위 설정.
 	inline void SetBulletRange(float range) { bulletRange = range; }
-
-	// 총알 데미지 설정 및 가져오기
-	inline void SetBulletDamage(float dmg) { bulletDamage = dmg; }
-	inline float GetBulletDamage() const { return bulletDamage; }
-
+	
+	inline void SetBulletDamage(float damage) { bulletDamage = damage; }
 private:
 	// 이벤트 함수 오버라이딩.
 	virtual void Tick(float deltaTime) override;
