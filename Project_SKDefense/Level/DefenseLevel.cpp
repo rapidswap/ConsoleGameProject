@@ -30,8 +30,11 @@ void DefenseLevel::OnInitialized()
 	// 파일을 읽어서 맵 로드 (mapWidth, mapHeight가 계산됨).
 	LoadMap("SK_Defense_Map.txt");
 
-	// 카메라를 맵의 정중앙에 위치시킴.
-	cameraPosition = Vector2(mapWidth / 2, mapHeight / 2);
+	// 카메라를 화면 정중앙 좌표로 맞추어, 맵(0,0)이 화면 좌측 상단(0,0)에 오도록 설정.
+	// (기존에는 mapWidth/2 여서 맵이 화면 정중앙에 렌더링되어 우측 UI와 겹치는 문제가 있었음)
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	cameraPosition = Vector2(screenWidth / 2, screenHeight / 2);
 
 	// 적 생성기 액터 추가.
 	enemySpawner = SpawnActor<EnemySpawner>();
@@ -341,9 +344,9 @@ void DefenseLevel::Draw()
 	// 4. 업그레이드 상태
 	Renderer::Get().Submit(" [ UPGRADE STATUS (Cost: 100G) ]", Vector2(uiX, uiY++), Color::White, 100);
 	char upgFlameStr[256], upgIceStr[256], upgStormStr[256];
-	sprintf_s(upgFlameStr, "  [Z] 화염 (Flame) : +%d", Turret::upgradeLevelFlame);
-	sprintf_s(upgIceStr,   "  [X] 얼음 (Ice)   : +%d", Turret::upgradeLevelIce);
-	sprintf_s(upgStormStr, "  [C] 전기 (Storm) : +%d", Turret::upgradeLevelStorm);
+	sprintf_s(upgFlameStr, "  [Z] Flame Upgrade : +%d", Turret::upgradeLevelFlame);
+	sprintf_s(upgIceStr,   "  [X] Ice Upgrade   : +%d", Turret::upgradeLevelIce);
+	sprintf_s(upgStormStr, "  [C] Storm Upgrade : +%d", Turret::upgradeLevelStorm);
 	
 	Renderer::Get().Submit(upgFlameStr, Vector2(uiX, uiY++), Color::Red, 100);
 	Renderer::Get().Submit(upgIceStr,   Vector2(uiX, uiY++), Color::Cyan, 100);
@@ -352,9 +355,9 @@ void DefenseLevel::Draw()
 	// 5. 하단 6칸 컨트롤 패널
 	int panelY = 22; // 콘솔 높이가 30이므로 하단 쪽에 배치
 	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
-	Renderer::Get().Submit(" [F12] 게임 설명       | [T] 골드 도박       | [R] 랜덤 강화    ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit(" [F12] Game Info       | [T] Gold Gamble     | [R] Random Upg   ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("----------------------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
-	Renderer::Get().Submit(" [Z] 화염 터렛 강화    | [X] 얼음 터렛 강화  | [C] 전기 터렛 강화", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit(" [Z] Upgrade Flame     | [X] Upgrade Ice     | [C] Upgrade Storm", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("================================================================", Vector2(uiX, panelY++), Color::White, 100);
 	
 	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)
