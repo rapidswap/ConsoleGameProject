@@ -276,12 +276,12 @@ void DefenseLevel::DrawGambleAnimation()
 	char slotStr[256];
 	
 	// 시간에 따라 첫 번째, 두 번째, 세 번째 숫자를 공개
-	// (0~1초: 전부 ?, 1~2초: 1개 공개, 2~3초: 2개 공개, 3초 이상: 3개 공개)
-	const char* s1 = (gambleTimer > 1.0f) ? std::to_string(gambleResults[0]).c_str() : "?";
-	const char* s2 = (gambleTimer > 2.0f) ? std::to_string(gambleResults[1]).c_str() : "?";
-	const char* s3 = (gambleTimer > 3.0f) ? std::to_string(gambleResults[2]).c_str() : "?";
+	// (임시 객체 소멸 방지를 위해 std::string 변수에 할당)
+	std::string s1 = (gambleTimer > 1.0f) ? std::to_string(gambleResults[0]) : "?";
+	std::string s2 = (gambleTimer > 2.0f) ? std::to_string(gambleResults[1]) : "?";
+	std::string s3 = (gambleTimer > 3.0f) ? std::to_string(gambleResults[2]) : "?";
 	
-	sprintf_s(slotStr, "    [ %s ]      [ %s ]      [ %s ]    ", s1, s2, s3);
+	sprintf_s(slotStr, "    [ %s ]      [ %s ]      [ %s ]    ", s1.c_str(), s2.c_str(), s3.c_str());
 	Renderer::Get().Submit(slotStr, Vector2(cx - 20, cy), Color::Cyan, 151);
 
 	if (gambleTimer > 4.0f) // 4초가 넘어가면 결과 출력
