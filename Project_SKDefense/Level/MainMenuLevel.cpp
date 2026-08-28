@@ -12,6 +12,8 @@ void MainMenuLevel::Tick(float deltaTime)
 	if (Input::Get().GetKeyDown(VK_RETURN))
 	{
 		Game& game = dynamic_cast<Game&>(Engine::Get());
+		// 이전 게임의 잔재(클리어 판정 등)를 없애기 위해 레벨을 리셋 후 시작
+		game.RestartDefenseLevel();
 		game.ToggleMenu(State::GAMEPLAY);
 	}
 
