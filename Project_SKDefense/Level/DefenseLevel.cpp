@@ -11,6 +11,7 @@
 #include <Actor/EnemySpawner.h>
 #include <Actor/Agit.h>
 #include <Util/Timer.h>
+#include <Util/Util.h>
 #include <Algorithm/AStar.h>
 #include <Algorithm/Node.h>
 #include <fstream>
@@ -61,6 +62,8 @@ void DefenseLevel::Tick(float deltaTime)
 	HandleCameraInput();
 	HandleMouseInput();
 	HandleUIInput();
+
+	if (Input::Get().GetKeyDown('R')) RandomUpgrade();
 
 #ifdef _DEBUG
 	// 치트/디버그용 단축키 처리
@@ -183,7 +186,34 @@ void DefenseLevel::HandleUIInput()
 		if (SpendGold(100)) Turret::upgradeLevelStorm++;
 	}
 	
-	// 랜덤 업그레이드 및 골드 도박 기능 추가 예정
+	// 랜덤 업그레이드 기능 (비용: 80골드 - 랜덤이라 조금 더 저렴하게 설정해봤습니다!)
+	if (Input::Get().GetKeyDown('R'))
+	{
+		if (SpendGold(80)) 
+		{
+			RandomUpgrade();
+		}
+	}
+}
+
+void DefenseLevel::RandomUpgrade()
+{
+	int random = Util::RandomRange(1, 3);
+	
+	switch(random)
+	{
+	case 1:
+		Turret::upgradeLevelFlame++;
+		break;
+
+	case 2:
+		Turret::upgradeLevelIce++;
+		break;
+
+	case 3:
+		Turret::upgradeLevelStorm++;
+		break;
+	}
 }
 
 void DefenseLevel::Draw()
