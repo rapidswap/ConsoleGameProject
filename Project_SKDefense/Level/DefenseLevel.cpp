@@ -359,11 +359,13 @@ void DefenseLevel::Draw()
 	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 100);
 
 	// 5. 하단 6칸 컨트롤 패널
-	int panelY = 22; // 콘솔 높이가 30이므로 하단 쪽에 배치
+	int panelY = 20; // 두 줄씩 들어가므로 시작 위치를 약간 위로 올림
 	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
-	Renderer::Get().Submit(" [F12] Info   | [T] Gamble   | [R] Random Upg   ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [   F12   ]  |   [    T    ]  |   [    R    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [Game Info]  |   [ Gamble  ]  |   [RandomUpg]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("--------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
-	Renderer::Get().Submit(" [Z] Upg Flame| [X] Upg Ice  | [C] Upg Storm    ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [    Z    ]  |   [    X    ]  |   [    C    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
+	Renderer::Get().Submit("   [Upg Flame]  |   [ Upg Ice ]  |   [Upg Storm]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
 	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
 	
 	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)
