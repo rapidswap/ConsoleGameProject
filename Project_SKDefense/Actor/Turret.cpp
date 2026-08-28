@@ -33,24 +33,24 @@ void Turret::UpdateStats()
 	{
 	case TurretType::FLAME:
 		color = Craft::Color::Red;
-		if (starTier == 1) { displaySymbol = "FF"; atkSpeed = 1.2f; atkRange = 9.0f; }
-		else if (starTier == 2) { displaySymbol = "F+"; atkSpeed = 0.7f; atkRange = 11.5f; }
-		else { displaySymbol = "F*"; atkSpeed = 0.35f; atkRange = 14.0f; }
+		if (starTier == 1) { displaySymbol = "FF"; atkSpeed = 1.2f; atkRange = 3.0f; }
+		else if (starTier == 2) { displaySymbol = "F+"; atkSpeed = 0.7f; atkRange = 4.5f; }
+		else { displaySymbol = "F*"; atkSpeed = 0.35f; atkRange = 6.0f; }
 		break;
 
 	case TurretType::ICE:
 		color = Craft::Color::Cyan;
-		if (starTier == 1) { displaySymbol = "II"; atkSpeed = 1.5f; atkRange = 12.0f; }
-		else if (starTier == 2) { displaySymbol = "I+"; atkSpeed = 0.9f; atkRange = 15.0f; }
-		else { displaySymbol = "I*"; atkSpeed = 0.5f; atkRange = 18.0f; }
+		if (starTier == 1) { displaySymbol = "II"; atkSpeed = 1.5f; atkRange = 5.0f; }
+		else if (starTier == 2) { displaySymbol = "I+"; atkSpeed = 0.9f; atkRange = 7.0f; }
+		else { displaySymbol = "I*"; atkSpeed = 0.5f; atkRange = 10.0f; }
 		break;
 
 	case TurretType::STORM:
 	default:
 		color = Craft::Color::Yellow;
-		if (starTier == 1) { displaySymbol = "TT"; atkSpeed = 1.0f; atkRange = 10.0f; }
-		else if (starTier == 2) { displaySymbol = "T+"; atkSpeed = 0.55f; atkRange = 12.5f; }
-		else { displaySymbol = "T*"; atkSpeed = 0.25f; atkRange = 15.0f; }
+		if (starTier == 1) { displaySymbol = "TT"; atkSpeed = 1.0f; atkRange = 4.0f; }
+		else if (starTier == 2) { displaySymbol = "T+"; atkSpeed = 0.55f; atkRange = 5.0f; }
+		else { displaySymbol = "T*"; atkSpeed = 0.25f; atkRange = 7.0f; }
 		break;
 	}
 
@@ -156,6 +156,7 @@ void Turret::Tick(float deltaTime)
 				// 총알 생성 및 발사
 				auto bullet = owner->SpawnActor<TurretBullet>(bulletPosition, baseDx, baseDy);
 				bullet->SetBulletRange(atkRange); // 터렛의 사거리를 총알에 적용
+				bullet->SetBulletDamage(static_cast<float>(starTier)); // 성급에 비례한 데미지 적용
 
 				// 3. 발사 후 타이머 리셋
 				autoFireInterval.Reset();

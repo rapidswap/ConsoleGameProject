@@ -97,11 +97,14 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	// 터렛 총알에 맞았다면.
 	if (other->IsTypeOf<TurretBullet>())
 	{
+		auto bullet = Craft::Cast<TurretBullet>(other);
+		float damage = bullet ? bullet->GetBulletDamage() : 1.0f;
+		
 		// 총알 파괴.
 		other->Destroy();
 
 		// enemy 체력 다운.
-		--enemyHealth;
+		enemyHealth -= damage;
 	}
 
 	if (enemyHealth <= 0)
