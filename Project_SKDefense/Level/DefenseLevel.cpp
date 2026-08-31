@@ -726,7 +726,7 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 			// 스폰 지점.
 		case 'S':
-			spawnPoint = position;
+			spawnPoints.push_back(position);
 			SpawnActor<Ground>(position);
 			currentRow.push_back(0);
 			break;

@@ -26,7 +26,7 @@ void EnemySpawner::BeginPlay()
 		for (int i = 0; i < maxPerWave; ++i)
 		{
 			// 생성과 동시에 비활성화 (보이지 않고 Tick도 안 돎)
-			auto enemy = defenseLevel->SpawnActor<Enemy>(defenseLevel->GetSpawnPoint());
+			auto enemy = defenseLevel->SpawnActor<Enemy>(defenseLevel->GetSpawnPoint(0));
 			enemy->SetActive(false);
 			
 			// 풀(Pool) 리스트에 등록
@@ -127,11 +127,23 @@ void EnemySpawner::SpawnEnemy()
 		auto enemy = weakEnemy.lock();
 		if (enemy && !enemy->IsActive())
 		{
+			// 웨이브에 따라 열려있는 입구 개수 결정
+			int activeSpawns = 1;
+			if (currentWave >= 4) activeSpawns = 2;
+			if (currentWave >= 7) activeSpawns = 3;
+
+			// 맵에 존재하는 스폰 지점 개수 이상으로 넘어가지 않도록 보정
+			int maxSpawns = defenseLevel->GetSpawnPointCount();
+			if (activeSpawns > maxSpawns) activeSpawns = maxSpawns;
+
+			// 열려있는 입구 중 랜덤으로 하나 선택
+			int randomIndex = (activeSpawns > 0) ? (rand() % activeSpawns) : 0;
+			
 			// 찾았다면 다시 깨워서 출발선에 세움
 			// 웨이브가 오를 때마다 몬스터 체력 증가 
 			enemy->SetHealth(3.0f * currentWave);
 			
-			enemy->SetPosition(defenseLevel->GetSpawnPoint());
+			enemy->SetPosition(defenseLevel->GetSpawnPoint(randomIndex));
 			enemy->SetActive(true);
 			enemy->RecalculatePath(); // 깨어날 때 최신 맵 기준으로 길 찾기
 			
