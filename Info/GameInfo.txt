@@ -1,31 +1,24 @@
-﻿==================================================
-              [ SK DEFENSE GAME INFO ]              
+==================================================
+              [ SK DEFENSE GAME INFO ]            
 ==================================================
 
-[1] HOW TO PLAY (기본 조작 및 규칙)
-- 좌클릭: 터렛 설치 (비용 50G) 
-- 우클릭: 터렛 판매 (성급에 따라 일정 골드 환불)
-- 적을 막아내고 아지트(HP:100)를 방어하세요!
-- 몬스터 처치 시 +10G를 획득합니다.
-- 터렛으로 적의 길을 완전히 막을 수는 없습니다!
+[1] HOW TO PLAY
+- L-Click: Build Turret (50G) / R-Click: Sell
+- Defend the Agit (HP:100)! Kills grant +10G.
+- Full maze-blocking is automatically prevented.
 
-[2] 3-MERGE AUTO UPGRADE (자동 3단 합성)
-- 동일한 속성 & 동일한 성급의 터렛 3개가 모이면?
-  자동으로 더 강한 다음 성급 터렛 1개로 합체!
-- 1성 3개 -> 2성 (+ 기호)
-- 2성 3개 -> 3성 (* 기호)
+[2] 3-MERGE AUTO UPGRADE
+- Build 3 turrets of same type/tier to auto-merge!
+- 1-Star x3 -> 2-Star (+)
+- 2-Star x3 -> 3-Star (*)
 
-[3] ELEMENTAL UPGRADE (속성 업그레이드)
-- [Z] Flame / [X] Ice / [C] Storm (비용: 100G)
-- 업그레이드 시 해당 속성의 모든 터렛 데미지가 +1 증가합니다!
-- [R] Random Upgrade (비용: 80G)
-  3가지 속성 중 하나가 무작위로 +1 증가! (20G 할인 효과)
+[3] UPGRADES
+- [Z/X/C] Upg Flame/Ice/Storm (100G): +1 Damage!
+- [R] Random Upgrade (80G): Random +1 Damage!
 
-[4] SLOT MACHINE GAMBLE (골드 도박)
-- [T] Gamble (비용: 300G)
-- 1~6 사이의 주사위 3개를 굴립니다.
-- 보상: (주사위1 x 주사위2 x 주사위3) x 10 골드!
-- 일확천금을 노려보세요! (최대 2160G 잭팟!)
+[4] SLOT MACHINE
+- [T] Gamble (300G) -> Roll 3 dice (1~6).
+- Reward: (D1 x D2 x D3) x 10 Gold! (Max 2160G!)
 
 ==================================================
-           [ PRESS F12 TO CLOSE MENU ]           
+           [ PRESS F12 TO CLOSE MENU ]            

@@ -342,10 +342,10 @@ void DefenseLevel::DrawGameInfo(const std::string& filename)
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 	int startX = screenWidth / 2 - 25; // 팝업 가로 크기의 절반만큼 빼줌
-	int startY = screenHeight / 2 - 10;
+	int startY = screenHeight / 2 - 12;
 	
 	// 배경을 검정색으로 덮기 (팝업창 느낌)
-	for (int y = startY - 2; y < startY + 20; ++y)
+	for (int y = startY - 1; y < startY + 26; ++y)
 	{
 		Renderer::Get().Submit("                                                      ", Vector2(startX - 2, y), Color::Black, 200);
 	}
