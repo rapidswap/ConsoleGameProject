@@ -2,6 +2,7 @@
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
 #include <Level/Level.h>
+#include <Level/DefenseLevel.h>
 #include <Actor/Enemy.h>
 #include <Actor/TurretBullet.h>
 #include <cmath>
@@ -104,6 +105,13 @@ void Turret::Tick(float deltaTime)
 	auto owner = GetOwner();
 	if (owner)
 	{
+		auto defenseLevel = Craft::Cast<DefenseLevel>(owner);
+		if (defenseLevel && defenseLevel->IsAStarDebug())
+		{
+			// F3 디버그 모드일 때는 몬스터 이동 시각화를 위해 공격하지 않음
+			return;
+		}
+
 		// 2. 타이머가 완료되었을 때만 적 탐색 및 발사
 		if (autoFireInterval.IsTimeOut())
 		{
