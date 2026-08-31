@@ -26,6 +26,9 @@ public:
 	// 터렛이 설치될 때마다 경로를 갱신하기 위한 함수
 	void RecalculatePath();
 	
+	const std::vector<Craft::Vector2>& GetPath() const { return path; }
+	int GetCurrentPathIndex() const { return currentPathIndex; }
+	
 	// 오브젝트 풀링을 위한 활성화 설정
 	inline void SetActive(bool active) { isActive = active; }
 

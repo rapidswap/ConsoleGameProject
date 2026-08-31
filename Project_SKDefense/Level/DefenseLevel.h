@@ -27,6 +27,8 @@ private:
 	
 	void RandomUpgrade();
 	void Gamble();
+	void DrawGambleAnimation();
+	void DrawGameInfo(const std::string& filename);
 
 public:
 	void GameClear();
@@ -38,7 +40,10 @@ private:
 	bool isGambling = false;
 	float gambleTimer = 0.0f;
 	int gambleResults[3] = {0, 0, 0};
-	void DrawGambleAnimation();
+
+	bool isGameInfo = false;
+	bool showAStarDebug = false;
+
 
 	// 맵 데이터 (0: 빈공간/바닥, 1: 벽, 2: 터렛, 3: 아지트)
 	std::vector<std::vector<int>> mapGrid;
@@ -81,6 +86,6 @@ public:
 	// 다음에 설치될 터렛의 타입
 	TurretType nextTurretType = TurretType::FLAME;
 
-public:
 	Craft::Vector2 GetSpawnPoint() const { return spawnPoint; }
+
 };

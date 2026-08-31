@@ -98,6 +98,10 @@ void DefenseLevel::Tick(float deltaTime)
 		auto spawner = enemySpawner.lock();
 		if (spawner) spawner->SkipWave();
 	}
+	if (Input::Get().GetKeyDown(VK_F3))
+	{
+		showAStarDebug = !showAStarDebug;
+	}
 #endif
 }
 
@@ -565,6 +569,36 @@ void DefenseLevel::Draw()
 	{
 		DrawGameInfo("GameInfo.txt");
 	}
+
+#ifdef _DEBUG
+	if (showAStarDebug)
+	{
+		for (auto enemy : FindActors<Enemy>())
+		{
+			if (!enemy->IsActive()) continue;
+
+			const auto& path = enemy->GetPath();
+			int currentIndex = enemy->GetCurrentPathIndex();
+
+			// 현재 인덱스부터 목표 지점까지 경로 그리기
+			for (size_t i = currentIndex; i < path.size(); ++i)
+			{
+				Vector2 p = path[i];
+				
+				// 카메라 오프셋 적용하여 화면 좌표로 변환
+				int drawX = p.x - cameraPosition.x + (Engine::Get().GetWidth() / 2);
+				int drawY = p.y - cameraPosition.y + (Engine::Get().GetHeight() / 2);
+
+				// 화면 안에 있을 때만 그리기
+				if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
+				{
+					// 우선순위를 높여서 바닥이나 다른 요소들 위에 보이도록 함
+					Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 80);
+				}
+			}
+		}
+	}
+#endif
 }
 
 Craft::Vector2 DefenseLevel::GetRealMousePos()
