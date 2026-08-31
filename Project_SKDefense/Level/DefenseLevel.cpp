@@ -47,6 +47,16 @@ void DefenseLevel::OnInitialized()
 
 void DefenseLevel::Tick(float deltaTime)
 {
+	// 게임 인포 창이 켜져 있으면 일시정지 (F12 키로만 닫기)
+	if (isGameInfo)
+	{
+		if (Input::Get().GetKeyDown(VK_F12))
+		{
+			isGameInfo = false;
+		}
+		return;
+	}
+
 	// 도박 진행 중이면 게임 정지 (Pause) 상태로 애니메이션만 처리
 	if (isGambling)
 	{
@@ -213,6 +223,11 @@ void DefenseLevel::HandleUIInput()
 	{
 		Gamble();
 	}
+
+	if (Input::Get().GetKeyDown(VK_F12))
+	{
+		isGameInfo = !isGameInfo;
+	}
 }
 
 
@@ -293,6 +308,84 @@ void DefenseLevel::DrawGambleAnimation()
 	}
 }
 
+void DefenseLevel::DrawGameInfo(const std::string& filename)
+{
+	// 최종 경로 조립.
+	std::string path = std::string("../Info/") + filename;
+
+	FILE* file = nullptr;
+	fopen_s(&file, path.c_str(), "rt");
+	if (!file)
+	{
+		assert(false && "failed to open Info file.");
+		return;
+	}
+
+	// 파일의 내용을 저장할 버퍼 확인.
+	// 파일 길이 확인 -> 파일 위치를 제일 뒤로 이동 시킨 다음, 해당 위치 값 읽기.
+	fseek(file, 0, SEEK_END);
+	long fileSize = ftell(file);
+
+	// 파일 제일 끝 위치를 구한 다음에는 다시 처음으로 되돌리기.
+	rewind(file);
+
+	// 앞에서 구한 위치를 사용해서 버퍼 생성.
+	char* buffer = new char[fileSize] {};
+
+	// 데이터 읽기(파일 읽기).
+	size_t readSize = fread(buffer, sizeof(char), fileSize, file);
+
+	// 어서트.
+	assert(readSize > 0 && "No data is in ther stage file.");
+
+	// 화면 정중앙 배치를 위한 오프셋 설정
+	int screenWidth = Engine::Get().GetWidth();
+	int screenHeight = Engine::Get().GetHeight();
+	int startX = screenWidth / 2 - 25; // 팝업 가로 크기의 절반만큼 빼줌
+	int startY = screenHeight / 2 - 10;
+	
+	// 배경을 검정색으로 덮기 (팝업창 느낌)
+	for (int y = startY - 2; y < startY + 20; ++y)
+	{
+		Renderer::Get().Submit("                                                      ", Vector2(startX - 2, y), Color::Black, 200);
+	}
+
+	int index = 0;
+	Vector2 position;
+	
+	// 문자열 단위로 끊어서 한 줄씩 제출(Submit)하는 것이 렌더러에 훨씬 효율적입니다.
+	std::string currentLine = "";
+	
+	while (index < fileSize)
+	{
+		char c = buffer[index];
+		++index;
+
+		if (c == '\n' || c == '\r')
+		{
+			if (c == '\r' && index < fileSize && buffer[index] == '\n') index++; // Windows CRLF 호환
+			
+			// 한 줄이 완성되면 렌더러에 제출
+			Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 201);
+			currentLine = "";
+			++position.y;
+			continue;
+		}
+		
+		currentLine += c;
+	}
+	// 마지막 줄 처리
+	if (!currentLine.empty())
+	{
+		Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 201);
+	}
+
+	delete[] buffer;
+	buffer = nullptr;
+
+	fclose(file);
+	file = nullptr;
+}
 void DefenseLevel::Draw()
 {
 
@@ -465,6 +558,12 @@ void DefenseLevel::Draw()
 	if (isGambling)
 	{
 		DrawGambleAnimation();
+	}
+
+	// GameInfo 진행중이면 팝업창 띄우기.
+	if (isGameInfo)
+	{
+		DrawGameInfo("GameInfo.txt");
 	}
 }
 
