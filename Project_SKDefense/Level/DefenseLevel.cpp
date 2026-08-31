@@ -573,6 +573,10 @@ void DefenseLevel::Draw()
 #ifdef _DEBUG
 	if (showAStarDebug)
 	{
+		static int astarAnimFrame = 0;
+		astarAnimFrame++;
+		int animProgress = (astarAnimFrame / 2) % 30; // 속도 조절(2프레임당 1칸) 및 최대 길이 30
+
 		for (auto enemy : FindActors<Enemy>())
 		{
 			if (!enemy->IsActive()) continue;
@@ -580,9 +584,11 @@ void DefenseLevel::Draw()
 			const auto& path = enemy->GetPath();
 			int currentIndex = enemy->GetCurrentPathIndex();
 
-			// 현재 인덱스부터 목표 지점까지 경로 그리기
+			// 현재 인덱스부터 애니메이션 진행도(animProgress)까지만 선 그리기
 			for (size_t i = currentIndex; i < path.size(); ++i)
 			{
+				if (i - currentIndex > (size_t)animProgress) break;
+
 				Vector2 p = path[i];
 				
 				// 카메라 오프셋 적용하여 화면 좌표로 변환

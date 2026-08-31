@@ -71,6 +71,15 @@ void EnemySpawner::Tick(float deltaTime)
 			return;
 		}
 
+		// F3 모드(AStar 시각화) 중이면 10초마다, 아니면 1초마다 스폰
+		float targetSpawnTime = 1.0f;
+		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+		if (defenseLevel && defenseLevel->IsAStarDebug())
+		{
+			targetSpawnTime = 10.0f;
+		}
+		spawnTimer.SetTargetTime(targetSpawnTime);
+
 		spawnTimer.Tick(deltaTime);
 		if (spawnTimer.IsTimeOut())
 		{

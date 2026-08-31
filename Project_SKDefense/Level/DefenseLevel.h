@@ -56,6 +56,7 @@ private:
 	std::weak_ptr<class EnemySpawner> enemySpawner;
 
 public:
+	bool IsAStarDebug() const { return showAStarDebug; }
 	bool CanBuildTurret(int x, int y);
 	
 	// 타겟 지점 접근용.
