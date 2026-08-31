@@ -805,18 +805,22 @@ bool DefenseLevel::CanBuildTurret(int x, int y)
 
 	bool canReach = true;
 
-	// (A) 스폰 지점(S)에서 아지트(D)까지 경로가 여전히 존재하는지 확인
+	// (A) 모든 스폰 지점(S)에서 아지트(D)까지 경로가 여전히 존재하는지 확인
 	{
-		AStar astar;
-		Node* startNode = new Node(static_cast<int>(std::round(spawnPoint.x)), static_cast<int>(std::round(spawnPoint.y)));
-		Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
-
-		std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
-		delete goalNode;
-
-		if (path.empty())
+		for (const auto& sp : spawnPoints)
 		{
-			canReach = false;
+			AStar astar;
+			Node* startNode = new Node(static_cast<int>(std::round(sp.x)), static_cast<int>(std::round(sp.y)));
+			Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
+
+			std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
+			delete goalNode;
+
+			if (path.empty())
+			{
+				canReach = false;
+				break;
+			}
 		}
 	}
 
