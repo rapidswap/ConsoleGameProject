@@ -583,8 +583,8 @@ void DefenseLevel::Draw()
 			
 			// 애니메이션 프레임 증가 (각 적마다 개별 진행도 유지)
 			enemy->debugAnimFrame++;
-			// 속도 조절: 1프레임당 5칸씩 쫙쫙 퍼지도록 매우 빠르게 설정!
-			int animProgress = enemy->debugAnimFrame * 5;
+			// 속도 조절: 1프레임당 50칸씩 퍼지도록 초고속(파바박!)으로 설정
+			int animProgress = enemy->debugAnimFrame * 50;
 
 			// 1단계: 탐색 히스토리 그리기 (초록색 +)
 			for (size_t i = 0; i < history.size(); ++i)
@@ -622,8 +622,9 @@ void DefenseLevel::Draw()
 				}
 			}
 			
-			// 루프 (탐색 히스토리 크기 + 경로 크기 + 잠시 대기 시간) 후 리셋
-			int maxProgress = static_cast<int>(history.size()) + static_cast<int>(path.size()) + 100;
+			// 루프 (탐색 히스토리 크기 + 경로 크기 + 결과를 감상할 여유 대기시간 추가) 후 리셋
+			// 1프레임당 50칸씩 오르므로, 2000을 더해주면 약 40프레임(0.6초) 정도 결과가 유지됩니다.
+			int maxProgress = static_cast<int>(history.size()) + static_cast<int>(path.size()) + 2000;
 			if (animProgress > maxProgress)
 			{
 				enemy->debugAnimFrame = 0;
