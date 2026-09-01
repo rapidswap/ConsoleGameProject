@@ -12,7 +12,8 @@ using namespace Craft;
 Enemy::Enemy(const Vector2& position)
 	: Actor("Z", position, Color::Red)
 {
-	sortingOrder = 15;
+	// 경로 탐색 애니메이션(70, 80)보다 높게 설정하여 에너미가 가려지지 않게 함
+	sortingOrder = 85;
 }
 
 void Enemy::BeginPlay()
