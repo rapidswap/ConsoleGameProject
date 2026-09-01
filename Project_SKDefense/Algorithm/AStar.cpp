@@ -111,6 +111,12 @@ std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<
 				continue;
 			}
 
+			// 대각선 이동 시 모서리(장애물)를 통과하는지 확인.
+			if (IsDiagonalBlocked(currentNode->position, direction, grid))
+			{
+				continue;
+			}
+
 			// 현재 노드를 기준으로 새 gCost 계산.
 			float newGCost = currentNode->gCost + direction.cost;
 
@@ -298,6 +304,24 @@ void AStar::DisplayGrid(std::vector<std::vector<int>>& grid)
 
 		std::cout << "\n";
 	}
+}
+
+bool AStar::IsDiagonalBlocked(const Position& current, const Direction& direction, const std::vector<std::vector<int>>& grid) const
+{
+	// 이동하려는 방향에 장애물이 있는지 확인
+	// 대각선 방향의 x, y 성분이 모두 0이 아니어야 대각선임.
+	if (direction.x == 0 || direction.y == 0)
+	{
+		return false;
+	}
+
+	// 대각선으로 이동하려는 새로운 위치의 x, y 성분을 분해.
+	int sideX = current.x + direction.x;
+	int sideY = current.y + direction.y;
+
+	// 벽(1) 이나 터렛(2)이 있으면 대각선 이동 불가로 판정
+	return (grid[current.y][sideX] == 1 || grid[current.y][sideX] == 2) || 
+		   (grid[sideY][current.x] == 1 || grid[sideY][current.x] == 2);
 }
 
 void AStar::DisplayGridWithPath(std::vector<std::vector<int>>& grid, const std::vector<Node*>& path)
