@@ -9,6 +9,7 @@
 #include <Actor/Turret.h>
 #include <Actor/Enemy.h>
 #include <Actor/EnemySpawner.h>
+#include<Actor/EnemyHouse.h>
 #include <Actor/Agit.h>
 #include <Util/Timer.h>
 #include <Util/Util.h>
@@ -573,34 +574,59 @@ void DefenseLevel::Draw()
 #ifdef _DEBUG
 	if (showAStarDebug)
 	{
-		static int astarAnimFrame = 0;
-		astarAnimFrame++;
-		int animProgress = (astarAnimFrame / 2) % 30; // 속도 조절(2프레임당 1칸) 및 최대 길이 30
-
 		for (auto enemy : FindActors<Enemy>())
 		{
 			if (!enemy->IsActive()) continue;
 
 			const auto& path = enemy->GetPath();
-			int currentIndex = enemy->GetCurrentPathIndex();
+			const auto& history = enemy->GetSearchHistory();
+			
+			// 애니메이션 프레임 증가 (각 적마다 개별 진행도 유지)
+			enemy->debugAnimFrame++;
+			// 속도 조절 (2프레임당 1칸)
+			int animProgress = enemy->debugAnimFrame / 2;
 
-			// 현재 인덱스부터 애니메이션 진행도(animProgress)까지만 선 그리기
-			for (size_t i = currentIndex; i < path.size(); ++i)
+			// 1단계: 탐색 히스토리 그리기 (초록색 +)
+			for (size_t i = 0; i < history.size(); ++i)
 			{
-				if (i - currentIndex > (size_t)animProgress) break;
+				if (i > (size_t)animProgress) break;
 
-				Vector2 p = path[i];
-				
-				// 카메라 오프셋 적용하여 화면 좌표로 변환
+				Vector2 p = history[i];
 				int drawX = p.x - cameraPosition.x + (Engine::Get().GetWidth() / 2);
 				int drawY = p.y - cameraPosition.y + (Engine::Get().GetHeight() / 2);
 
-				// 화면 안에 있을 때만 그리기
 				if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
 				{
-					// 우선순위를 높여서 바닥이나 다른 요소들 위에 보이도록 함
-					Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 80);
+					Renderer::Get().Submit("+", Vector2(drawX, drawY), Color::Green, 70);
 				}
+			}
+
+			// 2단계: 탐색 애니메이션이 끝난 후, 실제 경로 그리기 (마젠타 *)
+			if (animProgress > history.size())
+			{
+				int pathProgress = animProgress - static_cast<int>(history.size());
+				int currentIndex = enemy->GetCurrentPathIndex();
+
+				for (size_t i = currentIndex; i < path.size(); ++i)
+				{
+					if (i - currentIndex > (size_t)pathProgress) break;
+
+					Vector2 p = path[i];
+					int drawX = p.x - cameraPosition.x + (Engine::Get().GetWidth() / 2);
+					int drawY = p.y - cameraPosition.y + (Engine::Get().GetHeight() / 2);
+
+					if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
+					{
+						Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 80);
+					}
+				}
+			}
+			
+			// 루프 (탐색 히스토리 크기 + 경로 크기 + 잠시 대기 20칸) 후 리셋
+			int maxFrames = (static_cast<int>(history.size()) + static_cast<int>(path.size()) + 20) * 2;
+			if (enemy->debugAnimFrame > maxFrames)
+			{
+				enemy->debugAnimFrame = 0;
 			}
 		}
 	}
@@ -727,7 +753,7 @@ void DefenseLevel::LoadMap(const std::string& filename)
 			// 스폰 지점.
 		case 'S':
 			spawnPoints.push_back(position);
-			SpawnActor<Ground>(position);
+			SpawnActor<EnemyHouse>(position);
 			currentRow.push_back(0);
 			break;
 
@@ -739,7 +765,7 @@ void DefenseLevel::LoadMap(const std::string& filename)
 			break;
 		
 		default:
-			currentRow.push_back(0); // 알 수 없는 문자는 빈 공간 처리
+			currentRow.push_back(0); // 알 수 없는 문자는 빈 공간 처리spawnPoint
 			break;
 		}
 

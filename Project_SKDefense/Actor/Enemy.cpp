@@ -45,7 +45,15 @@ void Enemy::RecalculatePath()
 		
 		currentPathIndex = 0;
 		moveAccumulator = 0.0f; // 이동 진행도 초기화
+		debugAnimFrame = 0; // 시각화 애니메이션 초기화
 		
+		// 시각화를 위해 탐색 히스토리 복사
+		searchHistory.clear();
+		for (const auto& pos : astar.searchHistory)
+		{
+			searchHistory.push_back(Vector2(static_cast<float>(pos.x), static_cast<float>(pos.y)));
+		}
+
 		delete goalNode;
 	}
 }

@@ -34,6 +34,8 @@ std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<
 	this->startNode = startNode;
 	this->goalNode = goalNode;
 
+	searchHistory.clear();
+
 	// 입력 노드 또는 그리드가 유효하지 않으면 종료.
 	if (!this->startNode || !this->goalNode || grid.empty() || grid[0].empty())
 	{
@@ -91,6 +93,9 @@ std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<
 
 		// 방문 처리를 위해 현재 노드를 닫힌 리스트에 추가.
 		closedList.emplace_back(currentNode);
+
+		// 히스토리에 현재 탐색한 위치 저장 (애니메이션 용)
+		searchHistory.push_back(currentNode->position);
 
 		// 이웃 노드 방문(탐색). (하/상/우/좌 차례로 방문).
 		for (const Direction& direction : directions)

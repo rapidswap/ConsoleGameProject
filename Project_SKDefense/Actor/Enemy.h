@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <Actor/Actor.h>
 #include <vector>
@@ -29,6 +29,8 @@ public:
 	const std::vector<Craft::Vector2>& GetPath() const { return path; }
 	int GetCurrentPathIndex() const { return currentPathIndex; }
 	
+	const std::vector<Craft::Vector2>& GetSearchHistory() const { return searchHistory; }
+
 	// 오브젝트 풀링을 위한 활성화 설정
 	inline void SetActive(bool active) { isActive = active; }
 
@@ -37,18 +39,22 @@ private:
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 
 private:
-private:
 	// 위치 이동 처리를 위한 변수.
 	float xPosition = 0.0f;
 	float yPosition = 0.0f;
-	float moveSpeed = 5.0f;
+	float moveSpeed = 4.0f; // 한 칸 이동하는데 걸리는 시간(초).
+	float movementTimer = 0.0f;
 
-	// A* 경로 추적을 위한 변수들
+	// 이동 경로와 시각화 히스토리
 	std::vector<Craft::Vector2> path;
+	std::vector<Craft::Vector2> searchHistory;
 	int currentPathIndex = 0;
 	float moveAccumulator = 0.0f;
 
+public:
+	int debugAnimFrame = 0;
+
+private:
 	// 적의 체력.
 	float enemyHealth = 1.0f;
 };
-

@@ -1,6 +1,9 @@
 #pragma once
 
+
+#include "Node.h"
 #include <vector>
+
 
 template<typename T>
 void SafeDelete(T*& pointer)
@@ -13,7 +16,6 @@ void SafeDelete(T*& pointer)
 }
 
 // A* 길찾기 기능을 처리하는 클래스.
-class Node;
 class AStar
 {
 private:
@@ -29,9 +31,14 @@ private:
 		float cost;
 	};
 
+
+
 public:
 	AStar();
 	~AStar();
+
+	// 시각화 애니메이션을 위한 탐색 히스토리 기록.
+	std::vector<Position> searchHistory;
 
 	// 경로 검색 함수.
 	std::vector<Node*> FindPath(Node* startNode, Node* goalNode, std::vector<std::vector<int>>& grid);
@@ -57,6 +64,9 @@ private:
 	bool IsDestination(const Node* node);
 
 	void DisplayGrid(std::vector<std::vector<int>>& grid);
+
+	// 옵션: 대각선 이동이 장애물 모서리를 통과하는지 확인.
+	bool IsDiagonalBlocked(const Position& current, const Direction& direction, const std::vector<std::vector<int>>& grid) const;
 
 private:
 
