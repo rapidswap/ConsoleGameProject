@@ -581,27 +581,39 @@ void DefenseLevel::Draw()
 			const auto& path = enemy->GetPath();
 			const auto& history = enemy->GetSearchHistory();
 			
-			// 애니메이션 프레임 증가 (각 적마다 개별 진행도 유지)
-			enemy->debugAnimFrame++;
+			// 애니메이션 프레임 증가 (각 적마다 개별 진행도 유지, 너무 커지지 않게 제한)
+			if (enemy->debugAnimFrame < 100000)
+			{
+				enemy->debugAnimFrame++;
+			}
+			
 			// 속도 조절: 1프레임당 50칸씩 퍼지도록 초고속(파바박!)으로 설정
 			int animProgress = enemy->debugAnimFrame * 50;
+			
+			// 전체 애니메이션이 유지되는 최대 대기 시간
+			int maxProgress = static_cast<int>(history.size()) + static_cast<int>(path.size()) + 2000;
 
 			// 1단계: 탐색 히스토리 그리기 (초록색 +)
-			for (size_t i = 0; i < history.size(); ++i)
+			// 애니메이션이 완전히 끝나면 초록색 탐색 흔적은 사라지고 한 번만 보여지도록 설정
+			if (animProgress <= maxProgress)
 			{
-				if (i > (size_t)animProgress) break;
-
-				Vector2 p = history[i];
-				int drawX = p.x - cameraPosition.x + (Engine::Get().GetWidth() / 2);
-				int drawY = p.y - cameraPosition.y + (Engine::Get().GetHeight() / 2);
-
-				if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
+				for (size_t i = 0; i < history.size(); ++i)
 				{
-					Renderer::Get().Submit("+", Vector2(drawX, drawY), Color::Green, 70);
+					if (i > (size_t)animProgress) break;
+
+					Vector2 p = history[i];
+					int drawX = p.x - cameraPosition.x + (Engine::Get().GetWidth() / 2);
+					int drawY = p.y - cameraPosition.y + (Engine::Get().GetHeight() / 2);
+
+					if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
+					{
+						Renderer::Get().Submit("+", Vector2(drawX, drawY), Color::Green, 70);
+					}
 				}
 			}
 
 			// 2단계: 탐색 애니메이션이 끝난 후, 실제 경로 그리기 (마젠타 *)
+			// 몬스터가 이동할 경로는 애니메이션 종료 후에도 계속 화면에 유지됨
 			if (animProgress > history.size())
 			{
 				int pathProgress = animProgress - static_cast<int>(history.size());
@@ -620,14 +632,6 @@ void DefenseLevel::Draw()
 						Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 80);
 					}
 				}
-			}
-			
-			// 루프 (탐색 히스토리 크기 + 경로 크기 + 결과를 감상할 여유 대기시간 추가) 후 리셋
-			// 1프레임당 50칸씩 오르므로, 2000을 더해주면 약 40프레임(0.6초) 정도 결과가 유지됩니다.
-			int maxProgress = static_cast<int>(history.size()) + static_cast<int>(path.size()) + 2000;
-			if (animProgress > maxProgress)
-			{
-				enemy->debugAnimFrame = 0;
 			}
 		}
 	}
