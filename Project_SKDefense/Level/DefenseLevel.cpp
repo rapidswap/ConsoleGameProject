@@ -88,8 +88,6 @@ void DefenseLevel::Tick(float deltaTime)
 	HandleMouseInput();
 	HandleUIInput();
 
-	if (Input::Get().GetKeyDown('R')) RandomUpgrade();
-
 #ifdef _DEBUG
 	// 치트/디버그용 단축키 처리
 	if (Input::Get().GetKeyDown(VK_F2)) GameClear();
