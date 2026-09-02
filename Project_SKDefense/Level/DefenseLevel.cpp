@@ -599,15 +599,15 @@ void DefenseLevel::Draw()
 				enemy->debugAnimFrame++;
 			}
 			
-			// 속도 조절: 1프레임당 50칸씩 퍼지도록 초고속(파바박!)으로 설정
-			int animProgress = enemy->debugAnimFrame * 50;
+			// 속도 조절: 1프레임당 20칸씩 (기존 50에서 살짝 늦춰서 탐색 과정을 눈으로 따라갈 수 있게 함)
+			int animProgress = enemy->debugAnimFrame * 20;
 			
 			// 전체 애니메이션이 유지되는 최대 대기 시간
 			int maxProgress = static_cast<int>(history.size()) + static_cast<int>(path.size()) + 2000;
 
 			// 1단계: 탐색 히스토리 그리기 (초록색 +)
-			// 애니메이션이 완전히 끝나면 초록색 탐색 흔적은 사라지고 한 번만 보여지도록 설정
-			if (animProgress <= maxProgress)
+			// 탐색이 완료되면(animProgress가 history.size()를 넘어가면) 즉시 초록색 화면에서 제거
+			if (animProgress <= history.size())
 			{
 				for (size_t i = 0; i < history.size(); ++i)
 				{
