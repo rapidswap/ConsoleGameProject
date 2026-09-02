@@ -892,6 +892,11 @@ bool DefenseLevel::CanBuildTurret(int x, int y)
 
 void DefenseLevel::CheckTurretMerge()
 {
+#ifdef _DEBUG
+	// F3(A* 디버그 모드)가 켜져 있으면 길찾기 관찰이 목적이므로 합성을 제한함
+	if (showAStarDebug) return;
+#endif
+
 	bool hasMerged = false;
 
 	// 연쇄 합성(1성 3개 -> 2성 승급 -> 마침 2성이 3개가 되어 3성으로 연쇄 승급)을 위해 반복 검사
