@@ -559,6 +559,18 @@ void DefenseLevel::Draw()
 	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
 	Renderer::Get().Submit(debugStr, Vector2(uiX, 28), Color::DarkGray, 100);
 
+#ifdef _DEBUG
+	// F3 상태 표시
+	if (showAStarDebug)
+	{
+		Renderer::Get().Submit("[ F3 ] A* Debug Mode : ON ", Vector2(uiX, 29), Color::Magenta, 100);
+	}
+	else
+	{
+		Renderer::Get().Submit("[ F3 ] A* Debug Mode : OFF", Vector2(uiX, 29), Color::DarkGray, 100);
+	}
+#endif
+
 	// 도박(Gamble) 진행 중이면 팝업창(애니메이션) 띄우기
 	if (isGambling)
 	{
