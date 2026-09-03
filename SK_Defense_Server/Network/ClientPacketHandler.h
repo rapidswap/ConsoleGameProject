@@ -1,0 +1,19 @@
+#pragma once
+#include "Main/pch.h"
+#include "Common/Protocol.h"
+
+// 순환 참조 방지 위한 전방 선언.
+class GameSession;
+
+class ClientPacketHandler
+{
+public:
+	// 패킷이 들어왔을 떄 맨 처음 호출되는 교통정리 함수.
+	static void HandlePacket(std::shared_ptr<GameSession> session, BYTE* buffer, int32_t len);
+
+private:
+	// 각각의 패킷별 세부 처리 함수.
+	static void Handle_C_LOGIN(std::shared_ptr<GameSession> session, C_LOGIN_PACKET& pkt);
+	static void Handle_C_CHAT(std::shared_ptr<GameSession> session, C_CHAT_PACKET& pkt);
+	static void Handle_C_BUILD_TURRET(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt);
+};

@@ -8,5 +8,9 @@
   </Project>
   <Project Path="PEACEMAKER/PEACEMAKER.vcxproj" Id="51c2e28b-5bae-41f3-8e60-7fe69a2b3f2a" />
   <Project Path="Project_SKDefense/Project_SKDefense.vcxproj" Id="c2595c77-b436-4cfc-a329-a64b199713fc" />
+  <Project Path="ServerCore/ServerCore.vcxproj" Id="04635eaf-178f-4a13-a196-acb4821ddda8" />
   <Project Path="ShootingGame/ShootingGame.vcxproj" Id="50ba7d47-16d1-4db8-84bf-b91f2d204ff6" />
+  <Project Path="SK_Defense_Server/SK_Defense_Server.vcxproj" Id="312584e6-9ccf-49ea-96d4-a3569907ab86">
+    <BuildDependency Project="ServerCore/ServerCore.vcxproj" />
+  </Project>
 </Solution>

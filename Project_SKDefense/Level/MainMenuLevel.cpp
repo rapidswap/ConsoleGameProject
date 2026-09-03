@@ -8,6 +8,13 @@ void MainMenuLevel::Tick(float deltaTime)
 {
 	super::Tick(deltaTime);
 
+	// ESC키 누르면 게임 종료.
+	if (Input::Get().GetKeyDown(VK_ESCAPE))
+	{
+		Engine::Get().Quit();
+	}
+
+
 	// 엔터키를 누르면 게임 시작.
 	if (Input::Get().GetKeyDown(VK_RETURN))
 	{

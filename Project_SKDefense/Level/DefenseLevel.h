@@ -88,7 +88,7 @@ public:
 	}
 
 	// 재화 (골드)
-	int currentGold = 1000;
+	int currentGold = 300;
 	// 터렛 설치 비용
 	const int turretCost = 50;
 

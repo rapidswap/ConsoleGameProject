@@ -13,19 +13,19 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{c2595c77-b436-4cfc-a329-a64b199713fc}</ProjectGuid>
-    <RootNamespace>ProjectSKDefense</RootNamespace>
+    <ProjectGuid>{04635eaf-178f-4a13-a196-acb4821ddda8}</ProjectGuid>
+    <RootNamespace>ServerCore</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -55,22 +55,23 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)\;$(ProjectDir)Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\Lib\;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>CraftEngine.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PreBuildEvent>
-      <Command>xcopy ..\Assets\* $(OutDir)..\Assets\ /e /y /i</Command>
+      <Command>xcopy *.h ..\Includes\ /e /y /i</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -79,62 +80,50 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)\;$(ProjectDir)Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\Lib\;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>CraftEngine.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
     <PreBuildEvent>
-      <Command>xcopy ..\Assets\* $(OutDir)..\Assets\ /e /y /i</Command>
+      <Command>xcopy *.h ..\Includes\ /e /y /i</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Actor\Enemy.cpp" />
-    <ClCompile Include="Actor\EnemyHouse.cpp" />
-    <ClCompile Include="Actor\EnemySpawner.cpp" />
-    <ClCompile Include="Actor\TurretBullet.cpp" />
-    <ClCompile Include="Algorithm\AStar.cpp" />
-    <ClCompile Include="Game\Game.cpp" />
-    <ClCompile Include="Level\EscMenu.cpp" />
-    <ClCompile Include="Level\GameClearLevel.cpp" />
-    <ClCompile Include="Level\GameOverLevel.cpp" />
-    <ClCompile Include="Level\MainMenuLevel.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Actor\Agit.cpp" />
-    <ClCompile Include="Actor\Ground.cpp" />
-    <ClCompile Include="Actor\Turret.cpp" />
-    <ClCompile Include="Actor\Wall.cpp" />
-    <ClCompile Include="Level\DefenseLevel.cpp" />
-    <ClCompile Include="Util\Timer.cpp" />
+    <ClInclude Include="Common\PacketType.h" />
+    <ClInclude Include="Common\Protocol.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="Main\CoreMacro.h" />
+    <ClInclude Include="Main\pch.h" />
+    <ClInclude Include="Main\Type.h" />
+    <ClInclude Include="Network\IocpCore.h" />
+    <ClInclude Include="Network\IocpEvent.h" />
+    <ClInclude Include="Network\Listener.h" />
+    <ClInclude Include="Network\NetAddress.h" />
+    <ClInclude Include="Network\RecvBuffer.h" />
+    <ClInclude Include="Network\Session.h" />
+    <ClInclude Include="Thread\Lock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Actor\Agit.h" />
-    <ClInclude Include="Actor\Enemy.h" />
-    <ClInclude Include="Actor\EnemyHouse.h" />
-    <ClInclude Include="Actor\EnemySpawner.h" />
-    <ClInclude Include="Actor\Ground.h" />
-    <ClInclude Include="Actor\Turret.h" />
-    <ClInclude Include="Actor\TurretBullet.h" />
-    <ClInclude Include="Actor\Wall.h" />
-    <ClInclude Include="Algorithm\AStar.h" />
-    <ClInclude Include="Algorithm\Node.h" />
-    <ClInclude Include="Game\Game.h" />
-    <ClInclude Include="Level\DefenseLevel.h" />
-    <ClInclude Include="Level\EscMenu.h" />
-    <ClInclude Include="Level\GameClearLevel.h" />
-    <ClInclude Include="Level\GameOverLevel.h" />
-    <ClInclude Include="Level\MainMenuLevel.h" />
-    <ClInclude Include="Level\MenuItem.h" />
-    <ClInclude Include="Util\Timer.h" />
+    <ClCompile Include="Main\pch.cpp" />
+    <ClCompile Include="Network\IocpCore.cpp" />
+    <ClCompile Include="Network\IocpEvent.cpp" />
+    <ClCompile Include="Network\Listener.cpp" />
+    <ClCompile Include="Network\NetAddress.cpp" />
+    <ClCompile Include="Network\RecvBuffer.cpp" />
+    <ClCompile Include="Network\Session.cpp" />
+    <ClCompile Include="ServerCore.cpp" />
+    <ClCompile Include="Thread\Lock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
