@@ -1,5 +1,6 @@
 #include "GameSession.h"
 #include "ClientPacketHandler.h"
+#include "Game/GameRoom.h"
 #include <iostream>
 void GameSession::OnConnected()
 {
@@ -24,4 +25,6 @@ void GameSession::OnSend(int32_t len)
 void GameSession::OnDisconnected()
 {
     std::cout << "[Server] Client Disconnected! (PlayerID: " << playerId << ")\n";
+
+    GGameRoom->Leave(std::static_pointer_cast<GameSession>(shared_from_this()));
 }

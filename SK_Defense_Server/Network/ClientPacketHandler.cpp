@@ -1,6 +1,6 @@
 #include "ClientPacketHandler.h"
 #include "GameSession.h"
-
+#include "Game/GameRoom.h"
 
 void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYTE* buffer, int32_t len)
 {
@@ -28,43 +28,15 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 
 void ClientPacketHandler::Handle_C_LOGIN(std::shared_ptr<GameSession> session, C_LOGIN_PACKET& pkt)
 {
-	std::cout << "[Server] Login Request: " << pkt.playerName << "\n";
-
-	// 로그인 성공 응답 패킷 제작.
-	S_LOGIN_OK_PACKET sendPkt;
-	// Temp ID.
-	sendPkt.playerId = 1;
-	sendPkt.currentGold = 100;
-
-	// 클라이언트에게 전송.
-	session->Send(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+	GGameRoom->Enter(session, pkt.playerName);
 }
 
 void ClientPacketHandler::Handle_C_CHAT(std::shared_ptr<GameSession> session, C_CHAT_PACKET& pkt)
 {
-	std::cout << "[Server] Chat Received: " << pkt.msg << "\n";
-
-	// 채팅 에코 답장 제작.
-	S_CHAT_PACKET sendPkt;
-	sendPkt.playerId = 1;
-	::strcpy_s(sendPkt.msg, pkt.msg);
-
-	session->Send(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+	GGameRoom->HandleChat(session, pkt);
 }
 
 void ClientPacketHandler::Handle_C_BUILD_TURRET(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt)
 {
-	std::cout << "[Server] Turret Build Request -> Pos("
-		<< pkt.posX << ", " << pkt.posY << ") Type: " << pkt.turretType << "\n";
-
-	// 타워 설치 성공 결과 패킷 제작.
-	S_BUILD_TURRET_PACKET sendPkt;
-	sendPkt.success = true;
-	sendPkt.playerId = 1;
-	sendPkt.posX = pkt.posX;
-	sendPkt.posY = pkt.posY;
-	sendPkt.turretType = pkt.turretType;
-	sendPkt.remainingGold = 50;
-
-	session->Send(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+	GGameRoom->HandleBuildTurret(session, pkt);
 }

@@ -88,6 +88,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\GameRoom.cpp" />
     <ClCompile Include="Network\ClientPacketHandler.cpp" />
     <ClCompile Include="Main\Main.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
@@ -98,6 +99,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\GameRoom.h" />
     <ClInclude Include="Network\ClientPacketHandler.h" />
     <ClInclude Include="Network\GameSession.h" />
   </ItemGroup>
