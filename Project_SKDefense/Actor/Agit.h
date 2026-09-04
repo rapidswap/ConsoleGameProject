@@ -16,7 +16,7 @@ public:
 
 private:
 	// 아지트 현재 체력.
-	int agitHealth = 10;
+	int agitHealth = 100;
 
 };
 
