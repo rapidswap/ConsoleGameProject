@@ -1,3 +1,6 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include "Network/NetworkManager.h"
 #include "EscMenu.h"
 #include <Game/Game.h>
 #include <Input/Input.h>
@@ -26,7 +29,14 @@ EscMenu::EscMenu()
 			"Quit Game",
 			[]()
 			{
-				// 메뉴 토글 함수 호출.
+				// 소켓 연결을 끊지 않고 서버에 로비 복귀 알림 패킷 전송!
+				if (NetworkManager::Get()->IsConnected())
+				{
+					C_LEAVE_ROOM_PACKET pkt;
+					NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+				}
+
+				// 메뉴 토글 함수 호출 (로비로 이동).
 				Game& game = dynamic_cast<Game&>(Engine::Get());
 				game.ToggleMenu(State::MAINMENU);
 			}

@@ -1,3 +1,6 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include "Network/NetworkManager.h"
 #include "GameClearLevel.h"
 #include <Engine/Engine.h>
 #include <Game/Game.h>
@@ -16,8 +19,15 @@ GameClearLevel::GameClearLevel()
 			{
 				// 메뉴 토글 함수 호출.
 				Game& game = dynamic_cast<Game&>(Engine::Get());
-				game.RestartDefenseLevel();
-				game.ToggleMenu(State::GAMEPLAY);
+				if (NetworkManager::Get()->IsConnected())
+				{
+					game.ToggleMenu(State::MAINMENU);
+				}
+				else
+				{
+					game.RestartDefenseLevel();
+					game.ToggleMenu(State::GAMEPLAY);
+				}
 			}
 		)
 	);

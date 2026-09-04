@@ -1,6 +1,7 @@
 #include "Network/IocpCore.h"
 #include "Network/Listener.h"
 #include "Network/GameSession.h"
+#include "Game/GameRoom.h"
 
 #include <iostream>
 #include <memory>
@@ -52,26 +53,24 @@ int main()
 	std::cout << "  SK Defense IOCP Server Started (Port: 7777)\n";
 	std::cout << "========================================\n";
 
-	// 4. 일꾼 스레드 4개 가동.
+	// 4. 일꾼 스레드 4개 가동 (초고속 네트워크 입출력 전담)
 	std::vector<std::thread> workerThreads;
-	for (int i = 0;i < 4;++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		workerThreads.emplace_back([iocpCore]()
+		{
+			while (true)
 			{
-				while (true)
-				{
-					iocpCore->Dispatch();
-				}
-			});
+				iocpCore->Dispatch();
+			}
+		});
 	}
 
-	// 메인 스레드는 콘솔 종료 방지 대기.
-	for (auto& t : workerThreads)
+	// 5. 메인 스레드가 게임 타이머 루프 (0.1초마다 몬스터 스폰 업데이트) 전담!
+	while (true)
 	{
-		if (t.joinable())
-		{
-			t.join();
-		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		GGameRoom->Update(0.1f);
 	}
 
 	::WSACleanup();

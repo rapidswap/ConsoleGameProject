@@ -47,6 +47,77 @@ struct S_LOGIN_OK_PACKET : public PacketHeader
 	int32_t currentGold = 100;
 };
 
+// 클라 -> 서버: 준비 완료/시작 요청.
+struct C_READY_PACKET : public PacketHeader
+{
+	C_READY_PACKET()
+	{
+		size = sizeof(C_READY_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_READY);
+	}
+
+	// 혼자 플레이할 때는 강제 시작 플래그.
+	bool forceStart = false;
+};
+
+// 서버 -> 클라: 전원 준비 완료, 동시 게임 시작 명령.
+struct S_GAME_START_PACKET : public PacketHeader
+{
+	S_GAME_START_PACKET()
+	{
+		size = sizeof(S_GAME_START_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_GAME_START);
+	}
+
+	int32_t totalPlayers = 0;
+	// 첫 웨이브 준비 시간. 
+	float prepTime = 30.0f;
+};
+
+// 서버 -> 클라: 대기실 현황 정보.
+struct S_ROOM_INFO_PACKET : public PacketHeader
+{
+	S_ROOM_INFO_PACKET()
+	{
+		size = sizeof(S_ROOM_INFO_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_ROOM_INFO);
+	}
+
+	// 실제 접속한 실제 플레이어 수.
+	int32_t totalPlayers = 0;
+	// 현재 엔터를 눌러 준비 완료한 플레이어 수.
+	int32_t readyPlayers = 0;
+};
+
+// 클라 -> 서버: 게임 실패(패배) 알림
+struct C_GAME_OVER_PACKET : public PacketHeader
+{
+	C_GAME_OVER_PACKET()
+	{
+		size = sizeof(C_GAME_OVER_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_GAME_OVER);
+	}
+};
+
+// 서버 -> 클라: 게임 오버 및 대기실 레디 초기화
+struct S_GAME_OVER_PACKET : public PacketHeader
+{
+	S_GAME_OVER_PACKET()
+	{
+		size = sizeof(S_GAME_OVER_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_GAME_OVER);
+	}
+};
+
+// 클라 -> 서버: 게임 방 나가기(로비 복귀) 요청
+struct C_LEAVE_ROOM_PACKET : public PacketHeader
+{
+	C_LEAVE_ROOM_PACKET()
+	{
+		size = sizeof(C_LEAVE_ROOM_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_LEAVE_ROOM);
+	}
+};
 
 // [2] 채팅 패킷.
 
@@ -115,5 +186,56 @@ struct S_BUILD_TURRET_PACKET : public PacketHeader
 	int32_t remainingGold = 0;
 };
 
+// 클라 -> 서버: 타워 판매 요청.
+struct C_SELL_TURRET_PACKET : public PacketHeader
+{
+	C_SELL_TURRET_PACKET()
+	{
+		size = sizeof(C_SELL_TURRET_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_SELL_TURRET);
+	}
+
+	// 판매할 타워의 좌표.
+	int32_t posX = 0;
+	int32_t posY = 0;
+	// 타워의 성급 (환불액 산정용)
+	int32_t starTier = 1;
+};
+
+// 서버 -> 클라: 타워 판매 결과 동기화.
+struct S_SELL_TURRET_PACKET : public PacketHeader
+{
+	S_SELL_TURRET_PACKET()
+	{
+		size = sizeof(S_SELL_TURRET_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_SELL_TURRET);
+	}
+
+	bool success = false;
+	// 판매한 플레이어 ID.
+	uint32_t playerId = 0;
+	// 판매한 위치.
+	int32_t posX = 0;
+	int32_t posY = 0;
+	// 환불받은 골드.
+	int32_t refundGold = 0;
+};
+
+// 서버 -> 클라: 몬스터 소환 명령.
+struct S_SPAWN_MONSTER_PACKET : public PacketHeader
+{
+	S_SPAWN_MONSTER_PACKET()
+	{
+		size = sizeof(S_SPAWN_MONSTER_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_SPAWN_MONSTER);
+	}
+
+	// 몬스터 소환 입구.
+	int32_t spawnIndex = 0;
+	// 몬스터 체력.
+	int32_t maxHP = 1;
+	// 몬스터 이동속도.
+	float speed = 2.0f;
+};
 
 #pragma pack(pop)

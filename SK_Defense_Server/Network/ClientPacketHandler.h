@@ -16,4 +16,8 @@ private:
 	static void Handle_C_LOGIN(std::shared_ptr<GameSession> session, C_LOGIN_PACKET& pkt);
 	static void Handle_C_CHAT(std::shared_ptr<GameSession> session, C_CHAT_PACKET& pkt);
 	static void Handle_C_BUILD_TURRET(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt);
+	static void Handle_C_SELL_TURRET(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt);
+	static void Handle_C_READY(std::shared_ptr<GameSession> session, C_READY_PACKET& pkt);
+	static void Handle_C_GAME_OVER(std::shared_ptr<GameSession> session, C_GAME_OVER_PACKET& pkt);
+	static void Handle_C_LEAVE_ROOM(std::shared_ptr<GameSession> session, C_LEAVE_ROOM_PACKET& pkt);
 };

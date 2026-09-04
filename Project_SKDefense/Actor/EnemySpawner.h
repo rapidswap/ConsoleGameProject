@@ -28,6 +28,9 @@ public:
 	// 치트/디버그용: 웨이브 타이머 스킵
 	void SkipWave();
 
+	// 서버 패킷을 받아 기존 풀(Pool)에서 몬스터를 꺼내 깨우는 함수
+	void SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed);
+
 private:
 	// 몬스터 소환 타이머.
 	Timer spawnTimer;

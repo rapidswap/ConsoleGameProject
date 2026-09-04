@@ -27,6 +27,15 @@ void Game::ToggleMenu(State nextMenu)
 	// 레벨 설정 및 상태 값 업데이트.
 	state = nextMenu;
 	mainLevel = levelList[int(nextMenu)];
+
+	// 메인 메뉴로 돌아갈 때는 항상 레디 상태를 초기화!
+	if (nextMenu == State::MAINMENU)
+	{
+		if (auto mainMenu = std::dynamic_pointer_cast<MainMenuLevel>(levelList[0]))
+		{
+			mainMenu->ResetReady();
+		}
+	}
 }
 
 void Game::RestartDefenseLevel()

@@ -16,6 +16,10 @@
 [Ii]ncludes/
 [Ll]ib/
 
+# AI Agent directories
+.agent/
+.agents/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

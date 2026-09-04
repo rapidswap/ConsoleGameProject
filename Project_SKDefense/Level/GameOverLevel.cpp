@@ -1,3 +1,6 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include "Network/NetworkManager.h"
 #include "GameOverLevel.h"
 #include <Game/Game.h>
 #include <Input/Input.h>
@@ -16,8 +19,16 @@ GameOverLevel::GameOverLevel()
 			[]()
 			{
 				Game& game = dynamic_cast<Game&>(Engine::Get());
-				game.RestartDefenseLevel();
-				game.ToggleMenu(State::GAMEPLAY);
+				if (NetworkManager::Get()->IsConnected())
+				{
+					// 멀티플레이: 대기실로 돌아가서 다시 전원 레디 후 동시 시작
+					game.ToggleMenu(State::MAINMENU);
+				}
+				else
+				{
+					game.RestartDefenseLevel();
+					game.ToggleMenu(State::GAMEPLAY);
+				}
 			}
 		)
 	);

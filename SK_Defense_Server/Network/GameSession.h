@@ -17,4 +17,6 @@ public:
 public:
 	// 이 세션의 고유 플레이어 ID.
 	uint32_t playerId = 0;
+	// 서버에서 관리하는 플레이어의 골드.
+	int32_t gold = 100;
 };

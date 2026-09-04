@@ -58,7 +58,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\Includes\Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,7 +82,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\Includes\Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -114,9 +114,12 @@
     <ClCompile Include="Actor\Turret.cpp" />
     <ClCompile Include="Actor\Wall.cpp" />
     <ClCompile Include="Level\DefenseLevel.cpp" />
+    <ClCompile Include="Network\ServerPacketHandler.cpp" />
     <ClCompile Include="Util\Timer.cpp" />
+    <ClCompile Include="Network\NetworkManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network\NetworkManager.h" />
     <ClInclude Include="Actor\Agit.h" />
     <ClInclude Include="Actor\Enemy.h" />
     <ClInclude Include="Actor\EnemyHouse.h" />
@@ -134,6 +137,7 @@
     <ClInclude Include="Level\GameOverLevel.h" />
     <ClInclude Include="Level\MainMenuLevel.h" />
     <ClInclude Include="Level\MenuItem.h" />
+    <ClInclude Include="Network\ServerPacketHandler.h" />
     <ClInclude Include="Util\Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

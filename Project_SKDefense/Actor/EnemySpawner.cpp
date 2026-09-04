@@ -1,3 +1,6 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include "Network/NetworkManager.h"
 #include "EnemySpawner.h"
 #include <Util/Util.h>
 #include <Actor/Enemy.h>
@@ -84,7 +87,10 @@ void EnemySpawner::Tick(float deltaTime)
 		if (spawnTimer.IsTimeOut())
 		{
 			spawnTimer.Reset();
-			SpawnEnemy();
+			if (!NetworkManager::Get()->IsConnected())
+			{
+				SpawnEnemy();
+			}
 		}
 	}
 
@@ -163,3 +169,26 @@ void EnemySpawner::SkipWave()
 		spawnTimer.Reset();
 	}
 }
+
+void EnemySpawner::SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed)
+{
+	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+	if (!defenseLevel) return;
+
+	// 기존 30마리 오브젝트 풀(Pool)에서 비활성 몬스터 재사용!
+	for (auto& weakEnemy : enemyPool)
+	{
+		auto enemy = weakEnemy.lock();
+		if (enemy && !enemy->IsActive())
+		{
+			enemy->SetHealth(static_cast<float>(maxHp));
+			enemy->SetPosition(defenseLevel->GetSpawnPoint(spawnIndex));
+			enemy->SetActive(true);
+			enemy->RecalculatePath();
+
+			spawnedCount++;
+			break;
+		}
+	}
+}
+

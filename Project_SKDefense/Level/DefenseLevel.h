@@ -9,6 +9,8 @@
 class DefenseLevel : public Craft::Level
 {
 public:
+	DefenseLevel();
+	virtual ~DefenseLevel();
 
 	virtual void OnInitialized();
 	virtual void Tick(float deltaTime) override;
@@ -17,7 +19,6 @@ public:
 private:
 	Craft::Vector2 GetRealMousePos();
 	void LoadMap(const std::string& filename);
-	void GameOver();
 	void CheckTurretMerge();
 
 	// Tick 함수 정리를 위한 입력 처리 분리
@@ -56,6 +57,20 @@ private:
 	std::weak_ptr<class EnemySpawner> enemySpawner;
 
 public:
+	// 어디서든 현재 DefenseLevel에 접근할 수 있는 싱글톤 포인터
+	static DefenseLevel* Get() { return s_instance; }
+
+	// 서버로부터 타워 건설 패킷을 받았을 때 호출할 함수
+	void BuildTurretFromNetwork(int x, int y, int turretType);
+
+	// 서버로부터 타워 철거 패킷을 받았을 때 호출할 함수
+	void SellTurretFromNetwork(int x, int y, uint32_t sellerPlayerId, int refundGold);
+
+	// 서버로부터 몬스터 소환 패킷을 받았을 때 호출할 함수
+	void SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float speed);
+
+	void GameOver();
+
 	bool IsAStarDebug() const { return showAStarDebug; }
 	bool CanBuildTurret(int x, int y);
 	
@@ -76,6 +91,7 @@ public:
 	// 골드 시스템 접근용
 	int GetTurretCost() const { return turretCost; }
 	int GetGold() const { return currentGold; }
+	void SetGold(int amount) { currentGold = amount; }
 	void AddGold(int amount) { currentGold += amount; }
 	bool SpendGold(int amount) 
 	{ 
@@ -95,4 +111,6 @@ public:
 	// 다음에 설치될 터렛의 타입
 	TurretType nextTurretType = TurretType::FLAME;
 
+private:
+	static inline DefenseLevel* s_instance = nullptr;
 };

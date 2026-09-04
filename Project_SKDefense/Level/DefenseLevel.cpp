@@ -1,3 +1,7 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include "Network/NetworkManager.h"
+#include "Common/Protocol.h"
 #include "DefenseLevel.h"
 #include <Engine/Engine.h>
 #include <Input/Input.h>
@@ -25,6 +29,22 @@
 
 using namespace Craft;
 
+DefenseLevel::DefenseLevel()
+{
+	// 싱글톤 등록.
+	s_instance = this;
+
+
+}
+
+DefenseLevel::~DefenseLevel()
+{
+	if (s_instance == this)
+	{
+		s_instance = nullptr;
+	}
+}
+
 void DefenseLevel::OnInitialized()
 {
 	Level::OnInitialized();
@@ -38,16 +58,24 @@ void DefenseLevel::OnInitialized()
 	int screenHeight = Engine::Get().GetHeight();
 	cameraPosition = Vector2(screenWidth / 2, screenHeight / 2);
 
-	// 적 생성기 액터 추가.
+	// 적 생성기 액터 추가 (오브젝트 풀링 30마리 생성 및 관리).
 	enemySpawner = SpawnActor<EnemySpawner>();
+
+	// 서버와 연결된 멀티플레이어 환경이면 서버에서 내려준 공인 초기 골드로 동기화!
+	if (NetworkManager::Get()->IsConnected())
+	{
+		currentGold = NetworkManager::Get()->GetStartGold();
+	}
 
 	// 게임 시작 시 첫 번째로 지어질 터렛 타입 랜덤 결정
 	nextTurretType = static_cast<TurretType>(rand() % 3);
-
 }
 
 void DefenseLevel::Tick(float deltaTime)
 {
+	//  매 프레임 서버에서 도착한 패킷들을 꺼내서 처리.
+	NetworkManager::Get()->Update();
+
 	// 게임 인포 창이 켜져 있으면 일시정지 (F12 키로만 닫기)
 	if (isGameInfo)
 	{
@@ -138,20 +166,23 @@ void DefenseLevel::HandleMouseInput()
 
 		if (CanBuildTurret(worldPos.x, worldPos.y) && SpendGold(turretCost))
 		{
-			SpawnActor<Turret>(worldPos, nextTurretType);
-			nextTurretType = static_cast<TurretType>(rand() % 3);
-
-			mapGrid[worldPos.y][worldPos.x] = 2;
-			mapGrid[worldPos.y][worldPos.x + 1] = 2;
-			mapGrid[worldPos.y + 1][worldPos.x] = 2;
-			mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
-
-			CheckTurretMerge();
-
-			for (const auto& actor : actorList)
+			if (NetworkManager::Get()->IsConnected())
 			{
-				if (!actor->IsActive()) continue;
-				if (auto enemy = Craft::Cast<Enemy>(actor)) enemy->RecalculatePath();
+				// 서버에게 타워를 짓는다는것을 패킷 전송.
+				C_BUILD_TURRET_PACKET pkt;
+				pkt.posX = worldPos.x;
+				pkt.posY = worldPos.y;
+				pkt.turretType = static_cast<int32_t>(nextTurretType);
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+
+				// 다음 타워 랜덤 준비.
+				nextTurretType = static_cast<TurretType>(rand() % 3);
+			}
+			else
+			{
+				// 서버가 안 켜져 있으면 싱글 플레이로 즉시 건설.
+				BuildTurretFromNetwork(worldPos.x, worldPos.y, static_cast<int>(nextTurretType));
+				nextTurretType = static_cast<TurretType>(rand() % 3);
 			}
 		}
 	}
@@ -176,19 +207,19 @@ void DefenseLevel::HandleMouseInput()
 			if (worldPos.x >= tPos.x && worldPos.x <= tPos.x + 1 &&
 				worldPos.y >= tPos.y && worldPos.y <= tPos.y + 1)
 			{
-				mapGrid[tPos.y][tPos.x] = 0;
-				mapGrid[tPos.y][tPos.x + 1] = 0;
-				mapGrid[tPos.y + 1][tPos.x] = 0;
-				mapGrid[tPos.y + 1][tPos.x + 1] = 0;
-
-				int refundMultiplier = (turret->GetStarTier() == 3) ? 9 : (turret->GetStarTier() == 2) ? 3 : 1;
-				AddGold((turretCost / 2) * refundMultiplier);
-
-				turret->Destroy();
-
-				for (auto enemy : FindActors<Enemy>())
+				if (NetworkManager::Get()->IsConnected())
 				{
-					if (enemy->IsActive()) enemy->RecalculatePath();
+					// 서버로 타워 판매 요청 패킷 전송 (성급 포함)!
+					C_SELL_TURRET_PACKET pkt;
+					pkt.posX = tPos.x;
+					pkt.posY = tPos.y;
+					pkt.starTier = turret->GetStarTier();
+					NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+				}
+				else
+				{
+					// 싱글 플레이일 때 즉시 철거
+					SellTurretFromNetwork(tPos.x, tPos.y, 0, (turretCost / 2));
 				}
 				break;
 			}
@@ -540,7 +571,24 @@ void DefenseLevel::Draw()
 	Renderer::Get().Submit(upgIceStr,   Vector2(uiX, uiY++), Color::Cyan, 100);
 	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 100);
 
-	// 5. 하단 6칸 컨트롤 패널
+	// 5. 네트워크 모드 / 멀티플레이어 상태 표시
+	if (NetworkManager::Get()->IsConnected())
+	{
+		Renderer::Get().Submit(" [ MULTIPLAYER ROOM ]", Vector2(uiX, 15), Color::Cyan, 100);
+
+		char netInfo[64];
+		sprintf_s(netInfo, "  Player ID: %d (Me) | Total: %d",
+			NetworkManager::Get()->GetMyPlayerId(),
+			NetworkManager::Get()->GetPlayerCount());
+		Renderer::Get().Submit(netInfo, Vector2(uiX, 16), Color::Green, 100);
+	}
+	else
+	{
+		Renderer::Get().Submit(" [ SINGLE PLAYER MODE ]", Vector2(uiX, 15), Color::DarkGray, 100);
+		Renderer::Get().Submit("  (Offline - Local Play)", Vector2(uiX, 16), Color::DarkGray, 100);
+	}
+
+	// 6. 하단 6칸 컨트롤 패널
 	int panelY = 18; // 두 줄씩 들어가므로 시작 위치를 약간 위로 올림
 	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
 	Renderer::Get().Submit("   [   F12   ]  |   [    T    ]  |   [    R    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
@@ -809,6 +857,12 @@ void DefenseLevel::LoadMap(const std::string& filename)
 
 void DefenseLevel::GameOver()
 {
+	if (NetworkManager::Get()->IsConnected())
+	{
+		C_GAME_OVER_PACKET pkt;
+		NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+	}
+
 	Game& game = dynamic_cast<Game&>(Engine::Get());
 	game.ToggleMenu(State::GAMEOVER);
 }
@@ -817,6 +871,90 @@ void DefenseLevel::GameClear()
 {
 	Game& game = dynamic_cast<Game&>(Engine::Get());
 	game.ToggleMenu(State::GAMECLEAR);
+}
+
+void DefenseLevel::BuildTurretFromNetwork(int x, int y, int turretType)
+{
+	Vector2 worldPos(x, y);
+	TurretType type = static_cast<TurretType>(turretType);
+
+	// 1. 타워 액터 소환.
+	SpawnActor<Turret>(worldPos, type);
+
+	// 2. 맵 그리드에 2x2 설치 표시.
+	mapGrid[worldPos.y][worldPos.x] = 2;
+	mapGrid[worldPos.y][worldPos.x + 1] = 2;
+	mapGrid[worldPos.y + 1][worldPos.x] = 2;
+	mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
+
+	// 3. 3개가 모이면 자동 승급 체크.
+	CheckTurretMerge();
+
+	// 4. 몬스터들의 A* 길찾기 재계산.
+	for (const auto& actor : actorList)
+	{
+		if (!actor->IsActive())
+		{
+			continue;
+		}
+		if (auto enemy = Cast<Enemy>(actor))
+		{
+			enemy->RecalculatePath();
+		}
+	}
+}
+
+void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, int refundGold)
+{
+	// 1. 해당 좌표에 있는 타워 찾아서 파괴.
+	for (auto turret : FindActors<Turret>())
+	{
+		Vector2 tPos = turret->GetPosition();
+		if (tPos.x == x && tPos.y == y)
+		{
+			// 판 타워라면 골드 환불.
+			if (sellerPlayer == 0 || sellerPlayer == NetworkManager::Get()->GetMyPlayerId())
+			{
+				if (NetworkManager::Get()->IsConnected() && refundGold > 0)
+				{
+					AddGold(refundGold);
+				}
+				else
+				{
+					int refundMultiPlier = (turret->GetStarTier() == 3) ? 9 : (turret->GetStarTier() == 2) ? 3 : 1;
+					AddGold((turretCost / 2) * refundMultiPlier);
+				}
+			}
+
+			// 2. 맵 그리드 4칸을 빈 땅으로 복구.
+			mapGrid[tPos.y][tPos.x] = 0;
+			mapGrid[tPos.y][tPos.x + 1] = 0;
+			mapGrid[tPos.y + 1][tPos.x] = 0;
+			mapGrid[tPos.y + 1][tPos.x + 1] = 0;
+
+			// 3. 타워 객체 소멸.
+			turret->Destroy();
+			break;
+		}
+	}
+
+	// 4. 길이 다시 열렸으므로 몬스터들의 A* 길찾기 재계산.
+	for (auto enemy : FindActors<Enemy>())
+	{
+		if (enemy && enemy->IsActive())
+		{
+			enemy->RecalculatePath();
+		}
+	}
+}
+
+void DefenseLevel::SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float speed)
+{
+	// 레벨에 떠 있는 EnemySpawner의 풀링 시스템 통해 소환.
+	if (auto spawner = enemySpawner.lock())
+	{
+		spawner->SpawnEnemyFromNetwork(spawnIndex, maxHp, speed);
+	}
 }
 
 bool DefenseLevel::CanBuildTurret(int x, int y)
@@ -985,6 +1123,3 @@ void DefenseLevel::CheckTurretMerge()
 		}
 	} while (hasMerged);
 }
-
-
-
