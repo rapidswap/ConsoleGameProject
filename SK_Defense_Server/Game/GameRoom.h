@@ -4,6 +4,7 @@
 #include "Common/Protocol.h"
 #include <map>
 #include <set>
+#include <vector>
 #include <mutex>
 #include <memory>
 
@@ -16,16 +17,20 @@ enum class RoomState
 	PLAYING
 };
 
-class GameRoom
+class GameRoom : public std::enable_shared_from_this<GameRoom>
 {
 public:
-	GameRoom() = default;
+	explicit GameRoom(uint32_t inRoomId = 1) : roomId(inRoomId) {}
 	~GameRoom() = default;
+
+	uint32_t GetRoomId() const { return roomId; }
+	RoomState GetState();
+	size_t GetSessionCount();
+	bool IsEmpty();
 
 	// 방 입장 및 퇴장.
 	void Enter(std::shared_ptr<GameSession> session, const char* playerName);
-	void Leave(std::shared_ptr < GameSession> session);
-
+	void Leave(std::shared_ptr<GameSession> session);
 
 	// 방 안의 모든 플레이어에게 패킷 일괄 전송.
 	void Broadcast(BYTE* buffer, int32_t len);
@@ -40,11 +45,15 @@ public:
 	void HandleChat(std::shared_ptr<GameSession> session, C_CHAT_PACKET& pkt);
 	void HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt);
 	void HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt);
+	void HandleSpendGold(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt);
+	void HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 
 	void Update(float deltaTime);
 	void SpawnMonster(int32_t spawnIndex, int32_t hp, float speed);
 
 private:
+	uint32_t roomId = 1;
+
 	// 멀티스레드 동시 접근 보호용 락.
 	std::mutex lock;
 
@@ -56,7 +65,6 @@ private:
 
 	RoomState state = RoomState::WAITING;
 	std::set<uint32_t> readyPlayerIds;
-	
 
 	// 준비 시간.
 	float waveTimer = 30.0f;
@@ -72,6 +80,20 @@ private:
 	int32_t waveCount = 1;
 };
 
-// 서버 전체에서 공유해서 쓸 단 하나의 방.
-extern std::shared_ptr<GameRoom> GGameRoom;
+class GameRoomManager
+{
+public:
+	static GameRoomManager* Get()
+	{
+		static GameRoomManager instance;
+		return &instance;
+	}
 
+	void EnterRoom(std::shared_ptr<GameSession> session, const char* playerName);
+	void Update(float deltaTime);
+
+private:
+	std::mutex managerLock;
+	std::vector<std::shared_ptr<GameRoom>> rooms;
+	uint32_t nextRoomId = 1;
+};

@@ -36,6 +36,14 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 		Handle_C_LEAVE_ROOM(session, *reinterpret_cast<C_LEAVE_ROOM_PACKET*>(buffer));
 		break;
 
+	case PacketType::C_SPEND_GOLD:
+		Handle_C_SPEND_GOLD(session, *reinterpret_cast<C_SPEND_GOLD_PACKET*>(buffer));
+		break;
+
+	case PacketType::C_GAME_CLEAR:
+		Handle_C_GAME_CLEAR(session, *reinterpret_cast<C_GAME_CLEAR_PACKET*>(buffer));
+		break;
+
 	default:
 		std::cout << "[Server] Unknown Packet ID: " << header->id << "\n";
 		break;
@@ -44,35 +52,69 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 
 void ClientPacketHandler::Handle_C_LOGIN(std::shared_ptr<GameSession> session, C_LOGIN_PACKET& pkt)
 {
-	GGameRoom->Enter(session, pkt.playerName);
+	GameRoomManager::Get()->EnterRoom(session, pkt.playerName);
 }
 
 void ClientPacketHandler::Handle_C_CHAT(std::shared_ptr<GameSession> session, C_CHAT_PACKET& pkt)
 {
-	GGameRoom->HandleChat(session, pkt);
+	if (auto room = session->GetRoom())
+	{
+		room->HandleChat(session, pkt);
+	}
 }
 
 void ClientPacketHandler::Handle_C_BUILD_TURRET(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt)
 {
-	GGameRoom->HandleBuildTurret(session, pkt);
+	if (auto room = session->GetRoom())
+	{
+		room->HandleBuildTurret(session, pkt);
+	}
 }
 
 void ClientPacketHandler::Handle_C_SELL_TURRET(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt)
 {
-	GGameRoom->HandleSellTurret(session, pkt);
+	if (auto room = session->GetRoom())
+	{
+		room->HandleSellTurret(session, pkt);
+	}
 }
 
 void ClientPacketHandler::Handle_C_READY(std::shared_ptr<GameSession> session, C_READY_PACKET& pkt)
 {
-	GGameRoom->HandleReady(session, pkt);
+	if (auto room = session->GetRoom())
+	{
+		room->HandleReady(session, pkt);
+	}
 }
 
 void ClientPacketHandler::Handle_C_GAME_OVER(std::shared_ptr<GameSession> session, C_GAME_OVER_PACKET& pkt)
 {
-	GGameRoom->HandleGameOver();
+	if (auto room = session->GetRoom())
+	{
+		room->HandleGameOver();
+	}
 }
 
 void ClientPacketHandler::Handle_C_LEAVE_ROOM(std::shared_ptr<GameSession> session, C_LEAVE_ROOM_PACKET& pkt)
 {
-	GGameRoom->HandleLeaveRoom(session);
+	if (auto room = session->GetRoom())
+	{
+		room->HandleLeaveRoom(session);
+	}
+}
+
+void ClientPacketHandler::Handle_C_SPEND_GOLD(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleSpendGold(session, pkt);
+	}
+}
+
+void ClientPacketHandler::Handle_C_GAME_CLEAR(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleGameClear(session, pkt);
+	}
 }

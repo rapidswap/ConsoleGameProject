@@ -58,7 +58,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\Includes\Main\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\ServerCore\;..\Includes\Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,7 +82,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\Includes\Main\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Includes\;$(ProjectDir)\;..\ServerCore\;..\Includes\Main\;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

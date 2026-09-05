@@ -70,7 +70,7 @@ int main()
 	while (true)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		GGameRoom->Update(0.1f);
+		GameRoomManager::Get()->Update(0.1f);
 	}
 
 	::WSACleanup();

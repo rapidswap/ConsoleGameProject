@@ -33,6 +33,7 @@ private:
 
 public:
 	void GameClear();
+	void OnGameClearReceived();
 
 private:
 	int mapWidth = 0;
@@ -93,18 +94,13 @@ public:
 	int GetGold() const { return currentGold; }
 	void SetGold(int amount) { currentGold = amount; }
 	void AddGold(int amount) { currentGold += amount; }
-	bool SpendGold(int amount) 
-	{ 
-		if (currentGold >= amount) 
-		{
-			currentGold -= amount;
-			return true;
-		}
-		return false;
-	}
+	bool SpendGold(int amount);
+	int GetTotalGoldSpent() const { return totalGoldSpent; }
 
 	// 재화 (골드)
 	int currentGold = 300;
+	// 누적 소비 골드
+	int totalGoldSpent = 0;
 	// 터렛 설치 비용
 	const int turretCost = 50;
 

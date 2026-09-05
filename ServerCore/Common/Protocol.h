@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "Main/pch.h"
 #include "Main/Type.h"
 #include "PacketType.h"
 
@@ -119,6 +119,40 @@ struct C_LEAVE_ROOM_PACKET : public PacketHeader
 	}
 };
 
+// 클리어 플레이어 전적/랭킹 레코드
+struct ClearRecord
+{
+	uint32_t playerId = 0;
+	char playerName[32] = {};
+	int32_t totalGoldSpent = 0;
+	int32_t rank = 1;
+};
+
+// 클라 -> 서버: 게임 클리어 요청 (웨이브 전원 클리어 또는 치트 단축키)
+struct C_GAME_CLEAR_PACKET : public PacketHeader
+{
+	C_GAME_CLEAR_PACKET()
+	{
+		size = sizeof(C_GAME_CLEAR_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_GAME_CLEAR);
+	}
+
+	int32_t totalGoldSpent = 0;
+};
+
+// 서버 -> 클라: 게임 클리어 및 전체 플레이어 소비 골드 랭킹 정산 방송
+struct S_GAME_CLEAR_PACKET : public PacketHeader
+{
+	S_GAME_CLEAR_PACKET()
+	{
+		size = sizeof(S_GAME_CLEAR_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_GAME_CLEAR);
+	}
+
+	int32_t playerCount = 0;
+	ClearRecord records[4] = {};
+};
+
 // [2] 채팅 패킷.
 
 // 클라 -> 서버: 채팅 전송.
@@ -219,6 +253,18 @@ struct S_SELL_TURRET_PACKET : public PacketHeader
 	int32_t posY = 0;
 	// 환불받은 골드.
 	int32_t refundGold = 0;
+};
+
+// 클라 -> 서버: 골드 사용량(누적 사용 금액) 실시간 동기화
+struct C_SPEND_GOLD_PACKET : public PacketHeader
+{
+	C_SPEND_GOLD_PACKET()
+	{
+		size = sizeof(C_SPEND_GOLD_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_SPEND_GOLD);
+	}
+
+	int32_t totalGoldSpent = 0;
 };
 
 // 서버 -> 클라: 몬스터 소환 명령.

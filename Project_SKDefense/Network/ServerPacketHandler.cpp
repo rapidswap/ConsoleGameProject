@@ -1,7 +1,11 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
 #include "ServerPacketHandler.h"
 #include "NetworkManager.h"
 #include "Level/DefenseLevel.h"
-
+#include "Level/GameClearLevel.h"
+#include <Engine/Engine.h>
+#include <Game/Game.h>
 #include <iostream>
 
 void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
@@ -47,6 +51,10 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 		Handle_S_GAME_OVER(*reinterpret_cast<S_GAME_OVER_PACKET*>(buffer));
 		break;
 
+	case PacketType::S_GAME_CLEAR:
+		Handle_S_GAME_CLEAR(*reinterpret_cast<S_GAME_CLEAR_PACKET*>(buffer));
+		break;
+
 	default:
 		break;
 	}
@@ -58,6 +66,21 @@ void ServerPacketHandler::Handle_S_GAME_OVER(S_GAME_OVER_PACKET& pkt)
 	if (DefenseLevel::Get())
 	{
 		DefenseLevel::Get()->GameOver();
+	}
+}
+
+void ServerPacketHandler::Handle_S_GAME_CLEAR(S_GAME_CLEAR_PACKET& pkt)
+{
+	std::cout << "[Client] Received S_GAME_CLEAR from server! (" << pkt.playerCount << " players ranked)\n";
+	GameClearLevel::SetMultiplayerRecords(pkt.playerCount, pkt.records);
+	if (DefenseLevel::Get())
+	{
+		DefenseLevel::Get()->OnGameClearReceived();
+	}
+	else
+	{
+		Game& game = dynamic_cast<Game&>(Craft::Engine::Get());
+		game.ToggleMenu(State::GAMECLEAR);
 	}
 }
 

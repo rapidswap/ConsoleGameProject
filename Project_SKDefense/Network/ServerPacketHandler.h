@@ -1,5 +1,7 @@
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
 #include "Common/Protocol.h"
 
 class ServerPacketHandler
@@ -15,4 +17,5 @@ public:
 	static void Handle_S_SELL_TURRET(S_SELL_TURRET_PACKET& pkt);
 	static void Handle_S_SPAWN_MONSTER(S_SPAWN_MONSTER_PACKET& pkt);
 	static void Handle_S_GAME_OVER(S_GAME_OVER_PACKET& pkt);
+	static void Handle_S_GAME_CLEAR(S_GAME_CLEAR_PACKET& pkt);
 };

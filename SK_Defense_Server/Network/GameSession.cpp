@@ -2,6 +2,7 @@
 #include "ClientPacketHandler.h"
 #include "Game/GameRoom.h"
 #include <iostream>
+
 void GameSession::OnConnected()
 {
     std::wcout << L"[Server] Client Connected! IP: "
@@ -26,5 +27,9 @@ void GameSession::OnDisconnected()
 {
     std::cout << "[Server] Client Disconnected! (PlayerID: " << playerId << ")\n";
 
-    GGameRoom->Leave(std::static_pointer_cast<GameSession>(shared_from_this()));
+    if (auto r = GetRoom())
+    {
+        r->Leave(std::static_pointer_cast<GameSession>(shared_from_this()));
+        SetRoom(nullptr);
+    }
 }

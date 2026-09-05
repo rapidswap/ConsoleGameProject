@@ -15,6 +15,8 @@ enum class PacketType : uint16
 	C_GAME_OVER = 1006,
 	S_GAME_OVER = 1007,
 	C_LEAVE_ROOM = 1008,
+	C_GAME_CLEAR = 1009,
+	S_GAME_CLEAR = 1010,
 
 	C_CHAT=2001,
 	S_CHAT=2002,
@@ -27,6 +29,8 @@ enum class PacketType : uint16
 	C_SELL_TURRET=3003,
 	S_SELL_TURRET=3004,
 
+	// 골드 사용량 동기화
+	C_SPEND_GOLD=3005,
 
 	// 서버가 몬스터 소환 명령.
 	S_SPAWN_MONSTER=4001,

@@ -3,6 +3,7 @@
 #include "Network/NetworkManager.h"
 #include "Common/Protocol.h"
 #include "DefenseLevel.h"
+#include <Level/GameClearLevel.h>
 #include <Engine/Engine.h>
 #include <Input/Input.h>
 #include <Render/Renderer.h>
@@ -422,6 +423,11 @@ void DefenseLevel::DrawGameInfo(const std::string& filename)
 }
 void DefenseLevel::Draw()
 {
+	// 맵 데이터가 아직 로드되지 않았으면 그리기 생략 (레벨 초기화 전 프레임 가드)
+	if (mapGrid.empty())
+	{
+		return;
+	}
 
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
@@ -869,8 +875,46 @@ void DefenseLevel::GameOver()
 
 void DefenseLevel::GameClear()
 {
+	if (NetworkManager::Get()->IsConnected())
+	{
+		// 멀티플레이: 서버에게 게임 클리어 패킷 전송 (F2 치트 또는 웨이브 전원 클리어)
+		// 서버가 모든 세션의 소비 골드를 정산하여 S_GAME_CLEAR를 브로드캐스트합니다.
+		C_GAME_CLEAR_PACKET pkt;
+		pkt.totalGoldSpent = totalGoldSpent;
+		NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+	}
+	else
+	{
+		// 싱글플레이: 로컬 누적 소비 골드를 클리어 화면에 전달 후 즉시 전환
+		GameClearLevel::SetSinglePlayerSpend(totalGoldSpent);
+		Game& game = dynamic_cast<Game&>(Engine::Get());
+		game.ToggleMenu(State::GAMECLEAR);
+	}
+}
+
+void DefenseLevel::OnGameClearReceived()
+{
 	Game& game = dynamic_cast<Game&>(Engine::Get());
 	game.ToggleMenu(State::GAMECLEAR);
+}
+
+bool DefenseLevel::SpendGold(int amount)
+{
+	if (currentGold >= amount)
+	{
+		currentGold -= amount;
+		totalGoldSpent += amount;
+
+		// 멀티플레이 시 실시간으로 총 소비 골드를 서버에 보고
+		if (NetworkManager::Get()->IsConnected())
+		{
+			C_SPEND_GOLD_PACKET pkt;
+			pkt.totalGoldSpent = totalGoldSpent;
+			NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+		}
+		return true;
+	}
+	return false;
 }
 
 void DefenseLevel::BuildTurretFromNetwork(int x, int y, int turretType)

@@ -31,6 +31,19 @@ AStar::~AStar()
 
 std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<std::vector<int>>& grid)
 {
+	// 이전 탐색에서 남은 노드들 메모리 정리
+	for (Node* node : openList)
+	{
+		SafeDelete(node);
+	}
+	openList.clear();
+
+	for (Node* node : closedList)
+	{
+		SafeDelete(node);
+	}
+	closedList.clear();
+
 	this->startNode = startNode;
 	this->goalNode = goalNode;
 
@@ -39,6 +52,7 @@ std::vector<Node*> AStar::FindPath(Node* startNode, Node* goalNode, std::vector<
 	// 입력 노드 또는 그리드가 유효하지 않으면 종료.
 	if (!this->startNode || !this->goalNode || grid.empty() || grid[0].empty())
 	{
+		SafeDelete(startNode);
 		// 빈 경로 반환.
 		return {};
 	}
