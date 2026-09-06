@@ -36,9 +36,13 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 		return;
 	}
 
-	// 1. 고유 플레이어 번호 부여
-	uint32_t newId = playerIdGenerator++;
-	session->playerId = newId;
+	// 1. 고유 플레이어 번호 부여 (아직 ID가 없다면 서버 전역 발급기에서 고유 번호 부여)
+	uint32_t newId = session->playerId;
+	if (newId == 0)
+	{
+		newId = GameRoomManager::Get()->GeneratePlayerId();
+		session->playerId = newId;
+	}
 	strncpy_s(session->playerName, playerName, sizeof(session->playerName));
 	session->totalGoldSpent = 0;
 

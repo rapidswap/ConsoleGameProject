@@ -8,6 +8,8 @@
 #include <mutex>
 #include <memory>
 
+#include <atomic>
+
 class GameSession;
 
 // 방 상태.
@@ -60,9 +62,6 @@ private:
 	// 방에 있는 플레이어 목록.
 	std::map<uint32_t, std::shared_ptr<GameSession>> sessions;
 
-	// 플레이어 번호표(1부터 순차 증가).
-	uint32_t playerIdGenerator = 1;
-
 	RoomState state = RoomState::WAITING;
 	std::set<uint32_t> readyPlayerIds;
 
@@ -89,6 +88,7 @@ public:
 		return &instance;
 	}
 
+	uint32_t GeneratePlayerId() { return nextPlayerId.fetch_add(1); }
 	void EnterRoom(std::shared_ptr<GameSession> session, const char* playerName);
 	void Update(float deltaTime);
 
@@ -96,4 +96,5 @@ private:
 	std::mutex managerLock;
 	std::vector<std::shared_ptr<GameRoom>> rooms;
 	uint32_t nextRoomId = 1;
+	std::atomic<uint32_t> nextPlayerId{ 1 };
 };

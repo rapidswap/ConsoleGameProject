@@ -238,3 +238,17 @@
   - **(해결) `WS2tcpip.h` IPPROTO_IPV6 및 소켓 심볼 충돌 오류:** `GameClearLevel.h`에서 `Protocol.h`를 직접 인클루드하면서 `WinSock2.h`보다 먼저 `Windows.h`가 로드되어 Winsock 1.1과 Winsock 2 충돌 발생. `GameClearLevel.h`에서는 구조체를 전방 선언(`struct ClearRecord;`)하고 `.cpp` 파일에서만 `WinSock2.h`를 선두로 포함하도록 격리하여 충돌을 원천 차단함.
   - **(해결) ServerCore 빌드 후 헤더 동기화 타이밍 이슈:** `ServerCore` 수정 시 post-build 이벤트를 통해 `Includes/` 폴더로 헤더가 복사되는데, 종속 프로젝트들이 빌드되기 전 최신 헤더가 반영되도록 빌드 순서와 인클루드 경로를 안정화함.
 
+### 2026-09-07 (서버 전역 고유 플레이어 ID 발급 및 멀티플레이어 식별 체계 확립)
+- **진행 내용**:
+  - **서버 전역 고유 플레이어 ID 발급 시스템 구축**:
+    - 다중 방(`GameRoom`) 환경에서 각 방의 `playerIdGenerator`가 1부터 시작하여 다른 방의 플레이어들이 동일한 ID(1, 2)를 중복 부여받던 구조적 결함 분석.
+    - `GameRoomManager`에 스레드 세이프한 `std::atomic<uint32_t> nextPlayerId{ 1 };` 및 `GeneratePlayerId()`를 도입하여 서버 전역에서 절대 중복되지 않는 고유 번호를 순차 발급(1, 2, 3, 4...)하도록 아키텍처 개선.
+    - `GameRoom::Enter` 진입 시 세션에 이미 할당된 고유 ID가 없을 때만 전역 발급기에서 번호를 부여받도록 보장하여, 방 재입장 시에도 고유 번호가 보존되도록 구현.
+  - **전체 솔루션 무결성 검증**:
+    - `ConsoleGameProject.slnx` 솔루션 내 7개 프로젝트 전체 컴파일 및 링크 검증 (오류 0개, 경고 0개).
+- **트러블슈팅**:
+  - **(해결) 방마다 플레이어 ID가 1, 2로 중복 부여되는 문제:**
+    - *원인*: `playerIdGenerator`가 방(`GameRoom`) 단위 멤버 변수로 캡슐화되어 있어, 2번째 방이 생성될 때 다시 1번부터 번호를 발급함.
+    - *해결*: ID 생성 책임을 싱글톤인 `GameRoomManager`로 이관하고, `std::atomic` 기반의 원자적 증가(`fetch_add`)를 사용하여 멀티스레드 환경에서도 안전한 서버 전역 고유 ID 발급 체계 확립.
+
+
