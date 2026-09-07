@@ -86,7 +86,7 @@ void DefenseLevel::Tick(float deltaTime)
 	NetworkManager::Get()->Update();
 
 
-	// 도박 진행 중이면 게임 정지 (Pause) 상태로 애니메이션만 처리
+	// 도박 진행 중이면 애니메이션 타이머 갱신 및 완료 시 보상 지급 (논블로킹 오버레이)
 	if (isGambling)
 	{
 		gambleTimer += deltaTime;
@@ -97,7 +97,6 @@ void DefenseLevel::Tick(float deltaTime)
 			AddGold(reward);
 			isGambling = false;
 		}
-		return; // 아래 게임 로직 무시
 	}
 
 	// 부모의 Tick 호출 (배치된 모든 액터들의 Tick 실행)
@@ -149,8 +148,8 @@ void DefenseLevel::HandleCameraInput()
 
 void DefenseLevel::HandleMouseInput()
 {
-	// 게임 룰(F12) 팝업이 띄워져 있을 때는 마우스 클릭(설치/판매) 입력 무시
-	if (isGameInfo)
+	// 게임 룰(F12) 팝업이나 도박(T) 팝업이 띄워져 있을 때는 마우스 클릭(설치/판매) 입력 무시
+	if (isGameInfo || isGambling)
 	{
 		return;
 	}
@@ -481,7 +480,7 @@ void DefenseLevel::Draw()
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
 
-	// 2. 터렛 2x2 미리보기 렌더링 (게임 룰 팝업이 띄워져 있을 때는 숨김)
+	// 2. 터렛 2x2 미리보기 렌더링 (게임 룰 또는 도박 팝업이 띄워져 있을 때는 숨김)
 	Vector2 realMousePos = GetRealMousePos();
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
@@ -489,7 +488,7 @@ void DefenseLevel::Draw()
 	previewWorldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 	previewWorldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-	if (!isGameInfo)
+	if (!isGameInfo && !isGambling)
 	{
 		// 설치 가능 여부 및 골드 조건 확인
 		bool canBuild = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) && (currentGold >= turretCost);
