@@ -27,7 +27,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	std::lock_guard<std::mutex> guard(lock);
 
 	// 이미 입장했던 세션이면 ID를 새로 발급하지 않고 기존 정보만 재전송.
-	if (session->playerId != 0 && sessions.find(session->playerId) != sessions.end())
+	if (session->playerId != 0 && sessions.find(session->playerId) != sessions.end() && sessions[session->playerId] == session)
 	{
 		S_LOGIN_OK_PACKET loginOkPkt;
 		loginOkPkt.playerId = session->playerId;
@@ -37,13 +37,14 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 		return;
 	}
 
-	// 1. 고유 플레이어 번호 부여 (아직 ID가 없다면 서버 전역 발급기에서 고유 번호 부여)
-	uint32_t newId = session->playerId;
-	if (newId == 0)
+	// 1. 방 내 빈 슬롯 중 가장 낮은 번호(1번부터: 1, 2) 부여
+	uint32_t newId = 1;
+	while (sessions.find(newId) != sessions.end())
 	{
-		newId = GameRoomManager::Get()->GeneratePlayerId();
-		session->playerId = newId;
+		newId++;
 	}
+
+	session->playerId = newId;
 	strncpy_s(session->playerName, playerName, sizeof(session->playerName));
 	session->totalGoldSpent = 0;
 
@@ -63,7 +64,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	// 4. 방에 있는 다른 모든 사람에게 시스템 채팅 방송.
 	S_CHAT_PACKET alertPkt;
 	alertPkt.playerId = 0;
-	sprintf_s(alertPkt.msg, "[System] %s joined the room!", playerName);
+	sprintf_s(alertPkt.msg, "[System] %s joined the room as Player %d!", playerName, newId);
 	Broadcast(reinterpret_cast<BYTE*>(&alertPkt), alertPkt.size);
 
 	// 5. 방에 접속한 모든 클라이언트에게 최신 플레이어 수 및 레디 상태 실시간 전송!
@@ -85,6 +86,7 @@ void GameRoom::Leave(std::shared_ptr<GameSession> session)
 		// 방 목록에서 제거.
 		sessions.erase(targetId);
 		readyPlayerIds.erase(targetId);
+		session->playerId = 0;
 
 		std::cout << "[GameRoom #" << roomId << "] Player Leave -> ID: " << targetId
 			<< " (Current Players: " << sessions.size() << ")\n";

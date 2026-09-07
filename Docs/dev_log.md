@@ -303,6 +303,10 @@
       1. `GameRoom::Leave()` 내부에서 락을 잡은 상태에서는 파트너 세션 목록을 로컬 벡터로 복사하고 방 상태만 `WAITING`으로 초기화한 뒤, **반드시 락을 해제(Unlock)한 이후에 `partner->Disconnect()`를 호출**하도록 비블로킹 분리. 또한 `GameSession::OnDisconnected()`에서 `SetRoom(nullptr)`를 선행 호출하여 재진입 경로를 원천 차단.
       2. `DefenseLevel`에 `isMultiplayerGame` 플래그를 도입하고, `Tick()`에서 멀티플레이 도중 소켓 단절 감지 시 로컬 네트워크 정리(`Disconnect()`) 후 즉시 `ToggleMenu(State::MAINMENU)`로 안전 복귀하도록 예외 처리.
       3. `MainMenuLevel::ResetReady()`에서 연결 해제 상태로 메인 메뉴에 돌아온 경우 서버 자동 재접속 및 로그인을 수행하도록 연동하여, 파트너 이탈 후에도 대기실에서 즉시 다음 게임을 준비할 수 있도록 완성.
+  - **(해결) 방 생성 및 플레이어 접속 시 ID가 3, 4번으로 계속 누적 증가하는 버그:**
+    - *원인*: `GameRoomManager`의 전역 원자적 발급기(`nextPlayerId`)가 서버 전체에서 ID를 영구히 증가(1, 2 -> 3, 4 -> 5, 6...)시켜, 새 방을 만들거나 1번 클라이언트 강종 후 재접속 시 1번 슬롯이 비어있음에도 3번, 4번 ID가 부여되는 현상 발생.
+    - *해결*: 서버 전역 발급기를 제거하고, **방 단위 슬롯 할당 방식(`while(sessions.find(newId) != sessions.end()) newId++;`)**으로 전면 개편. 1번 플레이어가 강종되어 2번 플레이어만 남은 방에 새 유저가 접속하면 비어있는 1번 슬롯(Player ID 1)을 즉시 배정받으며, 새로운 방이 생성되더라도 언제나 1번(Host)과 2번(Guest)으로 깔끔하게 고정 부여되도록 개선 완료.
+
 
 
 

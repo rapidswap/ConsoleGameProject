@@ -101,7 +101,6 @@ public:
 		return &instance;
 	}
 
-	uint32_t GeneratePlayerId() { return nextPlayerId.fetch_add(1); }
 	void EnterRoom(std::shared_ptr<GameSession> session, const char* playerName);
 	void Update(float deltaTime);
 
@@ -109,5 +108,4 @@ private:
 	std::mutex managerLock;
 	std::vector<std::shared_ptr<GameRoom>> rooms;
 	uint32_t nextRoomId = 1;
-	std::atomic<uint32_t> nextPlayerId{ 1 };
 };
