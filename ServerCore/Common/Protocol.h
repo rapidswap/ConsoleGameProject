@@ -73,7 +73,10 @@ struct S_GAME_START_PACKET : public PacketHeader
 	// 첫 웨이브 준비 시간. 
 	float prepTime = 30.0f;
 
-	int32_t startGold = 150;
+	int32_t startGold = 200;
+
+	// 각 플레이어의 터렛 타입.
+	int32_t initialTurretType = 0;
 };
 
 // 서버 -> 클라: 대기실 현황 정보.
@@ -220,6 +223,9 @@ struct S_BUILD_TURRET_PACKET : public PacketHeader
 	int32_t turretType = 0;
 	// 설치 후 남은 골드 동기화.
 	int32_t remainingGold = 0;
+
+	// 다음 터렛 타입.
+	int32_t nextTurretType = 0;
 };
 
 // 클라 -> 서버: 타워 판매 요청.

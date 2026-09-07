@@ -97,6 +97,8 @@ public:
 	bool SpendGold(int amount);
 	int GetTotalGoldSpent() const { return totalGoldSpent; }
 
+	void SetNextTurretType(int32_t type) { nextTurretType = static_cast<TurretType>(type); }
+
 	// 재화 (골드)
 	int currentGold = 300;
 	// 누적 소비 골드

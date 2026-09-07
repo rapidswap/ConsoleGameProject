@@ -47,6 +47,7 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 		// 서버로부터 동시 시작 신호 수신.
 		auto pkt = reinterpret_cast<S_GAME_START_PACKET*>(buffer);
 		NetworkManager::Get()->SetStartGold(pkt->startGold);
+		NetworkManager::Get()->SetInitialTurretType(pkt->initialTurretType);
 		NetworkManager::Get()->SetGameStartTriggered(true);
 		break;
 	}
@@ -125,6 +126,7 @@ void ServerPacketHandler::Handle_S_BUILD_TURRET(S_BUILD_TURRET_PACKET& pkt)
 		if (pkt.playerId == NetworkManager::Get()->GetMyPlayerId())
 		{
 			level->SetGold(pkt.remainingGold);
+			level->SetNextTurretType(pkt.nextTurretType);
 		}
 
 		std::cout << "[Client] Turret Built by Player " << pkt.playerId

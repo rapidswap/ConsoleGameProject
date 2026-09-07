@@ -62,14 +62,17 @@ void DefenseLevel::OnInitialized()
 	// 적 생성기 액터 추가 (오브젝트 풀링 30마리 생성 및 관리).
 	enemySpawner = SpawnActor<EnemySpawner>();
 
-	// 서버와 연결된 멀티플레이어 환경이면 서버에서 내려준 공인 초기 골드로 동기화!
+	// 서버와 연결된 멀티플레이어 환경이면 서버에서 내려준 공인 초기 골드 및 첫 터렛 동기화!
 	if (NetworkManager::Get()->IsConnected())
 	{
 		currentGold = NetworkManager::Get()->GetStartGold();
+		nextTurretType = static_cast<TurretType>(NetworkManager::Get()->GetInitialTurretType());
 	}
-
-	// 게임 시작 시 첫 번째로 지어질 터렛 타입 랜덤 결정
-	nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
+	else
+	{
+		// 서버 미연결(오프라인 싱글) 시 첫 번째로 지어질 터렛 타입 랜덤 결정
+		nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
+	}
 }
 
 void DefenseLevel::Tick(float deltaTime)
@@ -173,8 +176,7 @@ void DefenseLevel::HandleMouseInput()
 				pkt.turretType = static_cast<int32_t>(nextTurretType);
 				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
 
-				// 다음 타워 랜덤 준비.
-				nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
+				// 멀티플레이 시 다음 타워는 서버의 S_BUILD_TURRET 응답으로 갱신되므로 로컬 랜덤 생략!
 			}
 			else
 			{

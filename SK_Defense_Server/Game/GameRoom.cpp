@@ -31,7 +31,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	{
 		S_LOGIN_OK_PACKET loginOkPkt;
 		loginOkPkt.playerId = session->playerId;
-		loginOkPkt.currentGold = 150;
+		loginOkPkt.currentGold = 200;
 		session->Send(reinterpret_cast<BYTE*>(&loginOkPkt), loginOkPkt.size);
 		BroadcastRoomInfo();
 		return;
@@ -57,7 +57,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	// 3. 본인에게 로그인 성공 답장 보내기.
 	S_LOGIN_OK_PACKET loginOkPkt;
 	loginOkPkt.playerId = newId;
-	loginOkPkt.currentGold = 150;
+	loginOkPkt.currentGold = 200;
 	session->Send(reinterpret_cast<BYTE*>(&loginOkPkt), loginOkPkt.size);
 
 	// 4. 방에 있는 다른 모든 사람에게 시스템 채팅 방송.
@@ -87,7 +87,16 @@ void GameRoom::Leave(std::shared_ptr<GameSession> session)
 		<< " (Current Players: " << sessions.size() << ")\n";
 
 	// 플레이중에 플레이어가 한명 탈주 했다면.
-	if(state==)
+	if (state == RoomState::PLAYING)
+	{
+		for (auto& pair : sessions)
+		{
+			pair.second->Disconnect(L"Partner Disconnected.");
+		}
+		sessions.clear();
+		state = RoomState::WAITING;
+		return;
+	}
 
 	// 모든 플레이어가 나갔다면 방 상태 초기화
 	if (sessions.empty())
@@ -163,7 +172,7 @@ void GameRoom::StartGame()
 	spawnTimer = 0.0f;
 	spawnedCount = 0;
 
-	int32_t startGold = (sessions.size() == 1) ? 300 : 150;
+	int32_t startGold = (sessions.size() == 1) ? 350 : 200;
 
 	for (auto& pair : sessions)
 	{
@@ -173,12 +182,26 @@ void GameRoom::StartGame()
 
 	std::cout << "[GameRoom #" << roomId << "] *** GAME START! (30s Preparation Time) ***\n";
 
-	// 모든 클라이언트에게 동시에 게임 시작 신호 브로드캐스트.
-	S_GAME_START_PACKET startPkt;
-	startPkt.totalPlayers = static_cast<int32_t>(sessions.size());
-	startPkt.prepTime = 30.0f;
-	startPkt.startGold = startGold;
-	Broadcast(reinterpret_cast<BYTE*>(&startPkt), startPkt.size);
+	// 각 플레이어마다 초기 골드 설정 및 서로다른 첫 번째 타워를 랜덤 추천하여 개별 전송.
+	for (auto& pair : sessions)
+	{
+		auto& session = pair.second;
+		session->gold = startGold;
+		session->totalGoldSpent = 0;
+
+		// 1. 서버가 이 플레이어의 첫 번째 타워를 랜덤 결정.
+		session->nextTurretType = static_cast<int32_t>(Util::RandomRange(0, 2));
+
+		// 2. 플레이어에게 보낼 시작 패킷 구성.
+		S_GAME_START_PACKET startPkt;
+		startPkt.totalPlayers = static_cast<int32_t>(sessions.size());
+		startPkt.prepTime = 30.0f;
+		startPkt.startGold = startGold;
+		startPkt.initialTurretType = session->nextTurretType;
+
+		session->Send(reinterpret_cast<BYTE*>(&startPkt), startPkt.size);
+
+	}
 }
 
 void GameRoom::HandleGameOver()
@@ -274,9 +297,21 @@ void GameRoom::HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_T
 
 	// 검증 통과: 서버 측 골드 차감
 	session->gold -= turretCost;
+	session->totalGoldSpent += turretCost;
+
+	// 클라이언트가 보낸 속성은 무시, 서버가 보관 중이던 타워로 확정.
+	int32_t builtTurretType = session->nextTurretType;
+
+	session->nextTurretType = static_cast<int32_t>(Util::RandomRange(0, 2));
+
+
 
 	std::cout << "[GameRoom #" << roomId << " Build SUCCESS] Player " << session->playerId
-		<< " built Turret at (" << pkt.posX << ", " << pkt.posY << "), Remaining Gold: " << session->gold << "\n";
+		<< " at (" << pkt.posX << ", " << pkt.posY << ")"
+		<< " Built Type: " << builtTurretType
+		<< " -> Next Type: " << session->nextTurretType
+		<< " Remaining Gold: " << session->gold << "\n";
+
 
 	// 방 안의 모든 플레이어에게 타워 생성 및 최신 잔여 골드 브로드캐스트
 	S_BUILD_TURRET_PACKET sendPkt;
@@ -284,8 +319,9 @@ void GameRoom::HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_T
 	sendPkt.playerId = session->playerId;
 	sendPkt.posX = pkt.posX;
 	sendPkt.posY = pkt.posY;
-	sendPkt.turretType = pkt.turretType;
+	sendPkt.turretType = builtTurretType;
 	sendPkt.remainingGold = session->gold;
+	sendPkt.nextTurretType = session->nextTurretType;
 
 	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
 }
@@ -317,6 +353,7 @@ void GameRoom::HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TUR
 }
 
 void GameRoom::Update(float deltaTime)
+
 {
 	std::lock_guard<std::mutex> guard(lock);
 
@@ -361,8 +398,21 @@ void GameRoom::Update(float deltaTime)
 			spawnTimer = 0.0f;
 			++spawnedCount;
 
-			int spawnIdx = static_cast<int>(Util::RandomRange(0, 2));
-			int maxHp = 3 * waveCount;
+			int activeSpawns = 1;
+			if (waveCount >= 4)
+			{
+				activeSpawns = 2;
+			}
+
+			if (waveCount >= 7)
+			{
+				activeSpawns = 3;
+			}
+			
+			int baseHp = 3 * waveCount;
+
+			int spawnIdx = static_cast<int>(Util::RandomRange(0, activeSpawns - 1));
+			int maxHp = (sessions.size() >= 2) ? baseHp * 2 : baseHp;
 			float speed = 2.0f;
 
 			SpawnMonster(spawnIdx, maxHp, speed);

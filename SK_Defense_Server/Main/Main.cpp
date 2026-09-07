@@ -2,6 +2,7 @@
 #include "Network/Listener.h"
 #include "Network/GameSession.h"
 #include "Game/GameRoom.h"
+#include "Util/Util.h"
 
 #include <iostream>
 #include <memory>
@@ -26,6 +27,8 @@ LONG WINAPI ExceptionFilter(EXCEPTION_POINTERS* pException)
 int main()
 {
 	::SetUnhandledExceptionFilter(ExceptionFilter);
+
+	Util::SetRandomSeed();
 
 	// 1. 윈도우 소켓 초기화.
 	WSAData wsaData;

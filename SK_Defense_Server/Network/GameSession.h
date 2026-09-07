@@ -30,6 +30,8 @@ public:
 	// 사용한 총 골드 (클리어 랭킹 산출용)
 	int32_t totalGoldSpent = 0;
 
+	int32_t nextTurretType = 0;
+
 private:
 	std::weak_ptr<GameRoom> room;
 };

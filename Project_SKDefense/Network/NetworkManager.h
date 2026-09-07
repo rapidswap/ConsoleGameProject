@@ -61,6 +61,9 @@ public:
 	int32_t GetStartGold() const { return startGold; }
 	void SetStartGold(int32_t gold) { startGold = gold; }
 
+	int32_t GetInitialTurretType() const { return initialTurretType; }
+	void SetInitialTurretType(int32_t type) { initialTurretType = type; }
+
 private:
 	// 백그라운드에서 패킷을 감시하는 수신 스레드 루프.
 	void RecvThread();
@@ -83,5 +86,9 @@ private:
 
 	bool gameStartTriggered = false;
 
-	int32_t startGold = 100;
+	int32_t startGold = 200;
+
+	int32_t initialTurretType = 0;
+
+
 };
