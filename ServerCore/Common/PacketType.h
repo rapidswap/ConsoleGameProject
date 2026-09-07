@@ -34,6 +34,14 @@ enum class PacketType : uint16
 	// 골드 획득 (몬스터 처치, 도박 보상 등)
 	C_ADD_GOLD=3006,
 
+	// 속성 업그레이드 요청 / 결과 동기화
+	C_UPGRADE_TURRET=3007,
+	S_UPGRADE_TURRET=3008,
+
+	// 아지트 데미지 동기화
+	C_AGIT_DAMAGE=3009,
+	S_AGIT_DAMAGE=3010,
+
 	// 서버가 몬스터 소환 명령.
 	S_SPAWN_MONSTER=4001,
 

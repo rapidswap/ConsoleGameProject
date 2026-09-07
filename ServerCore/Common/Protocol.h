@@ -304,4 +304,59 @@ struct S_SPAWN_MONSTER_PACKET : public PacketHeader
 	float speed = 2.0f;
 };
 
+// [4] 타워 속성 업그레이드 및 아지트 동기화 패킷
+
+// 클라 -> 서버: 속성 업그레이드 요청
+// upgradeType: 0 (FLAME), 1 (ICE), 2 (STORM), 3 (RANDOM)
+struct C_UPGRADE_TURRET_PACKET : public PacketHeader
+{
+	C_UPGRADE_TURRET_PACKET()
+	{
+		size = sizeof(C_UPGRADE_TURRET_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_UPGRADE_TURRET);
+	}
+
+	int32_t upgradeType = 0;
+};
+
+// 서버 -> 클라: 업그레이드 결과 동기화 (방 전체 브로드캐스트)
+// upgradeType: 실제 업그레이드된 속성 (0: FLAME, 1: ICE, 2: STORM)
+// newLevel: 해당 속성의 최신 업그레이드 레벨
+struct S_UPGRADE_TURRET_PACKET : public PacketHeader
+{
+	S_UPGRADE_TURRET_PACKET()
+	{
+		size = sizeof(S_UPGRADE_TURRET_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_UPGRADE_TURRET);
+	}
+
+	uint32_t playerId = 0;
+	int32_t upgradeType = 0;
+	int32_t newLevel = 0;
+};
+
+// 클라 -> 서버: 에너미가 아지트에 도달하여 데미지 발생
+struct C_AGIT_DAMAGE_PACKET : public PacketHeader
+{
+	C_AGIT_DAMAGE_PACKET()
+	{
+		size = sizeof(C_AGIT_DAMAGE_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_AGIT_DAMAGE);
+	}
+
+	int32_t damage = 1;
+};
+
+// 서버 -> 클라: 최신 아지트 체력 동기화
+struct S_AGIT_DAMAGE_PACKET : public PacketHeader
+{
+	S_AGIT_DAMAGE_PACKET()
+	{
+		size = sizeof(S_AGIT_DAMAGE_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_AGIT_DAMAGE);
+	}
+
+	int32_t remainingAgitHealth = 100;
+};
+
 #pragma pack(pop)

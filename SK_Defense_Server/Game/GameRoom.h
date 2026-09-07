@@ -49,6 +49,8 @@ public:
 	void HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt);
 	void HandleSpendGold(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt);
 	void HandleAddGold(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt);
+	void HandleUpgradeTurret(std::shared_ptr<GameSession> session, C_UPGRADE_TURRET_PACKET& pkt);
+	void HandleAgitDamage(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt);
 	void HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 
 	void Update(float deltaTime);
@@ -78,6 +80,14 @@ private:
 	const int32_t maxPerWave = 30;
 	// 현재 웨이브 번호.
 	int32_t waveCount = 1;
+
+	// 방 공유 아지트 체력 (기본 100)
+	int32_t agitHealth = 100;
+
+	// 방 공유 속성 업그레이드 레벨 (0: FLAME, 1: ICE, 2: STORM)
+	int32_t upgradeLevelFlame = 0;
+	int32_t upgradeLevelIce = 0;
+	int32_t upgradeLevelStorm = 0;
 };
 
 class GameRoomManager

@@ -34,6 +34,14 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 		Handle_S_SPAWN_MONSTER(*reinterpret_cast<S_SPAWN_MONSTER_PACKET*>(buffer));
 		break;
 
+	case PacketType::S_UPGRADE_TURRET:
+		Handle_S_UPGRADE_TURRET(*reinterpret_cast<S_UPGRADE_TURRET_PACKET*>(buffer));
+		break;
+
+	case PacketType::S_AGIT_DAMAGE:
+		Handle_S_AGIT_DAMAGE(*reinterpret_cast<S_AGIT_DAMAGE_PACKET*>(buffer));
+		break;
+
 	case PacketType::S_ROOM_INFO:
 	{
 		auto pkt = reinterpret_cast<S_ROOM_INFO_PACKET*>(buffer);
@@ -156,5 +164,23 @@ void ServerPacketHandler::Handle_S_SPAWN_MONSTER(S_SPAWN_MONSTER_PACKET& pkt)
 	{
 		level->SpawnMonsterFromNetwork(pkt.spawnIndex, pkt.maxHP, pkt.speed);
 	}
-	
+}
+
+void ServerPacketHandler::Handle_S_UPGRADE_TURRET(S_UPGRADE_TURRET_PACKET& pkt)
+{
+	if (DefenseLevel* level = DefenseLevel::Get())
+	{
+		level->UpgradeTurretFromNetwork(pkt.upgradeType, pkt.newLevel);
+		std::cout << "[Client] Turret Upgraded by Player " << pkt.playerId
+			<< " Type: " << pkt.upgradeType << " -> New Level: " << pkt.newLevel << "\n";
+	}
+}
+
+void ServerPacketHandler::Handle_S_AGIT_DAMAGE(S_AGIT_DAMAGE_PACKET& pkt)
+{
+	if (DefenseLevel* level = DefenseLevel::Get())
+	{
+		level->SetAgitHealthFromNetwork(pkt.remainingAgitHealth);
+		std::cout << "[Client] Agit Health Synced: " << pkt.remainingAgitHealth << "/100\n";
+	}
 }

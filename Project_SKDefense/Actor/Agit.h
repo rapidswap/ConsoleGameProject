@@ -10,6 +10,7 @@ public:
 	
 	// 아지트의 체력 관리 함수.
 	inline void AgitHealthDown() { --agitHealth; }
+	inline void SetHealth(int health) { agitHealth = health; }
 
 	// Getter.
 	inline int GetHealth() { return agitHealth; }

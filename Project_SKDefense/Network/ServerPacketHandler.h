@@ -16,6 +16,8 @@ public:
 	static void Handle_S_BUILD_TURRET(S_BUILD_TURRET_PACKET& pkt);
 	static void Handle_S_SELL_TURRET(S_SELL_TURRET_PACKET& pkt);
 	static void Handle_S_SPAWN_MONSTER(S_SPAWN_MONSTER_PACKET& pkt);
+	static void Handle_S_UPGRADE_TURRET(S_UPGRADE_TURRET_PACKET& pkt);
+	static void Handle_S_AGIT_DAMAGE(S_AGIT_DAMAGE_PACKET& pkt);
 	static void Handle_S_GAME_OVER(S_GAME_OVER_PACKET& pkt);
 	static void Handle_S_GAME_CLEAR(S_GAME_CLEAR_PACKET& pkt);
 };

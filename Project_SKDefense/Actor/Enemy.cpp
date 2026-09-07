@@ -135,11 +135,19 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	// 아지트에 도달했다면.
 	if (other->IsTypeOf<Agit>())
 	{
-		// 아지트 체력은 다운.
-		auto agitOther = Cast<Agit>(other);
-		agitOther->AgitHealthDown();
+		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+		if (defenseLevel)
+		{
+			defenseLevel->DamageAgit(1);
+		}
+		else
+		{
+			auto agitOther = Cast<Agit>(other);
+			if (agitOther)
+			{
+				agitOther->AgitHealthDown();
+			}
+		}
 		SetActive(false);
 	}
-
-	
 }

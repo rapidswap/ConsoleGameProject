@@ -44,6 +44,14 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 		Handle_C_ADD_GOLD(session, *reinterpret_cast<C_ADD_GOLD_PACKET*>(buffer));
 		break;
 
+	case PacketType::C_UPGRADE_TURRET:
+		Handle_C_UPGRADE_TURRET(session, *reinterpret_cast<C_UPGRADE_TURRET_PACKET*>(buffer));
+		break;
+
+	case PacketType::C_AGIT_DAMAGE:
+		Handle_C_AGIT_DAMAGE(session, *reinterpret_cast<C_AGIT_DAMAGE_PACKET*>(buffer));
+		break;
+
 	case PacketType::C_GAME_CLEAR:
 		Handle_C_GAME_CLEAR(session, *reinterpret_cast<C_GAME_CLEAR_PACKET*>(buffer));
 		break;
@@ -120,6 +128,22 @@ void ClientPacketHandler::Handle_C_ADD_GOLD(std::shared_ptr<GameSession> session
 	if (auto room = session->GetRoom())
 	{
 		room->HandleAddGold(session, pkt);
+	}
+}
+
+void ClientPacketHandler::Handle_C_UPGRADE_TURRET(std::shared_ptr<GameSession> session, C_UPGRADE_TURRET_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleUpgradeTurret(session, pkt);
+	}
+}
+
+void ClientPacketHandler::Handle_C_AGIT_DAMAGE(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleAgitDamage(session, pkt);
 	}
 }
 

@@ -70,6 +70,15 @@ public:
 	// 서버로부터 몬스터 소환 패킷을 받았을 때 호출할 함수
 	void SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float speed);
 
+	// 서버로부터 타워 속성 업그레이드 패킷을 받았을 때 호출할 함수
+	void UpgradeTurretFromNetwork(int upgradeType, int newLevel);
+
+	// 서버로부터 아지트 체력 동기화 패킷을 받았을 때 호출할 함수
+	void SetAgitHealthFromNetwork(int health);
+
+	// 몬스터가 아지트에 도달했을 때 호출 (네트워크 연결 여부에 따라 패킷 전송 or 로컬 차감)
+	void DamageAgit(int damage = 1);
+
 	void GameOver();
 
 	bool IsAStarDebug() const { return showAStarDebug; }

@@ -171,6 +171,10 @@ void GameRoom::StartGame()
 	waveTimer = 30.0f;
 	spawnTimer = 0.0f;
 	spawnedCount = 0;
+	agitHealth = 100;
+	upgradeLevelFlame = 0;
+	upgradeLevelIce = 0;
+	upgradeLevelStorm = 0;
 
 	int32_t startGold = (sessions.size() == 1) ? 350 : 200;
 
@@ -446,6 +450,87 @@ void GameRoom::HandleAddGold(std::shared_ptr<GameSession> session, C_ADD_GOLD_PA
 	session->gold += pkt.amount;
 	std::cout << "[GameRoom #" << roomId << "] Player " << session->playerId
 		<< " Earned " << pkt.amount << "G (Server Gold: " << session->gold << "G)\n";
+}
+
+void GameRoom::HandleUpgradeTurret(std::shared_ptr<GameSession> session, C_UPGRADE_TURRET_PACKET& pkt)
+{
+	std::lock_guard<std::mutex> guard(lock);
+
+	if (state != RoomState::PLAYING) return;
+
+	int32_t chosenType = pkt.upgradeType;
+	// 3인 경우 랜덤 업그레이드 (0: FLAME, 1: ICE, 2: STORM 중 하나)
+	if (chosenType == 3)
+	{
+		chosenType = static_cast<int32_t>(Util::RandomRange(0, 2));
+	}
+
+	int32_t newLevel = 0;
+	if (chosenType == 0)
+	{
+		++upgradeLevelFlame;
+		newLevel = upgradeLevelFlame;
+	}
+	else if (chosenType == 1)
+	{
+		++upgradeLevelIce;
+		newLevel = upgradeLevelIce;
+	}
+	else if (chosenType == 2)
+	{
+		++upgradeLevelStorm;
+		newLevel = upgradeLevelStorm;
+	}
+	else
+	{
+		return;
+	}
+
+	std::cout << "[GameRoom #" << roomId << "] Player " << session->playerId
+		<< " Upgraded Type " << chosenType << " to Level " << newLevel << "\n";
+
+	S_UPGRADE_TURRET_PACKET sendPkt;
+	sendPkt.playerId = session->playerId;
+	sendPkt.upgradeType = chosenType;
+	sendPkt.newLevel = newLevel;
+
+	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+}
+
+void GameRoom::HandleAgitDamage(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt)
+{
+	std::lock_guard<std::mutex> guard(lock);
+
+	if (state != RoomState::PLAYING) return;
+
+	int32_t dmg = (pkt.damage <= 0) ? 1 : pkt.damage;
+	agitHealth -= dmg;
+	if (agitHealth < 0) agitHealth = 0;
+
+	std::cout << "[GameRoom #" << roomId << "] Agit Damaged by " << dmg
+		<< " (Remaining HP: " << agitHealth << "/100) reported by Player " << session->playerId << "\n";
+
+	S_AGIT_DAMAGE_PACKET sendPkt;
+	sendPkt.remainingAgitHealth = agitHealth;
+	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+
+	// 아지트 체력이 0이 되면 방 전체 게임 오버 실행
+	if (agitHealth <= 0)
+	{
+		std::cout << "[GameRoom #" << roomId << "] Agit Destroyed! Triggering Game Over...\n";
+		
+		state = RoomState::WAITING;
+		readyPlayerIds.clear();
+		waveCount = 1;
+		isWaveActive = false;
+		waveTimer = 30.0f;
+		spawnTimer = 0.0f;
+		spawnedCount = 0;
+
+		S_GAME_OVER_PACKET overPkt;
+		Broadcast(reinterpret_cast<BYTE*>(&overPkt), overPkt.size);
+		BroadcastRoomInfo();
+	}
 }
 
 void GameRoom::HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt)

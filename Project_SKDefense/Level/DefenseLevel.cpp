@@ -62,6 +62,11 @@ void DefenseLevel::OnInitialized()
 	// 적 생성기 액터 추가 (오브젝트 풀링 30마리 생성 및 관리).
 	enemySpawner = SpawnActor<EnemySpawner>();
 
+	// 타워 업그레이드 수치 초기화
+	Turret::upgradeLevelFlame = 0;
+	Turret::upgradeLevelIce = 0;
+	Turret::upgradeLevelStorm = 0;
+
 	// 서버와 연결된 멀티플레이어 환경이면 서버에서 내려준 공인 초기 골드 및 첫 터렛 동기화!
 	if (NetworkManager::Get()->IsConnected())
 	{
@@ -233,15 +238,51 @@ void DefenseLevel::HandleUIInput()
 	// 단축키 Z, X, C로 속성별 업그레이드 진행 (비용: 100골드)
 	if (Input::Get().GetKeyDown('Z'))
 	{
-		if (SpendGold(100)) Turret::upgradeLevelFlame++;
+		if (SpendGold(100))
+		{
+			if (NetworkManager::Get()->IsConnected())
+			{
+				C_UPGRADE_TURRET_PACKET pkt;
+				pkt.upgradeType = 0; // FLAME
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			}
+			else
+			{
+				Turret::upgradeLevelFlame++;
+			}
+		}
 	}
 	if (Input::Get().GetKeyDown('X'))
 	{
-		if (SpendGold(100)) Turret::upgradeLevelIce++;
+		if (SpendGold(100))
+		{
+			if (NetworkManager::Get()->IsConnected())
+			{
+				C_UPGRADE_TURRET_PACKET pkt;
+				pkt.upgradeType = 1; // ICE
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			}
+			else
+			{
+				Turret::upgradeLevelIce++;
+			}
+		}
 	}
 	if (Input::Get().GetKeyDown('C'))
 	{
-		if (SpendGold(100)) Turret::upgradeLevelStorm++;
+		if (SpendGold(100))
+		{
+			if (NetworkManager::Get()->IsConnected())
+			{
+				C_UPGRADE_TURRET_PACKET pkt;
+				pkt.upgradeType = 2; // STORM
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			}
+			else
+			{
+				Turret::upgradeLevelStorm++;
+			}
+		}
 	}
 	
 	// 랜덤 업그레이드 기능 (비용: 80골드 - 랜덤이라 조금 더 저렴하게 설정해봤습니다!)
@@ -249,7 +290,16 @@ void DefenseLevel::HandleUIInput()
 	{
 		if (SpendGold(80)) 
 		{
-			RandomUpgrade();
+			if (NetworkManager::Get()->IsConnected())
+			{
+				C_UPGRADE_TURRET_PACKET pkt;
+				pkt.upgradeType = 3; // RANDOM
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			}
+			else
+			{
+				RandomUpgrade();
+			}
 		}
 	}
 
@@ -1004,6 +1054,53 @@ void DefenseLevel::SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float spee
 		spawner->SpawnEnemyFromNetwork(spawnIndex, maxHp, speed);
 	}
 }
+
+void DefenseLevel::UpgradeTurretFromNetwork(int upgradeType, int newLevel)
+{
+	if (upgradeType == 0)
+	{
+		Turret::upgradeLevelFlame = newLevel;
+	}
+	else if (upgradeType == 1)
+	{
+		Turret::upgradeLevelIce = newLevel;
+	}
+	else if (upgradeType == 2)
+	{
+		Turret::upgradeLevelStorm = newLevel;
+	}
+}
+
+void DefenseLevel::SetAgitHealthFromNetwork(int health)
+{
+	auto agit = FindActor<Agit>();
+	if (agit)
+	{
+		agit->SetHealth(health);
+	}
+}
+
+void DefenseLevel::DamageAgit(int damage)
+{
+	if (NetworkManager::Get()->IsConnected())
+	{
+		C_AGIT_DAMAGE_PACKET pkt;
+		pkt.damage = damage;
+		NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+	}
+	else
+	{
+		auto agit = FindActor<Agit>();
+		if (agit)
+		{
+			for (int i = 0; i < damage; ++i)
+			{
+				agit->AgitHealthDown();
+			}
+		}
+	}
+}
+
 
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
