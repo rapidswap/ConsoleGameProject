@@ -295,6 +295,15 @@
   - **(해결) 멀티플레이어 환경에서 클라이언트 간 몬스터 생사 불일치 및 30~40 골드 차이 버그:**
     - *원인*: 터렛 공격과 탄환 충돌 판정이 클라이언트 각자의 로컬 틱에서 독립적으로 연산되어 미세한 프레임 시차로 인해 터렛의 타겟 선정 순서가 달라짐. 이로 인해 A 클라이언트에서는 먼저 처치된 몬스터가 B 클라이언트에서는 아지트에 도달해버려, 한쪽 클라이언트는 30마리 전멸로 300G를 얻었으나 다른 쪽은 260~270G만 얻고 화면상의 몬스터 생존 여부가 달라지는 비동기화가 발생함.
     - *해결*: 몬스터 스폰 시 서버가 고유 `monsterId`를 부여하고, 어느 클라이언트에서든 몬스터 처치 판정이 발생하면 `C_ENEMY_KILL`을 서버로 전송하도록 변경. 서버는 `deadMonsters` 필터링으로 중복 처치를 방지하면서 방의 전원에게 `S_ENEMY_KILL`을 브로드캐스트하여 모든 클라이언트에서 동일한 몬스터를 즉시 소멸시키고 동일한 골드를 지급하도록 서버 권한형 동기화 체계 완성.
+  - **(해결) 게임 도중 한 클라이언트 종료 시 서버 크래시 및 파트너 클라이언트 미퇴장 버그:**
+    - *원인*:
+      1. **서버 크래시**: `GameRoom::Leave()`에서 `state == RoomState::PLAYING`일 때 방 내부 락(`std::mutex lock`)을 소유한 상태로 `pair.second->Disconnect()`를 동기 호출함. 이로 인해 `Session::ProcessDisconnect()` -> `GameSession::OnDisconnected()` -> `GameRoom::Leave()`가 재귀 호출되면서 동일 스레드가 non-recursive `std::mutex`를 재획득하려다 `std::system_error(resource_deadlock_would_occur)` 예외가 발생하고 unhandled terminate로 서버가 즉각 폭파(크래시)됨.
+      2. **클라이언트 미퇴장**: 파트너 클라이언트 `DefenseLevel::Tick`에 서버 연결 끊김(`!NetworkManager::Get()->IsConnected()`)을 감지하는 조건문이 전혀 없어, 소켓이 닫혀도 인게임 화면에 그대로 방치되고 로컬 싱글 몬스터가 튀어나오는 등 정상적인 세션 종료가 이뤄지지 않음.
+    - *해결*:
+      1. `GameRoom::Leave()` 내부에서 락을 잡은 상태에서는 파트너 세션 목록을 로컬 벡터로 복사하고 방 상태만 `WAITING`으로 초기화한 뒤, **반드시 락을 해제(Unlock)한 이후에 `partner->Disconnect()`를 호출**하도록 비블로킹 분리. 또한 `GameSession::OnDisconnected()`에서 `SetRoom(nullptr)`를 선행 호출하여 재진입 경로를 원천 차단.
+      2. `DefenseLevel`에 `isMultiplayerGame` 플래그를 도입하고, `Tick()`에서 멀티플레이 도중 소켓 단절 감지 시 로컬 네트워크 정리(`Disconnect()`) 후 즉시 `ToggleMenu(State::MAINMENU)`로 안전 복귀하도록 예외 처리.
+      3. `MainMenuLevel::ResetReady()`에서 연결 해제 상태로 메인 메뉴에 돌아온 경우 서버 자동 재접속 및 로그인을 수행하도록 연동하여, 파트너 이탈 후에도 대기실에서 즉시 다음 게임을 준비할 수 있도록 완성.
+
 
 
 

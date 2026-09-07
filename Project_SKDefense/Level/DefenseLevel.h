@@ -121,6 +121,9 @@ public:
 	// 다음에 설치될 터렛의 타입
 	TurretType nextTurretType = TurretType::FLAME;
 
+	// 멀티플레이어 세션 여부
+	bool isMultiplayerGame = false;
+
 private:
 	static inline DefenseLevel* s_instance = nullptr;
 };

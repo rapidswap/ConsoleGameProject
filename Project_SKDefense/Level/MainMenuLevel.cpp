@@ -8,6 +8,22 @@
 
 using namespace Craft;
 
+void MainMenuLevel::ResetReady()
+{
+	isReady = false;
+
+	// 연결이 끊긴 상태로 메인 메뉴에 복귀했다면 자동 재접속 및 로그인 시도
+	if (!NetworkManager::Get()->IsConnected())
+	{
+		if (NetworkManager::Get()->Connect(L"127.0.0.1", 7777))
+		{
+			C_LOGIN_PACKET loginPkt;
+			strcpy_s(loginPkt.playerName, "Player_Game");
+			NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&loginPkt), loginPkt.size);
+		}
+	}
+}
+
 void MainMenuLevel::OnInitialized()
 {
 	super::OnInitialized();

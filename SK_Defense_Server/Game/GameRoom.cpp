@@ -72,53 +72,76 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 
 void GameRoom::Leave(std::shared_ptr<GameSession> session)
 {
-	std::lock_guard<std::mutex> guard(lock);
-	uint32_t targetId = session->playerId;
-	if (targetId == 0)
+	std::vector<std::shared_ptr<GameSession>> partnersToDisconnect;
+
 	{
-		return;
-	}
-
-	// 방 목록에서 제거.
-	sessions.erase(targetId);
-	readyPlayerIds.erase(targetId);
-
-	std::cout << "[GameRoom #" << roomId << "] Player Leave -> ID: " << targetId
-		<< " (Current Players: " << sessions.size() << ")\n";
-
-	// 플레이중에 플레이어가 한명 탈주 했다면.
-	if (state == RoomState::PLAYING)
-	{
-		for (auto& pair : sessions)
+		std::lock_guard<std::mutex> guard(lock);
+		uint32_t targetId = session->playerId;
+		if (targetId == 0)
 		{
-			pair.second->Disconnect(L"Partner Disconnected.");
+			return;
 		}
-		sessions.clear();
-		state = RoomState::WAITING;
-		return;
+
+		// 방 목록에서 제거.
+		sessions.erase(targetId);
+		readyPlayerIds.erase(targetId);
+
+		std::cout << "[GameRoom #" << roomId << "] Player Leave -> ID: " << targetId
+			<< " (Current Players: " << sessions.size() << ")\n";
+
+		// 플레이중에 플레이어가 한명 탈주 했다면.
+		if (state == RoomState::PLAYING)
+		{
+			std::cout << "[GameRoom #" << roomId << "] Player " << targetId
+				<< " left during PLAYING. Terminating co-op game for remaining player(s).\n";
+
+			for (auto& pair : sessions)
+			{
+				partnersToDisconnect.push_back(pair.second);
+			}
+			sessions.clear();
+			state = RoomState::WAITING;
+			readyPlayerIds.clear();
+			waveCount = 1;
+			isWaveActive = false;
+			waveTimer = 30.0f;
+			spawnTimer = 0.0f;
+			spawnedCount = 0;
+			deadMonsters.clear();
+		}
+		else
+		{
+			// 모든 플레이어가 나갔다면 방 상태 초기화
+			if (sessions.empty())
+			{
+				state = RoomState::WAITING;
+				readyPlayerIds.clear();
+				waveCount = 1;
+				isWaveActive = false;
+				waveTimer = 30.0f;
+				spawnTimer = 0.0f;
+				spawnedCount = 0;
+				deadMonsters.clear();
+				return;
+			}
+
+			// 방에 남은 사람들에게 퇴장 알림 방송.
+			S_CHAT_PACKET alertPkt;
+			alertPkt.playerId = 0;
+			sprintf_s(alertPkt.msg, "[System] Player %d left the room.", targetId);
+			Broadcast(reinterpret_cast<BYTE*>(&alertPkt), alertPkt.size);
+
+			// 남은 플레이어에게 최신 인원수 및 레디 상태 전송.
+			BroadcastRoomInfo();
+		}
 	}
 
-	// 모든 플레이어가 나갔다면 방 상태 초기화
-	if (sessions.empty())
+	// 락을 해제한 후 남아있는 파트너 세션들을 안전하게 연결 해제
+	for (auto& partner : partnersToDisconnect)
 	{
-		state = RoomState::WAITING;
-		readyPlayerIds.clear();
-		waveCount = 1;
-		isWaveActive = false;
-		waveTimer = 30.0f;
-		spawnTimer = 0.0f;
-		spawnedCount = 0;
-		return;
+		partner->SetRoom(nullptr);
+		partner->Disconnect(L"Partner Disconnected.");
 	}
-
-	// 방에 남은 사람들에게 퇴장 알림 방송.
-	S_CHAT_PACKET alertPkt;
-	alertPkt.playerId = 0;
-	sprintf_s(alertPkt.msg, "[System] Player %d left the room.", targetId);
-	Broadcast(reinterpret_cast<BYTE*>(&alertPkt), alertPkt.size);
-
-	// 남은 플레이어에게 최신 인원수 및 레디 상태 전송.
-	BroadcastRoomInfo();
 }
 
 void GameRoom::Broadcast(BYTE* buffer, int32_t len)

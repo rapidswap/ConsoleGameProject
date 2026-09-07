@@ -7,7 +7,7 @@ class MainMenuLevel:public Craft::Level
 	TYPE_DECLARATIONS(MainMenuLevel, Level)
 
 public:
-	void ResetReady() { isReady = false; }
+	void ResetReady();
 
 private:
 	virtual void OnInitialized() override;

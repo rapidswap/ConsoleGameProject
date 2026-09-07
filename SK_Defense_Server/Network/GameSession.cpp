@@ -29,7 +29,7 @@ void GameSession::OnDisconnected()
 
     if (auto r = GetRoom())
     {
-        r->Leave(std::static_pointer_cast<GameSession>(shared_from_this()));
         SetRoom(nullptr);
+        r->Leave(std::static_pointer_cast<GameSession>(shared_from_this()));
     }
 }

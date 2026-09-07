@@ -70,11 +70,13 @@ void DefenseLevel::OnInitialized()
 	// 서버와 연결된 멀티플레이어 환경이면 서버에서 내려준 공인 초기 골드 및 첫 터렛 동기화!
 	if (NetworkManager::Get()->IsConnected())
 	{
+		isMultiplayerGame = true;
 		currentGold = NetworkManager::Get()->GetStartGold();
 		nextTurretType = static_cast<TurretType>(NetworkManager::Get()->GetInitialTurretType());
 	}
 	else
 	{
+		isMultiplayerGame = false;
 		// 서버 미연결(오프라인 싱글) 시 첫 번째로 지어질 터렛 타입 랜덤 결정
 		nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
 	}
@@ -84,6 +86,16 @@ void DefenseLevel::Tick(float deltaTime)
 {
 	//  매 프레임 서버에서 도착한 패킷들을 꺼내서 처리.
 	NetworkManager::Get()->Update();
+
+	// 멀티플레이 진행 중 서버와의 연결이 끊어졌다면 (파트너 이탈 또는 서버 종료)
+	if (isMultiplayerGame && !NetworkManager::Get()->IsConnected())
+	{
+		std::cout << "[Client] Connection to server lost (Partner disconnected). Returning to Main Menu...\n";
+		NetworkManager::Get()->Disconnect();
+		Game& game = dynamic_cast<Game&>(Engine::Get());
+		game.ToggleMenu(State::MAINMENU);
+		return;
+	}
 
 
 	// 도박 진행 중이면 애니메이션 타이머 갱신 및 완료 시 보상 지급 (논블로킹 오버레이)
