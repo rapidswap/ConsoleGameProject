@@ -31,7 +31,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	{
 		S_LOGIN_OK_PACKET loginOkPkt;
 		loginOkPkt.playerId = session->playerId;
-		loginOkPkt.currentGold = 100;
+		loginOkPkt.currentGold = 150;
 		session->Send(reinterpret_cast<BYTE*>(&loginOkPkt), loginOkPkt.size);
 		BroadcastRoomInfo();
 		return;
@@ -57,7 +57,7 @@ void GameRoom::Enter(std::shared_ptr<GameSession> session, const char* playerNam
 	// 3. 본인에게 로그인 성공 답장 보내기.
 	S_LOGIN_OK_PACKET loginOkPkt;
 	loginOkPkt.playerId = newId;
-	loginOkPkt.currentGold = 100;
+	loginOkPkt.currentGold = 150;
 	session->Send(reinterpret_cast<BYTE*>(&loginOkPkt), loginOkPkt.size);
 
 	// 4. 방에 있는 다른 모든 사람에게 시스템 채팅 방송.
@@ -85,6 +85,9 @@ void GameRoom::Leave(std::shared_ptr<GameSession> session)
 
 	std::cout << "[GameRoom #" << roomId << "] Player Leave -> ID: " << targetId
 		<< " (Current Players: " << sessions.size() << ")\n";
+
+	// 플레이중에 플레이어가 한명 탈주 했다면.
+	if(state==)
 
 	// 모든 플레이어가 나갔다면 방 상태 초기화
 	if (sessions.empty())
@@ -160,9 +163,11 @@ void GameRoom::StartGame()
 	spawnTimer = 0.0f;
 	spawnedCount = 0;
 
+	int32_t startGold = (sessions.size() == 1) ? 300 : 150;
+
 	for (auto& pair : sessions)
 	{
-		pair.second->gold = 100;
+		pair.second->gold = startGold;
 		pair.second->totalGoldSpent = 0;
 	}
 
@@ -172,6 +177,7 @@ void GameRoom::StartGame()
 	S_GAME_START_PACKET startPkt;
 	startPkt.totalPlayers = static_cast<int32_t>(sessions.size());
 	startPkt.prepTime = 30.0f;
+	startPkt.startGold = startGold;
 	Broadcast(reinterpret_cast<BYTE*>(&startPkt), startPkt.size);
 }
 

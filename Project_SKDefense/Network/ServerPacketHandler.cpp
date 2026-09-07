@@ -43,9 +43,13 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 	}
 
 	case PacketType::S_GAME_START:
+	{
 		// 서버로부터 동시 시작 신호 수신.
+		auto pkt = reinterpret_cast<S_GAME_START_PACKET*>(buffer);
+		NetworkManager::Get()->SetStartGold(pkt->startGold);
 		NetworkManager::Get()->SetGameStartTriggered(true);
 		break;
+	}
 
 	case PacketType::S_GAME_OVER:
 		Handle_S_GAME_OVER(*reinterpret_cast<S_GAME_OVER_PACKET*>(buffer));

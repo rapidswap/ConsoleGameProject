@@ -181,7 +181,8 @@ void Session::Send(BYTE* buffer, int32_t len)
 
 void Session::ProcessSend(int32_t numOfBytes)
 {
-	auto self = shared_from_this(); // 처리 도중 세션 소멸 방지
+	// 처리 도중 세션 소멸 방지.
+	auto self = shared_from_this(); 
 	sendEvent.owner = nullptr;
 
 	if (numOfBytes == 0)

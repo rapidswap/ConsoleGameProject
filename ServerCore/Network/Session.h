@@ -22,7 +22,7 @@ public:
 	void SetNetAddress(NetAddress address) { netAddress = address; }
 	NetAddress GetNetAddress() const { return netAddress; }
 
-	bool IsConnected() { return connected; }
+	bool IsConnected() const { return connected; }
 
 	// 비동기 송수신.
 	void Send(BYTE* buffer, int32_t len);

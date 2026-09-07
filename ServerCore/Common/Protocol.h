@@ -72,6 +72,8 @@ struct S_GAME_START_PACKET : public PacketHeader
 	int32_t totalPlayers = 0;
 	// 첫 웨이브 준비 시간. 
 	float prepTime = 30.0f;
+
+	int32_t startGold = 150;
 };
 
 // 서버 -> 클라: 대기실 현황 정보.
