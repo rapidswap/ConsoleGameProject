@@ -76,7 +76,13 @@ void Enemy::Tick(float deltaTime)
 	}
 	else
 	{
-		// 경로 끝(아지트) 도착 처리: 아지트 데미지를 입히고 사라짐(비활성화)
+		// 경로 끝(아지트) 도착 처리: 아지트에 도달하여 데미지를 입히고 소멸(골드 미지급)
+		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+		if (defenseLevel)
+		{
+			defenseLevel->DamageAgit(1);
+			std::cout << "[Enemy] Reached Agit! Agit Damaged (No Gold Awarded)\n";
+		}
 		SetActive(false);
 	}
 }
@@ -126,10 +132,12 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 		if (defenseLevel)
 		{
 			defenseLevel->AddGold(10);
+			std::cout << "[Enemy] Killed! +10G (Current Gold: " << defenseLevel->GetGold() << "G)\n";
 		}
 
 		// 오브젝트 풀링을 위해 파괴 대신 비활성화
 		SetActive(false);
+		return;
 	}
 
 	// 아지트에 도달했다면.
@@ -139,6 +147,7 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 		if (defenseLevel)
 		{
 			defenseLevel->DamageAgit(1);
+			std::cout << "[Enemy] Collided with Agit! Agit Damaged (No Gold Awarded)\n";
 		}
 		else
 		{
