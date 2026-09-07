@@ -31,6 +31,8 @@ enum class PacketType : uint16
 
 	// 골드 사용량 동기화
 	C_SPEND_GOLD=3005,
+	// 골드 획득 (몬스터 처치, 도박 보상 등)
+	C_ADD_GOLD=3006,
 
 	// 서버가 몬스터 소환 명령.
 	S_SPAWN_MONSTER=4001,

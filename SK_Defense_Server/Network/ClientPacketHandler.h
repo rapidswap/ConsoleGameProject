@@ -21,5 +21,6 @@ private:
 	static void Handle_C_GAME_OVER(std::shared_ptr<GameSession> session, C_GAME_OVER_PACKET& pkt);
 	static void Handle_C_LEAVE_ROOM(std::shared_ptr<GameSession> session, C_LEAVE_ROOM_PACKET& pkt);
 	static void Handle_C_SPEND_GOLD(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt);
+	static void Handle_C_ADD_GOLD(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt);
 	static void Handle_C_GAME_CLEAR(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 };

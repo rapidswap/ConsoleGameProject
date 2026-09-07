@@ -438,6 +438,16 @@ void GameRoom::HandleSpendGold(std::shared_ptr<GameSession> session, C_SPEND_GOL
 	session->totalGoldSpent = pkt.totalGoldSpent;
 }
 
+void GameRoom::HandleAddGold(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt)
+{
+	std::lock_guard<std::mutex> guard(lock);
+	if (pkt.amount <= 0) return;
+
+	session->gold += pkt.amount;
+	std::cout << "[GameRoom #" << roomId << "] Player " << session->playerId
+		<< " Earned " << pkt.amount << "G (Server Gold: " << session->gold << "G)\n";
+}
+
 void GameRoom::HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt)
 {
 	std::lock_guard<std::mutex> guard(lock);

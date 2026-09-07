@@ -93,7 +93,7 @@ public:
 	int GetTurretCost() const { return turretCost; }
 	int GetGold() const { return currentGold; }
 	void SetGold(int amount) { currentGold = amount; }
-	void AddGold(int amount) { currentGold += amount; }
+	void AddGold(int amount, bool syncServer = true);
 	bool SpendGold(int amount);
 	int GetTotalGoldSpent() const { return totalGoldSpent; }
 

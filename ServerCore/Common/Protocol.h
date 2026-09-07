@@ -275,6 +275,18 @@ struct C_SPEND_GOLD_PACKET : public PacketHeader
 	int32_t totalGoldSpent = 0;
 };
 
+// 클라 -> 서버: 골드 획득 (몬스터 처치, 도박 보상, 치트키 등)
+struct C_ADD_GOLD_PACKET : public PacketHeader
+{
+	C_ADD_GOLD_PACKET()
+	{
+		size = sizeof(C_ADD_GOLD_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_ADD_GOLD);
+	}
+
+	int32_t amount = 0;
+};
+
 // 서버 -> 클라: 몬스터 소환 명령.
 struct S_SPAWN_MONSTER_PACKET : public PacketHeader
 {

@@ -48,6 +48,7 @@ public:
 	void HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_TURRET_PACKET& pkt);
 	void HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt);
 	void HandleSpendGold(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt);
+	void HandleAddGold(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt);
 	void HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 
 	void Update(float deltaTime);

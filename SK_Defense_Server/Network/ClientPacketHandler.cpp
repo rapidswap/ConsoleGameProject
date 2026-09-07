@@ -40,6 +40,10 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 		Handle_C_SPEND_GOLD(session, *reinterpret_cast<C_SPEND_GOLD_PACKET*>(buffer));
 		break;
 
+	case PacketType::C_ADD_GOLD:
+		Handle_C_ADD_GOLD(session, *reinterpret_cast<C_ADD_GOLD_PACKET*>(buffer));
+		break;
+
 	case PacketType::C_GAME_CLEAR:
 		Handle_C_GAME_CLEAR(session, *reinterpret_cast<C_GAME_CLEAR_PACKET*>(buffer));
 		break;
@@ -108,6 +112,14 @@ void ClientPacketHandler::Handle_C_SPEND_GOLD(std::shared_ptr<GameSession> sessi
 	if (auto room = session->GetRoom())
 	{
 		room->HandleSpendGold(session, pkt);
+	}
+}
+
+void ClientPacketHandler::Handle_C_ADD_GOLD(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleAddGold(session, pkt);
 	}
 }
 

@@ -891,6 +891,17 @@ void DefenseLevel::OnGameClearReceived()
 	game.ToggleMenu(State::GAMECLEAR);
 }
 
+void DefenseLevel::AddGold(int amount, bool syncServer)
+{
+	currentGold += amount;
+	if (syncServer && NetworkManager::Get()->IsConnected() && amount > 0)
+	{
+		C_ADD_GOLD_PACKET pkt;
+		pkt.amount = amount;
+		NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+	}
+}
+
 bool DefenseLevel::SpendGold(int amount)
 {
 	if (currentGold >= amount)
@@ -954,7 +965,7 @@ void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, in
 			{
 				if (NetworkManager::Get()->IsConnected() && refundGold > 0)
 				{
-					AddGold(refundGold);
+					AddGold(refundGold, false);
 				}
 				else
 				{
