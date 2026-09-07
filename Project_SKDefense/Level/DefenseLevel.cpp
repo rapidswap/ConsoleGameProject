@@ -77,15 +77,6 @@ void DefenseLevel::Tick(float deltaTime)
 	//  매 프레임 서버에서 도착한 패킷들을 꺼내서 처리.
 	NetworkManager::Get()->Update();
 
-	// 게임 인포 창이 켜져 있으면 일시정지 (F12 키로만 닫기)
-	if (isGameInfo)
-	{
-		if (Input::Get().GetKeyDown(VK_F12))
-		{
-			isGameInfo = false;
-		}
-		return;
-	}
 
 	// 도박 진행 중이면 게임 정지 (Pause) 상태로 애니메이션만 처리
 	if (isGambling)
@@ -150,6 +141,12 @@ void DefenseLevel::HandleCameraInput()
 
 void DefenseLevel::HandleMouseInput()
 {
+	// 게임 룰(F12) 팝업이 띄워져 있을 때는 마우스 클릭(설치/판매) 입력 무시
+	if (isGameInfo)
+	{
+		return;
+	}
+
 	Vector2 realMousePos = GetRealMousePos();
 
 	// 좌클릭: 터렛 설치
@@ -432,75 +429,69 @@ void DefenseLevel::Draw()
 	// 1. 부모의 Draw 호출 (벽, 바닥, 설치된 터렛 등 기존 액터 렌더링)
 	Level::Draw();
 
-	// 아지트 체력 렌더링 (우측 UI 패널로 이동됨)
-	// 2. 터렛 2x2 미리보기 렌더링
+	// 2. 터렛 2x2 미리보기 렌더링 (게임 룰 팝업이 띄워져 있을 때는 숨김)
 	Vector2 realMousePos = GetRealMousePos();
-
-	// 화면 좌표를 월드 좌표로 변환하여 설치 가능 여부 확인
 	int screenWidth = Engine::Get().GetWidth();
 	int screenHeight = Engine::Get().GetHeight();
 	Vector2 previewWorldPos;
 	previewWorldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 	previewWorldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-	// 설치 가능 여부 및 골드 조건 확인
-	bool canBuild = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) && (currentGold >= turretCost);
-	// 다음 설치될 터렛의 심볼 및 색상 결정
-	std::string previewSymbol = "TT";
-	Color typeColor = Color::Yellow;
-	switch (nextTurretType)
+	if (!isGameInfo)
 	{
-	case TurretType::FLAME: previewSymbol = "FF"; typeColor = Color::Red; break;
-	case TurretType::ICE:   previewSymbol = "II"; typeColor = Color::Cyan; break;
-	case TurretType::STORM: previewSymbol = "TT"; typeColor = Color::Yellow; break;
-	}
-
-	// 설치 가능하면 해당 터렛의 색상, 불가능하면 어두운 회색 (또는 빨간색)
-	// 빨간색(Red)은 화염 터렛과 색이 겹치므로, 설치 불가 시 약간 다른 색(Magenta 등)을 써도 좋음.
-	// 이번엔 설치 불가능을 쉽게 알 수 있도록 배경색을 씌우거나 어두운 빨강, 혹은 심볼을 XX로 바꿀 수 있음.
-	if (!canBuild) 
-	{
-		previewSymbol = "XX";
-		typeColor = Color::Red;
-	}
-	
-	Color previewColor = typeColor;
-	int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
-
-	Renderer::Get().Submit(previewSymbol, realMousePos, previewColor, previewSortingOrder);
-	Renderer::Get().Submit(previewSymbol, Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
-
-	// 사거리 표시 렌더링
-	float atkRange = 10.0f;
-	switch (nextTurretType)
-	{
-	case TurretType::FLAME: atkRange = 3.0f; break;
-	case TurretType::ICE:   atkRange = 5.0f; break;
-	case TurretType::STORM: atkRange = 4.0f; break;
-	}
-
-	// 중앙점 (터렛의 중심) - 스크린 좌표 기준
-	int centerScrX = realMousePos.x + 1;
-	int centerScrY = realMousePos.y; 
-	
-	// 사거리 원 테두리 그리기
-	int rangeInt = static_cast<int>(atkRange);
-	for (int y = -rangeInt; y <= rangeInt; ++y)
-	{
-		for (int x = -rangeInt; x <= rangeInt; ++x)
+		// 설치 가능 여부 및 골드 조건 확인
+		bool canBuild = CanBuildTurret(previewWorldPos.x, previewWorldPos.y) && (currentGold >= turretCost);
+		// 다음 설치될 터렛의 심볼 및 색상 결정
+		std::string previewSymbol = "TT";
+		Color typeColor = Color::Yellow;
+		switch (nextTurretType)
 		{
-			float dist = std::sqrt(static_cast<float>(x * x + y * y));
-			// 사거리의 테두리 부분(외곽선)만 그리기 위해 오차 범위를 줌 (0.8f로 늘려 틈새를 줄임)
-			if (std::abs(dist - atkRange) <= 0.8f)
+		case TurretType::FLAME: previewSymbol = "FF"; typeColor = Color::Red; break;
+		case TurretType::ICE:   previewSymbol = "II"; typeColor = Color::Cyan; break;
+		case TurretType::STORM: previewSymbol = "TT"; typeColor = Color::Yellow; break;
+		}
+
+		// 설치 가능하면 해당 터렛의 색상, 불가능하면 빨간색
+		if (!canBuild) 
+		{
+			previewSymbol = "XX";
+			typeColor = Color::Red;
+		}
+		
+		Color previewColor = typeColor;
+		int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
+
+		Renderer::Get().Submit(previewSymbol, realMousePos, previewColor, previewSortingOrder);
+		Renderer::Get().Submit(previewSymbol, Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
+
+		// 사거리 표시 렌더링
+		float atkRange = 10.0f;
+		switch (nextTurretType)
+		{
+		case TurretType::FLAME: atkRange = 3.0f; break;
+		case TurretType::ICE:   atkRange = 5.0f; break;
+		case TurretType::STORM: atkRange = 4.0f; break;
+		}
+
+		// 중앙점 (터렛의 중심) - 스크린 좌표 기준
+		int centerScrX = realMousePos.x + 1;
+		int centerScrY = realMousePos.y; 
+		
+		// 사거리 원 테두리 그리기
+		int rangeInt = static_cast<int>(atkRange);
+		for (int y = -rangeInt; y <= rangeInt; ++y)
+		{
+			for (int x = -rangeInt; x <= rangeInt; ++x)
 			{
-				Vector2 rangePos(centerScrX + x, centerScrY + y);
-				// 화면 밖을 벗어나지 않게 처리
-				if (rangePos.x >= 0 && rangePos.x < screenWidth &&
-					rangePos.y >= 0 && rangePos.y < screenHeight)
+				float dist = std::sqrt(static_cast<float>(x * x + y * y));
+				if (std::abs(dist - atkRange) <= 0.8f)
 				{
-					// 배경과 겹치지 않게 어두운 색상이나 특정 문자로 렌더링
-					// 미리보기보다 바로 아래 단계인 19번 우선순위 사용
-					Renderer::Get().Submit("+", rangePos, Color::Green, 9);
+					Vector2 rangePos(centerScrX + x, centerScrY + y);
+					if (rangePos.x >= 0 && rangePos.x < screenWidth &&
+						rangePos.y >= 0 && rangePos.y < screenHeight)
+					{
+						Renderer::Get().Submit("+", rangePos, Color::Green, 9);
+					}
 				}
 			}
 		}
