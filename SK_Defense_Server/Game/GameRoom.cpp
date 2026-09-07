@@ -1,5 +1,6 @@
 #include "GameRoom.h"
 #include "Network/GameSession.h"
+#include <Util/Util.h>
 #include <iostream>
 #include <algorithm>
 
@@ -354,7 +355,7 @@ void GameRoom::Update(float deltaTime)
 			spawnTimer = 0.0f;
 			++spawnedCount;
 
-			int spawnIdx = rand() % 4;
+			int spawnIdx = static_cast<int>(Util::RandomRange(0, 3));
 			int maxHp = 3 * waveCount;
 			float speed = 2.0f;
 

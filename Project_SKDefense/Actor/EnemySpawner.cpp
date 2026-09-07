@@ -143,7 +143,7 @@ void EnemySpawner::SpawnEnemy()
 			if (activeSpawns > maxSpawns) activeSpawns = maxSpawns;
 
 			// 열려있는 입구 중 랜덤으로 하나 선택
-			int randomIndex = (activeSpawns > 0) ? (rand() % activeSpawns) : 0;
+			int randomIndex = (activeSpawns > 0) ? static_cast<int>(Util::RandomRange(0, activeSpawns - 1)) : 0;
 			
 			// 찾았다면 다시 깨워서 출발선에 세움
 			// 웨이브가 오를 때마다 몬스터 체력 증가 

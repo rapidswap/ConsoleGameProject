@@ -69,7 +69,7 @@ void DefenseLevel::OnInitialized()
 	}
 
 	// 게임 시작 시 첫 번째로 지어질 터렛 타입 랜덤 결정
-	nextTurretType = static_cast<TurretType>(rand() % 3);
+	nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
 }
 
 void DefenseLevel::Tick(float deltaTime)
@@ -177,13 +177,13 @@ void DefenseLevel::HandleMouseInput()
 				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
 
 				// 다음 타워 랜덤 준비.
-				nextTurretType = static_cast<TurretType>(rand() % 3);
+				nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
 			}
 			else
 			{
 				// 서버가 안 켜져 있으면 싱글 플레이로 즉시 건설.
 				BuildTurretFromNetwork(worldPos.x, worldPos.y, static_cast<int>(nextTurretType));
-				nextTurretType = static_cast<TurretType>(rand() % 3);
+				nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
 			}
 		}
 	}
