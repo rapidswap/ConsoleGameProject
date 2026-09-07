@@ -42,6 +42,10 @@ enum class PacketType : uint16
 	C_AGIT_DAMAGE=3009,
 	S_AGIT_DAMAGE=3010,
 
+	// 몬스터 처치(사망) 동기화
+	C_ENEMY_KILL=3011,
+	S_ENEMY_KILL=3012,
+
 	// 서버가 몬스터 소환 명령.
 	S_SPAWN_MONSTER=4001,
 

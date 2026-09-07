@@ -29,7 +29,10 @@ public:
 	void SkipWave();
 
 	// 서버 패킷을 받아 기존 풀(Pool)에서 몬스터를 꺼내 깨우는 함수
-	void SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed);
+	void SpawnEnemyFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed);
+
+	// 서버로부터 몬스터 처치 패킷을 받았을 때 해당 몬스터를 즉시 사망 처리하는 함수
+	void KillMonsterFromNetwork(int monsterId, int rewardGold);
 
 private:
 	// 몬스터 소환 타이머.

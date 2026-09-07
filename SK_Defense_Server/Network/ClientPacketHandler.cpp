@@ -52,6 +52,10 @@ void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYT
 		Handle_C_AGIT_DAMAGE(session, *reinterpret_cast<C_AGIT_DAMAGE_PACKET*>(buffer));
 		break;
 
+	case PacketType::C_ENEMY_KILL:
+		Handle_C_ENEMY_KILL(session, *reinterpret_cast<C_ENEMY_KILL_PACKET*>(buffer));
+		break;
+
 	case PacketType::C_GAME_CLEAR:
 		Handle_C_GAME_CLEAR(session, *reinterpret_cast<C_GAME_CLEAR_PACKET*>(buffer));
 		break;
@@ -144,6 +148,14 @@ void ClientPacketHandler::Handle_C_AGIT_DAMAGE(std::shared_ptr<GameSession> sess
 	if (auto room = session->GetRoom())
 	{
 		room->HandleAgitDamage(session, pkt);
+	}
+}
+
+void ClientPacketHandler::Handle_C_ENEMY_KILL(std::shared_ptr<GameSession> session, C_ENEMY_KILL_PACKET& pkt)
+{
+	if (auto room = session->GetRoom())
+	{
+		room->HandleEnemyKill(session, pkt);
 	}
 }
 

@@ -42,6 +42,10 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 		Handle_S_AGIT_DAMAGE(*reinterpret_cast<S_AGIT_DAMAGE_PACKET*>(buffer));
 		break;
 
+	case PacketType::S_ENEMY_KILL:
+		Handle_S_ENEMY_KILL(*reinterpret_cast<S_ENEMY_KILL_PACKET*>(buffer));
+		break;
+
 	case PacketType::S_ROOM_INFO:
 	{
 		auto pkt = reinterpret_cast<S_ROOM_INFO_PACKET*>(buffer);
@@ -163,7 +167,7 @@ void ServerPacketHandler::Handle_S_SPAWN_MONSTER(S_SPAWN_MONSTER_PACKET& pkt)
 {
 	if (DefenseLevel* level = DefenseLevel::Get())
 	{
-		level->SpawnMonsterFromNetwork(pkt.spawnIndex, pkt.maxHP, pkt.speed);
+		level->SpawnMonsterFromNetwork(pkt.monsterId, pkt.spawnIndex, pkt.maxHP, pkt.speed);
 	}
 }
 
@@ -183,5 +187,13 @@ void ServerPacketHandler::Handle_S_AGIT_DAMAGE(S_AGIT_DAMAGE_PACKET& pkt)
 	{
 		level->SetAgitHealthFromNetwork(pkt.remainingAgitHealth);
 		std::cout << "[Client] Agit Health Synced: " << pkt.remainingAgitHealth << "/100\n";
+	}
+}
+
+void ServerPacketHandler::Handle_S_ENEMY_KILL(S_ENEMY_KILL_PACKET& pkt)
+{
+	if (DefenseLevel* level = DefenseLevel::Get())
+	{
+		level->KillMonsterFromNetwork(pkt.monsterId, pkt.rewardGold);
 	}
 }

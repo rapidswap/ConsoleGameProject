@@ -68,7 +68,10 @@ public:
 	void SellTurretFromNetwork(int x, int y, uint32_t sellerPlayerId, int refundGold);
 
 	// 서버로부터 몬스터 소환 패킷을 받았을 때 호출할 함수
-	void SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float speed);
+	void SpawnMonsterFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed);
+
+	// 서버로부터 몬스터 처치 패킷을 받았을 때 호출할 함수
+	void KillMonsterFromNetwork(int monsterId, int rewardGold);
 
 	// 서버로부터 타워 속성 업그레이드 패킷을 받았을 때 호출할 함수
 	void UpgradeTurretFromNetwork(int upgradeType, int newLevel);

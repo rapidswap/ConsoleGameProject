@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Actor/Actor.h>
 #include <vector>
@@ -15,6 +15,9 @@ public:
 	inline void SetMoveSpeed(float speed) { moveSpeed = speed; }
 
 	inline void SetHealth(float health) { enemyHealth = health; }
+
+	inline int GetMonsterId() const { return monsterId; }
+	inline void SetMonsterId(int id) { monsterId = id; }
 
 private:
 	// 이벤트 함수 오버라이드.
@@ -39,6 +42,9 @@ private:
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 
 private:
+	// 몬스터 고유 식별 번호 (웨이브 내 0 ~ 29)
+	int monsterId = -1;
+
 	// 위치 이동 처리를 위한 변수.
 	float xPosition = 0.0f;
 	float yPosition = 0.0f;

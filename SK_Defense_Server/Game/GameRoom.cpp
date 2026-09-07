@@ -376,6 +376,7 @@ void GameRoom::Update(float deltaTime)
 			isWaveActive = true;
 			spawnedCount = 0;
 			spawnTimer = 0.0f;
+			deadMonsters.clear(); // 새 웨이브 시작 시 처치 목록 초기화
 			std::cout << "[GameRoom #" << roomId << "] Wave " << waveCount << " Started! Spawning 30 monsters...\n";
 		}
 	}
@@ -419,21 +420,56 @@ void GameRoom::Update(float deltaTime)
 			int maxHp = (sessions.size() >= 2) ? baseHp * 2 : baseHp;
 			float speed = 2.0f;
 
-			SpawnMonster(spawnIdx, maxHp, speed);
+			// spawnedCount - 1 을 고유 monsterId로 지정 (0 ~ 29)
+			int32_t monsterId = spawnedCount - 1;
+			SpawnMonster(monsterId, spawnIdx, maxHp, speed);
 		}
 	}
 }
 
-void GameRoom::SpawnMonster(int32_t spawnIndex, int32_t hp, float speed)
+void GameRoom::SpawnMonster(int32_t monsterId, int32_t spawnIndex, int32_t hp, float speed)
 {
 	S_SPAWN_MONSTER_PACKET pkt;
+	pkt.monsterId = monsterId;
 	pkt.spawnIndex = spawnIndex;
 	pkt.maxHP = hp;
 	pkt.speed = speed;
 
-	std::cout << "[GameRoom #" << roomId << "] Monster SpawnPoint: " << spawnIndex << "\n";
+	std::cout << "[GameRoom #" << roomId << "] Monster #" << monsterId << " SpawnPoint: " << spawnIndex << "\n";
 
 	Broadcast(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+}
+
+void GameRoom::HandleEnemyKill(std::shared_ptr<GameSession> session, C_ENEMY_KILL_PACKET& pkt)
+{
+	std::lock_guard<std::mutex> guard(lock);
+
+	if (state != RoomState::PLAYING) return;
+
+	// 이미 사망 처리된 몬스터는 중복 지급 방지
+	if (deadMonsters.find(pkt.monsterId) != deadMonsters.end())
+	{
+		return;
+	}
+
+	deadMonsters.insert(pkt.monsterId);
+
+	int32_t reward = (pkt.rewardGold <= 0) ? 10 : pkt.rewardGold;
+
+	// 방 안의 모든 플레이어에게 골드 지급
+	for (auto& pair : sessions)
+	{
+		pair.second->gold += reward;
+	}
+
+	std::cout << "[GameRoom #" << roomId << "] Monster #" << pkt.monsterId 
+		<< " Killed (Reported by Player " << session->playerId << ") -> Awarded " << reward << "G to all players!\n";
+
+	// 방 전체에 처치 확정 및 동기화 브로드캐스트
+	S_ENEMY_KILL_PACKET sendPkt;
+	sendPkt.monsterId = pkt.monsterId;
+	sendPkt.rewardGold = reward;
+	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
 }
 
 void GameRoom::HandleSpendGold(std::shared_ptr<GameSession> session, C_SPEND_GOLD_PACKET& pkt)

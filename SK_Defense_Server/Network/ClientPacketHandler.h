@@ -24,5 +24,6 @@ private:
 	static void Handle_C_ADD_GOLD(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt);
 	static void Handle_C_UPGRADE_TURRET(std::shared_ptr<GameSession> session, C_UPGRADE_TURRET_PACKET& pkt);
 	static void Handle_C_AGIT_DAMAGE(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt);
+	static void Handle_C_ENEMY_KILL(std::shared_ptr<GameSession> session, C_ENEMY_KILL_PACKET& pkt);
 	static void Handle_C_GAME_CLEAR(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 };

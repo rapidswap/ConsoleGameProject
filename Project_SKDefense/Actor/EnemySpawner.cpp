@@ -170,7 +170,7 @@ void EnemySpawner::SkipWave()
 	}
 }
 
-void EnemySpawner::SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed)
+void EnemySpawner::SpawnEnemyFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed)
 {
 	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
 	if (!defenseLevel) return;
@@ -181,6 +181,7 @@ void EnemySpawner::SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed)
 		auto enemy = weakEnemy.lock();
 		if (enemy && !enemy->IsActive())
 		{
+			enemy->SetMonsterId(monsterId);
 			enemy->SetHealth(static_cast<float>(maxHp));
 			enemy->SetPosition(defenseLevel->GetSpawnPoint(spawnIndex));
 			enemy->SetActive(true);
@@ -189,6 +190,27 @@ void EnemySpawner::SpawnEnemyFromNetwork(int spawnIndex, int maxHp, float speed)
 			spawnedCount++;
 			break;
 		}
+	}
+}
+
+void EnemySpawner::KillMonsterFromNetwork(int monsterId, int rewardGold)
+{
+	// 해당 monsterId를 가진 활성 몬스터를 찾아 즉시 비활성화(사망 처리)
+	for (auto& weakEnemy : enemyPool)
+	{
+		auto enemy = weakEnemy.lock();
+		if (enemy && enemy->IsActive() && enemy->GetMonsterId() == monsterId)
+		{
+			enemy->SetActive(false);
+			break;
+		}
+	}
+
+	// 골드 지급 (네트워크 동기화 없이 로컬에만 반영)
+	if (auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner()))
+	{
+		defenseLevel->AddGold(rewardGold, false);
+		std::cout << "[Client] Monster #" << monsterId << " Killed! +" << rewardGold << "G (Synced Gold: " << defenseLevel->GetGold() << "G)\n";
 	}
 }
 

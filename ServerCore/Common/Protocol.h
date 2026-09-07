@@ -296,6 +296,8 @@ struct S_SPAWN_MONSTER_PACKET : public PacketHeader
 		id = static_cast<uint16_t>(PacketType::S_SPAWN_MONSTER);
 	}
 
+	// 몬스터 고유 번호 (웨이브 내 풀 인덱스 0~29)
+	int32_t monsterId = 0;
 	// 몬스터 소환 입구.
 	int32_t spawnIndex = 0;
 	// 몬스터 체력.
@@ -359,4 +361,31 @@ struct S_AGIT_DAMAGE_PACKET : public PacketHeader
 	int32_t remainingAgitHealth = 100;
 };
 
+// 클라 -> 서버: 특정 몬스터 처치 보고
+struct C_ENEMY_KILL_PACKET : public PacketHeader
+{
+	C_ENEMY_KILL_PACKET()
+	{
+		size = sizeof(C_ENEMY_KILL_PACKET);
+		id = static_cast<uint16_t>(PacketType::C_ENEMY_KILL);
+	}
+
+	int32_t monsterId = -1;
+	int32_t rewardGold = 10;
+};
+
+// 서버 -> 클라: 몬스터 처치 확정 브로드캐스트 (전원 해당 몬스터 사망 처리 및 골드 지급)
+struct S_ENEMY_KILL_PACKET : public PacketHeader
+{
+	S_ENEMY_KILL_PACKET()
+	{
+		size = sizeof(S_ENEMY_KILL_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_ENEMY_KILL);
+	}
+
+	int32_t monsterId = -1;
+	int32_t rewardGold = 10;
+};
+
 #pragma pack(pop)
+

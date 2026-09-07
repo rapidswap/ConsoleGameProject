@@ -1051,12 +1051,20 @@ void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, in
 	}
 }
 
-void DefenseLevel::SpawnMonsterFromNetwork(int spawnIndex, int maxHp, float speed)
+void DefenseLevel::SpawnMonsterFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed)
 {
 	// 레벨에 떠 있는 EnemySpawner의 풀링 시스템 통해 소환.
 	if (auto spawner = enemySpawner.lock())
 	{
-		spawner->SpawnEnemyFromNetwork(spawnIndex, maxHp, speed);
+		spawner->SpawnEnemyFromNetwork(monsterId, spawnIndex, maxHp, speed);
+	}
+}
+
+void DefenseLevel::KillMonsterFromNetwork(int monsterId, int rewardGold)
+{
+	if (auto spawner = enemySpawner.lock())
+	{
+		spawner->KillMonsterFromNetwork(monsterId, rewardGold);
 	}
 }
 

@@ -51,13 +51,15 @@ public:
 	void HandleAddGold(std::shared_ptr<GameSession> session, C_ADD_GOLD_PACKET& pkt);
 	void HandleUpgradeTurret(std::shared_ptr<GameSession> session, C_UPGRADE_TURRET_PACKET& pkt);
 	void HandleAgitDamage(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt);
+	void HandleEnemyKill(std::shared_ptr<GameSession> session, C_ENEMY_KILL_PACKET& pkt);
 	void HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEAR_PACKET& pkt);
 
 	void Update(float deltaTime);
-	void SpawnMonster(int32_t spawnIndex, int32_t hp, float speed);
+	void SpawnMonster(int32_t monsterId, int32_t spawnIndex, int32_t hp, float speed);
 
 private:
 	uint32_t roomId = 1;
+	std::set<int32_t> deadMonsters;
 
 	// 멀티스레드 동시 접근 보호용 락.
 	std::mutex lock;

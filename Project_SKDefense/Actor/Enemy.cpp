@@ -1,3 +1,5 @@
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
 #include "Enemy.h"
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
@@ -6,6 +8,8 @@
 #include <Algorithm/Node.h>
 #include <Actor/TurretBullet.h>
 #include <Actor/Agit.h>
+#include "Network/NetworkManager.h"
+#include "Common/Protocol.h"
 #include <cmath>
 
 using namespace Craft;
@@ -127,12 +131,23 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 		// 죽었다면 이펙트 스폰.
 		//GetOwner()->SpawnActor<DestroyEffect>(GetPosition());
 		
-		// 골드 획득 (예: 1마리당 10골드)
 		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
 		if (defenseLevel)
 		{
-			defenseLevel->AddGold(10);
-			std::cout << "[Enemy] Killed! +10G (Current Gold: " << defenseLevel->GetGold() << "G)\n";
+			if (NetworkManager::Get()->IsConnected())
+			{
+				// 멀티플레이: 서버에 특정 몬스터 처치 보고 (서버가 검증 후 S_ENEMY_KILL로 전원에게 브로드캐스트)
+				C_ENEMY_KILL_PACKET pkt;
+				pkt.monsterId = monsterId;
+				pkt.rewardGold = 10;
+				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			}
+			else
+			{
+				// 싱글플레이: 로컬 즉시 골드 지급
+				defenseLevel->AddGold(10);
+				std::cout << "[Enemy] Killed! +10G (Current Gold: " << defenseLevel->GetGold() << "G)\n";
+			}
 		}
 
 		// 오브젝트 풀링을 위해 파괴 대신 비활성화
