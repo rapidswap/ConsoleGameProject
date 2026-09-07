@@ -134,6 +134,7 @@ void ServerPacketHandler::Handle_S_BUILD_TURRET(S_BUILD_TURRET_PACKET& pkt)
 		if (pkt.playerId == NetworkManager::Get()->GetMyPlayerId())
 		{
 			level->SetGold(pkt.remainingGold);
+			level->totalGoldSpent += level->GetTurretCost();
 			level->SetNextTurretType(pkt.nextTurretType);
 		}
 

@@ -169,24 +169,30 @@ void DefenseLevel::HandleMouseInput()
 		worldPos.x = realMousePos.x + cameraPosition.x - (screenWidth / 2);
 		worldPos.y = realMousePos.y + cameraPosition.y - (screenHeight / 2);
 
-		if (CanBuildTurret(worldPos.x, worldPos.y) && SpendGold(turretCost))
+		if (CanBuildTurret(worldPos.x, worldPos.y))
 		{
 			if (NetworkManager::Get()->IsConnected())
 			{
-				// 서버에게 타워를 짓는다는것을 패킷 전송.
-				C_BUILD_TURRET_PACKET pkt;
-				pkt.posX = worldPos.x;
-				pkt.posY = worldPos.y;
-				pkt.turretType = static_cast<int32_t>(nextTurretType);
-				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+				if (currentGold >= turretCost)
+				{
+					// 서버에게 타워를 짓는다는것을 패킷 전송 (골드 차감 및 동기화는 서버 S_BUILD_TURRET에서 확정 반영)
+					C_BUILD_TURRET_PACKET pkt;
+					pkt.posX = worldPos.x;
+					pkt.posY = worldPos.y;
+					pkt.turretType = static_cast<int32_t>(nextTurretType);
+					NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
 
-				// 멀티플레이 시 다음 타워는 서버의 S_BUILD_TURRET 응답으로 갱신되므로 로컬 랜덤 생략!
+					// 멀티플레이 시 다음 타워는 서버의 S_BUILD_TURRET 응답으로 갱신되므로 로컬 랜덤 생략!
+				}
 			}
 			else
 			{
-				// 서버가 안 켜져 있으면 싱글 플레이로 즉시 건설.
-				BuildTurretFromNetwork(worldPos.x, worldPos.y, static_cast<int>(nextTurretType));
-				nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
+				if (SpendGold(turretCost))
+				{
+					// 서버가 안 켜져 있으면 싱글 플레이로 즉시 건설.
+					BuildTurretFromNetwork(worldPos.x, worldPos.y, static_cast<int>(nextTurretType));
+					nextTurretType = static_cast<TurretType>(static_cast<int>(Util::RandomRange(0, 2)));
+				}
 			}
 		}
 	}
