@@ -355,7 +355,7 @@ void GameRoom::Update(float deltaTime)
 			spawnTimer = 0.0f;
 			++spawnedCount;
 
-			int spawnIdx = static_cast<int>(Util::RandomRange(0, 3));
+			int spawnIdx = static_cast<int>(Util::RandomRange(0, 2));
 			int maxHp = 3 * waveCount;
 			float speed = 2.0f;
 
