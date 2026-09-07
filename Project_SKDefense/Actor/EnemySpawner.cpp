@@ -94,8 +94,8 @@ void EnemySpawner::Tick(float deltaTime)
 		}
 	}
 
-	// 만약 3웨이브가 끝났다면 (currentWave가 4로 넘어간 상태)
-	if (currentWave > 3)
+	// 만약 9웨이브가 끝났다면 (currentWave가 10으로 넘어간 상태)
+	if (currentWave > 9)
 	{
 		bool isAllDead = true;
 

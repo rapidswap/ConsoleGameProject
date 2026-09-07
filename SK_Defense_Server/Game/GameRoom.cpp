@@ -339,9 +339,9 @@ void GameRoom::Update(float deltaTime)
 		{
 			isWaveActive = false;
 			++waveCount;
-			if (waveCount > 3)
+			if (waveCount > 9)
 			{
-				std::cout << "[GameRoom #" << roomId << "] All waves spawned.\n";
+				std::cout << "[GameRoom #" << roomId << "] All 9 waves spawned.\n";
 				return;
 			}
 			waveTimer = 90.0f;
