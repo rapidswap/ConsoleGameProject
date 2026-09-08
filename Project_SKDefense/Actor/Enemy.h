@@ -48,7 +48,8 @@ private:
 	// 위치 이동 처리를 위한 변수.
 	float xPosition = 0.0f;
 	float yPosition = 0.0f;
-	float moveSpeed = 4.0f; // 한 칸 이동하는데 걸리는 시간(초).
+	// 한 칸 이동하는데 걸리는 시간(초).
+	float moveSpeed = 2.0f; 
 	float movementTimer = 0.0f;
 
 	// 이동 경로와 시각화 히스토리
