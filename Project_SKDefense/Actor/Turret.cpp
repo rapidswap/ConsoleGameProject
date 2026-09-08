@@ -18,8 +18,8 @@ int Turret::upgradeLevelStorm = 0;
 Turret::Turret(const Craft::Vector2& position, TurretType type)
 	: Craft::Actor("TT", position, Craft::Color::Yellow)
 {
-	// 터렛은 다른 물체 위에 그려지도록 우선순위 상향
-	sortingOrder = 10;
+	// 렌더링 우선순위 (0: 바닥/벽, 1: 사거리/경로탐색, 2: 터렛)
+	sortingOrder = 2;
 
 	// 고유 생성 번호 부여 (먼저 지어진 터렛 식별용)
 	spawnOrder = ++globalTurretSpawnCounter;

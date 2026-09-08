@@ -11,7 +11,8 @@ TurretBullet::TurretBullet(const Craft::Vector2& position, float dirX, float dir
 	directionX(dirX), directionY(dirY),
 	startPosition(position)
 {
-
+	// 렌더링 우선순위 (3: 날아가는 총알 및 미리보기)
+	sortingOrder = 3;
 }
 
 void TurretBullet::Tick(float deltaTime)

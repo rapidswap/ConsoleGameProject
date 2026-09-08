@@ -153,31 +153,31 @@ void MainMenuLevel::Draw()
 		char lobbyStr[128];
 		sprintf_s(lobbyStr, "[ MULTIPLAYER LOBBY ] Players: %d / 2 (Ready: %d)", total, ready);
 		std::string lobbyString = lobbyStr;
-		Renderer::Get().Submit(lobbyString, Vector2((screenWidth / 2) - ((int)lobbyString.length() / 2), (screenHeight / 2) + 3), Color::Cyan, 100);
+		Renderer::Get().Submit(lobbyString, Vector2((screenWidth / 2) - ((int)lobbyString.length() / 2), (screenHeight / 2) + 3), Color::Cyan, 8);
 
 		if (!isReady)
 		{
 			std::string readyText = "Press ENTER to Ready!";
-			Renderer::Get().Submit(readyText, Vector2((screenWidth / 2) - ((int)readyText.length() / 2), (screenHeight / 2) + 5), Color::Green, 100);
+			Renderer::Get().Submit(readyText, Vector2((screenWidth / 2) - ((int)readyText.length() / 2), (screenHeight / 2) + 5), Color::Green, 8);
 		}
 		else
 		{
 			if (total >= 2)
 			{
 				std::string waitText = "[ READY ] Waiting for other player...";
-				Renderer::Get().Submit(waitText, Vector2((screenWidth / 2) - ((int)waitText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 100);
+				Renderer::Get().Submit(waitText, Vector2((screenWidth / 2) - ((int)waitText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 8);
 			}
 			else
 			{
 				std::string soloText = "[ READY ] Press ENTER again to Solo Start";
-				Renderer::Get().Submit(soloText, Vector2((screenWidth / 2) - ((int)soloText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 100);
+				Renderer::Get().Submit(soloText, Vector2((screenWidth / 2) - ((int)soloText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 8);
 			}
 		}
 	}
 	else
 	{
 		std::string promptText = "Press Enter Button.";
-		Renderer::Get().Submit(promptText, Vector2((screenWidth / 2) - ((int)promptText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 100);
+		Renderer::Get().Submit(promptText, Vector2((screenWidth / 2) - ((int)promptText.length() / 2), (screenHeight / 2) + 5), Color::Yellow, 8);
 	}
 	
 }

@@ -16,8 +16,8 @@ using namespace Craft;
 Enemy::Enemy(const Vector2& position)
 	: Actor("Z", position, Color::Red)
 {
-	// 경로 탐색 애니메이션(70, 80)보다 높게 설정하여 에너미가 가려지지 않게 함
-	sortingOrder = 85;
+	// 렌더링 우선순위 (5: 몬스터는 A* 최종 경로(4) 위에 그려짐)
+	sortingOrder = 5;
 }
 
 void Enemy::BeginPlay()
@@ -45,7 +45,7 @@ void Enemy::RecalculatePath()
 		// 길찾기 결과 복사 (시작 노드는 보통 현재 위치이므로 제외)
 		for (size_t i = 1; i < nodePath.size(); ++i)
 		{
-			path.push_back(Vector2(static_cast<float>(nodePath[i]->position.x), static_cast<float>(nodePath[i]->position.y)));
+			path.emplace_back(Vector2(static_cast<float>(nodePath[i]->position.x), static_cast<float>(nodePath[i]->position.y)));
 		}
 		
 		currentPathIndex = 0;
@@ -56,10 +56,11 @@ void Enemy::RecalculatePath()
 		searchHistory.clear();
 		for (const auto& pos : astar.searchHistory)
 		{
-			searchHistory.push_back(Vector2(static_cast<float>(pos.x), static_cast<float>(pos.y)));
+			searchHistory.emplace_back(Vector2(static_cast<float>(pos.x), static_cast<float>(pos.y)));
 		}
 
 		delete goalNode;
+		
 	}
 }
 

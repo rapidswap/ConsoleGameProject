@@ -107,7 +107,7 @@ void GameClearLevel::Draw()
 	auto drawCentered = [&](const std::string& text, int y, Color color)
 	{
 		int x = (screenWidth / 2) - (static_cast<int>(text.length()) / 2);
-		Renderer::Get().Submit(text, Vector2(x, y), color, 100);
+		Renderer::Get().Submit(text, Vector2(x, y), color, 8);
 	};
 
 	// 전체 블록 높이 계산하여 수직 중앙 정렬

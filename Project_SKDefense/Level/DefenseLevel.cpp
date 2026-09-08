@@ -377,16 +377,16 @@ void DefenseLevel::DrawGambleAnimation()
 	int cx = screenWidth / 2;
 	int cy = screenHeight / 2;
 	
-	// 검은색 반투명(또는 단색) 팝업 배경
+	// 검은색 반투명(또는 단색) 팝업 배경 (9: 팝업 배경)
 	for(int y = cy - 5; y <= cy + 5; ++y)
 	{
-		Renderer::Get().Submit("                                        ", Vector2(cx - 20, y), Color::Black, 150);
+		Renderer::Get().Submit("                                        ", Vector2(cx - 20, y), Color::Black, 9);
 	}
 	
-	// 테두리
-	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy - 5), Color::Yellow, 151);
-	Renderer::Get().Submit("            SLOT MACHINE                ", Vector2(cx - 20, cy - 3), Color::White, 151);
-	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy + 5), Color::Yellow, 151);
+	// 테두리 및 텍스트 (10: 팝업 내용/전경)
+	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy - 5), Color::Yellow, 10);
+	Renderer::Get().Submit("            SLOT MACHINE                ", Vector2(cx - 20, cy - 3), Color::White, 10);
+	Renderer::Get().Submit("========================================", Vector2(cx - 20, cy + 5), Color::Yellow, 10);
 
 	// 주사위 3개 그리기
 	char slotStr[256];
@@ -398,14 +398,14 @@ void DefenseLevel::DrawGambleAnimation()
 	std::string s3 = (gambleTimer > 3.0f) ? std::to_string(gambleResults[2]) : "?";
 	
 	sprintf_s(slotStr, "    [ %s ]      [ %s ]      [ %s ]    ", s1.c_str(), s2.c_str(), s3.c_str());
-	Renderer::Get().Submit(slotStr, Vector2(cx - 20, cy), Color::Cyan, 151);
+	Renderer::Get().Submit(slotStr, Vector2(cx - 20, cy), Color::Cyan, 10);
 
 	if (gambleTimer > 4.0f) // 4초가 넘어가면 결과 출력
 	{
 		int reward = 10 * gambleResults[0] * gambleResults[1] * gambleResults[2];
 		char resultStr[256];
 		sprintf_s(resultStr, "      WINNER! +%d GOLD!      ", reward);
-		Renderer::Get().Submit(resultStr, Vector2(cx - 20, cy + 3), Color::Green, 151);
+		Renderer::Get().Submit(resultStr, Vector2(cx - 20, cy + 3), Color::Green, 10);
 	}
 }
 
@@ -445,10 +445,10 @@ void DefenseLevel::DrawGameInfo(const std::string& filename)
 	int startX = screenWidth / 2 - 25; // 팝업 가로 크기의 절반만큼 빼줌
 	int startY = screenHeight / 2 - 12;
 	
-	// 배경을 검정색으로 덮기 (팝업창 느낌)
+	// 배경을 검정색으로 덮기 (9: 팝업 배경)
 	for (int y = startY - 1; y < startY + 26; ++y)
 	{
-		Renderer::Get().Submit("                                                      ", Vector2(startX - 2, y), Color::Black, 200);
+		Renderer::Get().Submit("                                                      ", Vector2(startX - 2, y), Color::Black, 9);
 	}
 
 	int index = 0;
@@ -466,8 +466,8 @@ void DefenseLevel::DrawGameInfo(const std::string& filename)
 		{
 			if (c == '\r' && index < fileSize && buffer[index] == '\n') index++; // Windows CRLF 호환
 			
-			// 한 줄이 완성되면 렌더러에 제출
-			Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 201);
+			// 한 줄이 완성되면 렌더러에 제출 (10: 팝업 텍스트 내용)
+			Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 10);
 			currentLine = "";
 			++position.y;
 			continue;
@@ -478,7 +478,7 @@ void DefenseLevel::DrawGameInfo(const std::string& filename)
 	// 마지막 줄 처리
 	if (!currentLine.empty())
 	{
-		Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 201);
+		Renderer::Get().Submit(currentLine, Vector2(startX, startY + position.y), Color::Yellow, 10);
 	}
 
 	delete[] buffer;
@@ -528,7 +528,7 @@ void DefenseLevel::Draw()
 		}
 		
 		Color previewColor = typeColor;
-		int previewSortingOrder = 20; // 맵 위에 떠야 하므로 높게 설정
+		int previewSortingOrder = 3; // 렌더링 우선순위 (3: 터렛 설치 미리보기 및 총알)
 
 		Renderer::Get().Submit(previewSymbol, realMousePos, previewColor, previewSortingOrder);
 		Renderer::Get().Submit(previewSymbol, Vector2(realMousePos.x, realMousePos.y + 1), previewColor, previewSortingOrder);
@@ -559,7 +559,8 @@ void DefenseLevel::Draw()
 					if (rangePos.x >= 0 && rangePos.x < screenWidth &&
 						rangePos.y >= 0 && rangePos.y < screenHeight)
 					{
-						Renderer::Get().Submit("+", rangePos, Color::Green, 9);
+						// 렌더링 우선순위 (1: 바닥 위 사거리 인디케이터)
+						Renderer::Get().Submit("+", rangePos, Color::Green, 1);
 					}
 				}
 			}
@@ -569,11 +570,11 @@ void DefenseLevel::Draw()
 	// ====== UI 패널 렌더링 (우측 화면) ======
 	int uiX = 65; // 맵(50) 우측에 15칸 여백을 두고 홀쭉하게 배치
 	
-	// UI 영역 전체를 검은색 배경(공백)으로 덮어서 맵이 관통되어 보이지 않게 처리
+	// UI 영역 전체를 검은색 배경(공백)으로 덮어서 맵이 관통되어 보이지 않게 처리 (7: 우측 UI 배경 가림막)
 	std::string blackCover(55, ' ');
 	for (int i = 0; i < screenHeight; ++i)
 	{
-		Renderer::Get().Submit(blackCover, Vector2(uiX, i), Color::Black, 90);
+		Renderer::Get().Submit(blackCover, Vector2(uiX, i), Color::Black, 7);
 	}
 
 	// [ WAVE INFO ] : 좌측 상단(맵 위)으로 이동
@@ -584,28 +585,29 @@ void DefenseLevel::Draw()
 		if (spawner->IsWaveActive())
 		{
 			sprintf_s(waveStr, " Wave %d : In Progress! ", spawner->GetCurrentWave());
-			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Red, 100);
+			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Red, 8);
 		}
 		else
 		{
 			int remainTime = static_cast<int>(std::ceil(spawner->GetRemainingWaveTime()));
 			sprintf_s(waveStr, " Next Wave %d in: %d:%02d ", spawner->GetCurrentWave(), remainTime / 60, remainTime % 60);
-			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Yellow, 100);
+			Renderer::Get().Submit(waveStr, Vector2(0, 0), Color::Yellow, 8);
 		}
 	}
 
 	int uiY = 1;
 	
-	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 100);
-	Renderer::Get().Submit("                    SK DEFENSE                    ", Vector2(uiX, uiY++), Color::Cyan, 100);
-	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 100);
+	// 8: 인게임 HUD 및 UI 텍스트 전경 레이어
+	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 8);
+	Renderer::Get().Submit("                    SK DEFENSE                    ", Vector2(uiX, uiY++), Color::Cyan, 8);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, uiY++), Color::White, 8);
 	uiY++;
 
 	// 1. 아지트 체력
 	auto agit = FindActor<Agit>();
 	if (agit)
 	{
-		Renderer::Get().Submit(" [ AGIT STATUS ]", Vector2(uiX, uiY++), Color::Green, 100);
+		Renderer::Get().Submit(" [ AGIT STATUS ]", Vector2(uiX, uiY++), Color::Green, 8);
 		float hpRatio = static_cast<float>(agit->GetHealth()) / 100;
 		int barLength = 20;
 		int filledLength = static_cast<int>(hpRatio * barLength);
@@ -615,71 +617,71 @@ void DefenseLevel::Draw()
 			hpBar += (i < filledLength) ? "#" : ".";
 		}
 		hpBar += "] " + std::to_string(agit->GetHealth()) + " / 100";
-		Renderer::Get().Submit(hpBar, Vector2(uiX, uiY++), Color::Green, 100);
+		Renderer::Get().Submit(hpBar, Vector2(uiX, uiY++), Color::Green, 8);
 	}
 	uiY++;
 
 	// 3. 자원 (골드)
-	Renderer::Get().Submit(" [ RESOURCE ]", Vector2(uiX, uiY++), Color::Yellow, 100);
+	Renderer::Get().Submit(" [ RESOURCE ]", Vector2(uiX, uiY++), Color::Yellow, 8);
 	char goldStr[256];
 	sprintf_s(goldStr, " Gold: %d G  (Turret: %d G)", currentGold, turretCost);
-	Renderer::Get().Submit(goldStr, Vector2(uiX, uiY++), Color::Yellow, 100);
+	Renderer::Get().Submit(goldStr, Vector2(uiX, uiY++), Color::Yellow, 8);
 	uiY++;
 
 	// 4. 업그레이드 상태
-	Renderer::Get().Submit(" [ UPGRADE STATUS (Cost: 100G) ]", Vector2(uiX, uiY++), Color::White, 100);
+	Renderer::Get().Submit(" [ UPGRADE STATUS (Cost: 100G) ]", Vector2(uiX, uiY++), Color::White, 8);
 	char upgFlameStr[256], upgIceStr[256], upgStormStr[256];
 	sprintf_s(upgFlameStr, "  [Z] Flame Upgrade : +%d", Turret::upgradeLevelFlame);
 	sprintf_s(upgIceStr,   "  [X] Ice Upgrade   : +%d", Turret::upgradeLevelIce);
 	sprintf_s(upgStormStr, "  [C] Storm Upgrade : +%d", Turret::upgradeLevelStorm);
 	
-	Renderer::Get().Submit(upgFlameStr, Vector2(uiX, uiY++), Color::Red, 100);
-	Renderer::Get().Submit(upgIceStr,   Vector2(uiX, uiY++), Color::Cyan, 100);
-	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 100);
+	Renderer::Get().Submit(upgFlameStr, Vector2(uiX, uiY++), Color::Red, 8);
+	Renderer::Get().Submit(upgIceStr,   Vector2(uiX, uiY++), Color::Cyan, 8);
+	Renderer::Get().Submit(upgStormStr, Vector2(uiX, uiY++), Color::Yellow, 8);
 
 	// 5. 네트워크 모드 / 멀티플레이어 상태 표시
 	if (NetworkManager::Get()->IsConnected())
 	{
-		Renderer::Get().Submit(" [ MULTIPLAYER ROOM ]", Vector2(uiX, 15), Color::Cyan, 100);
+		Renderer::Get().Submit(" [ MULTIPLAYER ROOM ]", Vector2(uiX, 15), Color::Cyan, 8);
 
 		char netInfo[64];
 		sprintf_s(netInfo, "  Player ID: %d (Me) | Total: %d",
 			NetworkManager::Get()->GetMyPlayerId(),
 			NetworkManager::Get()->GetPlayerCount());
-		Renderer::Get().Submit(netInfo, Vector2(uiX, 16), Color::Green, 100);
+		Renderer::Get().Submit(netInfo, Vector2(uiX, 16), Color::Green, 8);
 	}
 	else
 	{
-		Renderer::Get().Submit(" [ SINGLE PLAYER MODE ]", Vector2(uiX, 15), Color::DarkGray, 100);
-		Renderer::Get().Submit("  (Offline - Local Play)", Vector2(uiX, 16), Color::DarkGray, 100);
+		Renderer::Get().Submit(" [ SINGLE PLAYER MODE ]", Vector2(uiX, 15), Color::DarkGray, 8);
+		Renderer::Get().Submit("  (Offline - Local Play)", Vector2(uiX, 16), Color::DarkGray, 8);
 	}
 
 	// 6. 하단 6칸 컨트롤 패널
 	int panelY = 18; // 두 줄씩 들어가므로 시작 위치를 약간 위로 올림
-	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
-	Renderer::Get().Submit("   [   F12   ]  |   [    T    ]  |   [    R    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("   [Game Rule]  |   [ Gamble  ]  |   [RandomUpg]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("   [---------]  |   [   300G  ]  |   [   80G   ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("--------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 100);
-	Renderer::Get().Submit("   [    Z    ]  |   [    X    ]  |   [    C    ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("   [Upg Flame]  |   [ Upg Ice ]  |   [Upg Storm]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("   [   100G  ]  |   [   100G  ]  |   [   100G  ]  ", Vector2(uiX, panelY++), Color::Cyan, 100);
-	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 100);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 8);
+	Renderer::Get().Submit("   [   F12   ]  |   [    T    ]  |   [    R    ]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("   [Game Rule]  |   [ Gamble  ]  |   [RandomUpg]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("   [---------]  |   [   300G  ]  |   [   80G   ]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("--------------------------------------------------", Vector2(uiX, panelY++), Color::DarkGray, 8);
+	Renderer::Get().Submit("   [    Z    ]  |   [    X    ]  |   [    C    ]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("   [Upg Flame]  |   [ Upg Ice ]  |   [Upg Storm]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("   [   100G  ]  |   [   100G  ]  |   [   100G  ]  ", Vector2(uiX, panelY++), Color::Cyan, 8);
+	Renderer::Get().Submit("==================================================", Vector2(uiX, panelY++), Color::White, 8);
 	
 	// 디버그용: 현재 마우스 좌표 (가장 아래 구석)
 	char debugStr[256];
 	sprintf_s(debugStr, "Mouse(Scr): %d,%d | World: %d,%d", realMousePos.x, realMousePos.y, previewWorldPos.x, previewWorldPos.y);
-	Renderer::Get().Submit(debugStr, Vector2(uiX, 28), Color::DarkGray, 100);
+	Renderer::Get().Submit(debugStr, Vector2(uiX, 28), Color::DarkGray, 8);
 
 #ifdef _DEBUG
 	// F3 상태 표시
 	if (showAStarDebug)
 	{
-		Renderer::Get().Submit("[ F3 ] A* Debug Mode : ON ", Vector2(uiX, 29), Color::Magenta, 100);
+		Renderer::Get().Submit("[ F3 ] A* Debug Mode : ON ", Vector2(uiX, 29), Color::Magenta, 8);
 	}
 	else
 	{
-		Renderer::Get().Submit("[ F3 ] A* Debug Mode : OFF", Vector2(uiX, 29), Color::DarkGray, 100);
+		Renderer::Get().Submit("[ F3 ] A* Debug Mode : OFF", Vector2(uiX, 29), Color::DarkGray, 8);
 	}
 #endif
 
@@ -731,7 +733,8 @@ void DefenseLevel::Draw()
 
 					if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
 					{
-						Renderer::Get().Submit("+", Vector2(drawX, drawY), Color::Green, 70);
+						// 렌더링 우선순위 (1: 탐색 히스토리 흔적 +)
+						Renderer::Get().Submit("+", Vector2(drawX, drawY), Color::Green, 1);
 					}
 				}
 			}
@@ -753,7 +756,8 @@ void DefenseLevel::Draw()
 
 					if (drawX >= 0 && drawX < Engine::Get().GetWidth() && drawY >= 0 && drawY < Engine::Get().GetHeight())
 					{
-						Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 80);
+						// 렌더링 우선순위 (4: 최종 경로 *, 몬스터(5) 아래에 깔림)
+						Renderer::Get().Submit("*", Vector2(drawX, drawY), Color::Magenta, 4);
 					}
 				}
 			}
