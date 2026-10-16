@@ -1,5 +1,5 @@
 #pragma once
-#include "Main/pch.h"
+#include <cstdint>
 #include "Main/Type.h"
 #include "PacketType.h"
 
@@ -296,7 +296,7 @@ struct S_SPAWN_MONSTER_PACKET : public PacketHeader
 		id = static_cast<uint16_t>(PacketType::S_SPAWN_MONSTER);
 	}
 
-	// 몬스터 고유 번호 (웨이브 내 풀 인덱스 0~29)
+	// 게임 내 고유 몬스터 번호 (웨이브 간에도 중복되지 않음).
 	int32_t monsterId = 0;
 	// 몬스터 소환 입구.
 	int32_t spawnIndex = 0;
@@ -385,6 +385,53 @@ struct S_ENEMY_KILL_PACKET : public PacketHeader
 
 	int32_t monsterId = -1;
 	int32_t rewardGold = 10;
+};
+
+// Variable payload: pathCount coordinates, followed by historyCount coordinates.
+// Paths include the current position at index 0. Maximum map size is 4096 cells.
+struct PathCoordinate
+{
+	int16_t x = 0;
+	int16_t y = 0;
+};
+
+struct S_MONSTER_PATH_PACKET : public PacketHeader
+{
+	S_MONSTER_PATH_PACKET()
+	{
+		size = sizeof(S_MONSTER_PATH_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_MONSTER_PATH);
+	}
+	int32_t monsterId = -1;
+	uint32_t mapRevision = 0;
+	uint16_t pathCount = 0;
+	uint16_t historyCount = 0;
+};
+
+struct S_MONSTER_MOVE_PACKET : public PacketHeader
+{
+	S_MONSTER_MOVE_PACKET()
+	{
+		size = sizeof(S_MONSTER_MOVE_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_MONSTER_MOVE);
+	}
+	int32_t monsterId = -1;
+	uint32_t mapRevision = 0;
+	uint16_t pathIndex = 0;
+	PathCoordinate position;
+	bool active = true; // false: reached the agit, no reward.
+};
+
+struct S_MERGE_TURRET_PACKET : public PacketHeader
+{
+	S_MERGE_TURRET_PACKET()
+	{
+		size = sizeof(S_MERGE_TURRET_PACKET);
+		id = static_cast<uint16_t>(PacketType::S_MERGE_TURRET);
+	}
+	PathCoordinate survivor;
+	PathCoordinate removed[2];
+	int32_t newTier = 2;
 };
 
 #pragma pack(pop)

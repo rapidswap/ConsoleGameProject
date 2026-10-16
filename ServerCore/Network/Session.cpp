@@ -32,12 +32,10 @@ void Session::Dispatch(IocpEvent* iocpEvent, int32_t numOfBytes)
 
 void Session::Disconnect(const WCHAR* cause)
 {
-	if (!connected)
+	if (!connected.exchange(false))
 	{
 		return;
 	}
-
-	connected = false;
 
 	ProcessDisconnect();
 }
@@ -55,6 +53,7 @@ void Session::ProcessConnect()
 
 void Session::RegisterRecv()
 {
+	std::unique_lock<std::mutex> guard(sendLock);
 	if (!IsConnected())
 	{
 		return;
@@ -83,6 +82,8 @@ void Session::RegisterRecv()
 		// WSA_IO_PENDING: 당장 데이터가 없으니 받으면 알려줄게 -> 정상.
 		if (errorCode != WSA_IO_PENDING)
 		{
+			recvEvent.owner.reset();
+			guard.unlock();
 			Disconnect(L"WSARecv Error");
 		}
 	}
@@ -123,6 +124,11 @@ void Session::ProcessRecv(int32_t numOfBytes)
 
 		// 헤더를 까서 패킷 전체 크기를 확인.
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(recvBuffer.ReadPos() + processLen);
+		if (header->size < sizeof(PacketHeader))
+		{
+			Disconnect(L"Invalid packet size");
+			return;
+		}
 
 		// 아직 패킷 내용이 다 도착안했으면 다음 수신을 기다림.
 		if (currentSize < header->size)
@@ -150,56 +156,93 @@ void Session::ProcessRecv(int32_t numOfBytes)
 
 void Session::Send(BYTE* buffer, int32_t len)
 {
-	if (!IsConnected() || len > sizeof(sendBuffer))
+	if (!buffer || len <= 0 || len > 65535)
 	{
 		return;
 	}
 
-	std::lock_guard<std::mutex> lock(sendLock);
-
-	::memcpy(sendBuffer, buffer, len);
-
-	sendEvent.Init();
-	sendEvent.owner = shared_from_this();
-
-	WSABUF wsaBuf;
-	wsaBuf.buf = reinterpret_cast<char*>(sendBuffer);
-	wsaBuf.len = len;
-
-	DWORD numOfBytes = 0;
-	if (::WSASend(socket, &wsaBuf, 1, &numOfBytes, 0, &sendEvent, nullptr) == SOCKET_ERROR)
+	std::lock_guard<std::mutex> guard(sendLock);
+	if (!IsConnected()) return;
+	// Send is often called with a room lock held. Shutdown wakes the pending recv;
+	// its completion disconnects outside the room lock, avoiding callback deadlocks.
+	if (queuedBytes + static_cast<size_t>(len) > maxQueuedBytes)
 	{
-		int32_t errorCode = ::WSAGetLastError();
-		if (errorCode != WSA_IO_PENDING)
-		{
-			Disconnect(L"WSASend Error");
-		}
-
+		::shutdown(socket, SD_BOTH);
+		return;
 	}
+	sendQueue.emplace_back(buffer, buffer + len);
+	queuedBytes += len;
+	if (!sendPending && !RegisterSendLocked()) ::shutdown(socket, SD_BOTH);
 }
 
+bool Session::RegisterSendLocked()
+{
+	if (sendQueue.empty() || !IsConnected()) return true;
+	sendEvent.Init();
+	sendEvent.owner = shared_from_this();
+	WSABUF wsaBuf;
+	wsaBuf.buf = reinterpret_cast<char*>(sendQueue.front().data() + sendOffset);
+	wsaBuf.len = static_cast<ULONG>(sendQueue.front().size() - sendOffset);
+	sendPending = true;
+	DWORD bytes = 0;
+	if (::WSASend(socket, &wsaBuf, 1, &bytes, 0, &sendEvent, nullptr) == SOCKET_ERROR && ::WSAGetLastError() != WSA_IO_PENDING)
+	{
+		sendPending = false;
+		sendEvent.owner.reset();
+		sendQueue.clear();
+		sendOffset = queuedBytes = 0;
+		return false;
+	}
+	return true;
+}
 
 void Session::ProcessSend(int32_t numOfBytes)
 {
 	// 처리 도중 세션 소멸 방지.
 	auto self = shared_from_this(); 
-	sendEvent.owner = nullptr;
-
-	if (numOfBytes == 0)
+	bool failed = false;
 	{
-		Disconnect(L"Send 0 Bytes");
-		return;
+		std::lock_guard<std::mutex> guard(sendLock);
+		sendEvent.owner.reset();
+		sendPending = false;
+		failed = numOfBytes <= 0 || sendQueue.empty() ||
+			static_cast<size_t>(numOfBytes) > sendQueue.front().size() - sendOffset;
+		if (failed || !IsConnected())
+		{
+			sendQueue.clear();
+			sendOffset = queuedBytes = 0;
+		}
+		else
+		{
+			sendOffset += numOfBytes;
+			queuedBytes -= numOfBytes;
+			if (sendOffset == sendQueue.front().size())
+			{
+				sendQueue.pop_front();
+				sendOffset = 0;
+			}
+			failed = !RegisterSendLocked();
+		}
 	}
-	
-	OnSend(numOfBytes);
+	if (failed) Disconnect(L"Send failed");
+	else OnSend(numOfBytes);
 }
 
 void Session::ProcessDisconnect()
 {
-	if (socket != INVALID_SOCKET)
 	{
-		::closesocket(socket);
-		socket = INVALID_SOCKET;
+		std::lock_guard<std::mutex> guard(sendLock);
+		if (socket != INVALID_SOCKET)
+		{
+			::closesocket(socket);
+			socket = INVALID_SOCKET;
+		}
+		// Keep any outstanding send's bytes alive until cancellation completion.
+		if (!sendPending)
+		{
+			sendQueue.clear();
+			sendOffset = queuedBytes = 0;
+		}
 	}
 	OnDisconnected();
 }

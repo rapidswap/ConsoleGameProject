@@ -2,6 +2,7 @@
 
 #include "Main/pch.h"
 #include "Common/Protocol.h"
+#include "Common/Pathfinding.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -58,6 +59,40 @@ public:
 	void SpawnMonster(int32_t monsterId, int32_t spawnIndex, int32_t hp, float speed);
 
 private:
+	// All navigation state is owned by this room and protected by lock.
+	struct ServerTurret
+	{
+		SKDefense::GridPoint position;
+		int type = 0;
+		int tier = 1;
+		int order = 0;
+	};
+	struct ServerMonster
+	{
+		SKDefense::GridPoint position;
+		std::vector<SKDefense::GridPoint> path;
+		size_t pathIndex = 1;
+		float speed = 2.0f;
+		float moveAccumulator = 0.0f;
+	};
+	bool LoadNavigationMap();
+	bool CanBuildTurret(int x, int y);
+	void SetTurretTiles(SKDefense::GridPoint position, int value);
+	void MergeTurrets();
+	void RefreshMonsterPaths();
+	void AssignMonsterPath(int32_t id, ServerMonster& monster);
+	void UpdateMonsters(float deltaTime);
+	void DamageAgitFromMonster();
+	SKDefense::Grid navigationGrid;
+	std::vector<SKDefense::GridPoint> spawnPoints;
+	SKDefense::GridPoint targetPoint;
+	SKDefense::AStar pathfinder;
+	std::map<int, SKDefense::AStar::Result> pathCache;
+	std::vector<ServerTurret> turrets;
+	std::map<int32_t, ServerMonster> monsters;
+	uint32_t mapRevision = 0;
+	int nextTurretOrder = 0;
+
 	uint32_t roomId = 1;
 	std::set<int32_t> deadMonsters;
 

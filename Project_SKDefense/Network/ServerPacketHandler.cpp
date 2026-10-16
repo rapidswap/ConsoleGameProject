@@ -10,43 +10,76 @@
 
 void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 {
+	if (!buffer || len < sizeof(PacketHeader)) return;
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
+	if (header->size != len) return;
 
 	switch (static_cast<PacketType>(header->id))
 	{
+	case PacketType::S_MONSTER_PATH:
+	{
+		if (len < sizeof(S_MONSTER_PATH_PACKET)) return;
+		const auto& pkt = *reinterpret_cast<S_MONSTER_PATH_PACKET*>(buffer);
+		if (pkt.pathCount == 0 || pkt.pathCount > 4096 || pkt.historyCount > 4096 ||
+			len != sizeof(pkt) + (static_cast<size_t>(pkt.pathCount) + pkt.historyCount) * sizeof(PathCoordinate)) return;
+		if (auto level = DefenseLevel::Get())
+			level->ApplyMonsterPath(pkt, reinterpret_cast<const PathCoordinate*>(buffer + sizeof(pkt)));
+		break;
+	}
+	case PacketType::S_MONSTER_MOVE:
+	{
+		if (len != sizeof(S_MONSTER_MOVE_PACKET)) return;
+		if (auto level = DefenseLevel::Get()) level->ApplyMonsterMove(*reinterpret_cast<S_MONSTER_MOVE_PACKET*>(buffer));
+		break;
+	}
+	case PacketType::S_MERGE_TURRET:
+	{
+		if (len != sizeof(S_MERGE_TURRET_PACKET)) return;
+		if (auto level = DefenseLevel::Get()) level->MergeTurretsFromNetwork(*reinterpret_cast<S_MERGE_TURRET_PACKET*>(buffer));
+		break;
+	}
 	case PacketType::S_LOGIN_OK:
+		if (len != sizeof(S_LOGIN_OK_PACKET)) return;
 		Handle_S_LOGIN_OK(*reinterpret_cast<S_LOGIN_OK_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_CHAT:
+		if (len != sizeof(S_CHAT_PACKET)) return;
 		Handle_S_CHAT(*reinterpret_cast<S_CHAT_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_BUILD_TURRET:
+		if (len != sizeof(S_BUILD_TURRET_PACKET)) return;
 		Handle_S_BUILD_TURRET(*reinterpret_cast<S_BUILD_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_SELL_TURRET:
+		if (len != sizeof(S_SELL_TURRET_PACKET)) return;
 		Handle_S_SELL_TURRET(*reinterpret_cast<S_SELL_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_SPAWN_MONSTER:
+		if (len != sizeof(S_SPAWN_MONSTER_PACKET)) return;
 		Handle_S_SPAWN_MONSTER(*reinterpret_cast<S_SPAWN_MONSTER_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_UPGRADE_TURRET:
+		if (len != sizeof(S_UPGRADE_TURRET_PACKET)) return;
 		Handle_S_UPGRADE_TURRET(*reinterpret_cast<S_UPGRADE_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_AGIT_DAMAGE:
+		if (len != sizeof(S_AGIT_DAMAGE_PACKET)) return;
 		Handle_S_AGIT_DAMAGE(*reinterpret_cast<S_AGIT_DAMAGE_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_ENEMY_KILL:
+		if (len != sizeof(S_ENEMY_KILL_PACKET)) return;
 		Handle_S_ENEMY_KILL(*reinterpret_cast<S_ENEMY_KILL_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_ROOM_INFO:
+		if (len != sizeof(S_ROOM_INFO_PACKET)) return;
 	{
 		auto pkt = reinterpret_cast<S_ROOM_INFO_PACKET*>(buffer);
 		NetworkManager::Get()->SetPlayerCount(pkt->totalPlayers);
@@ -55,6 +88,7 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 	}
 
 	case PacketType::S_GAME_START:
+		if (len != sizeof(S_GAME_START_PACKET)) return;
 	{
 		// 서버로부터 동시 시작 신호 수신.
 		auto pkt = reinterpret_cast<S_GAME_START_PACKET*>(buffer);
@@ -65,10 +99,12 @@ void ServerPacketHandler::HandlePacket(BYTE* buffer, int32_t len)
 	}
 
 	case PacketType::S_GAME_OVER:
+		if (len != sizeof(S_GAME_OVER_PACKET)) return;
 		Handle_S_GAME_OVER(*reinterpret_cast<S_GAME_OVER_PACKET*>(buffer));
 		break;
 
 	case PacketType::S_GAME_CLEAR:
+		if (len != sizeof(S_GAME_CLEAR_PACKET)) return;
 		Handle_S_GAME_CLEAR(*reinterpret_cast<S_GAME_CLEAR_PACKET*>(buffer));
 		break;
 

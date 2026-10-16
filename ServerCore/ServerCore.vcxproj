@@ -102,6 +102,7 @@
   <ItemGroup>
     <ClInclude Include="Common\PacketType.h" />
     <ClInclude Include="Common\Protocol.h" />
+    <ClInclude Include="Common\Pathfinding.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Main\CoreMacro.h" />
     <ClInclude Include="Main\pch.h" />

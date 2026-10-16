@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 #include <Actor/Turret.h>
+#include "Common/Pathfinding.h"
+#include "Common/Protocol.h"
 
 class DefenseLevel : public Craft::Level
 {
@@ -20,6 +22,7 @@ private:
 	Craft::Vector2 GetRealMousePos();
 	void LoadMap(const std::string& filename);
 	void CheckTurretMerge();
+	std::shared_ptr<Turret> FindTurretAt(int x, int y);
 
 	// Tick 함수 정리를 위한 입력 처리 분리
 	void HandleCameraInput();
@@ -53,6 +56,7 @@ private:
 	// 스폰 지점(S) 배열과 목표 지점(D)
 	std::vector<Craft::Vector2> spawnPoints;
 	Craft::Vector2 targetPoint;
+	SKDefense::AStar offlinePathfinder;
 
 	// 웨이브 관리를 위한 스포너 참조
 	std::weak_ptr<class EnemySpawner> enemySpawner;
@@ -72,6 +76,10 @@ public:
 
 	// 서버로부터 몬스터 처치 패킷을 받았을 때 호출할 함수
 	void KillMonsterFromNetwork(int monsterId, int rewardGold);
+	void ApplyMonsterPath(const S_MONSTER_PATH_PACKET& pkt, const PathCoordinate* points);
+	void ApplyMonsterMove(const S_MONSTER_MOVE_PACKET& pkt);
+	void MergeTurretsFromNetwork(const S_MERGE_TURRET_PACKET& pkt);
+	SKDefense::AStar::Result FindOfflinePath(SKDefense::GridPoint start);
 
 	// 서버로부터 타워 속성 업그레이드 패킷을 받았을 때 호출할 함수
 	void UpgradeTurretFromNetwork(int upgradeType, int newLevel);

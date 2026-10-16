@@ -4,6 +4,9 @@
 #include "IocpEvent.h"
 #include "NetAddress.h"
 #include "RecvBuffer.h"
+#include <atomic>
+#include <deque>
+#include <vector>
 
 class Session : public IocpObject
 {
@@ -36,6 +39,7 @@ protected:
 	void ProcessRecv(int32_t numOfBytes);
 	void ProcessSend(int32_t numOfBytes);
 	void ProcessDisconnect();
+	bool RegisterSendLocked(); // sendLock must be held.
 
 protected:
 	// 상속받는 게임 서버에서 오버라이딩한 함수.
@@ -47,7 +51,7 @@ protected:
 private:
 	SOCKET socket = INVALID_SOCKET;
 	NetAddress netAddress = {};
-	bool connected = false;
+	std::atomic<bool> connected = false;
 
 	// 수신(Recv) 관련.
 	IocpEvent recvEvent{ EventType::Recv };
@@ -58,7 +62,11 @@ private:
 
 	// 송신(Send) 관련.
 	IocpEvent sendEvent{ EventType::Send };
-	BYTE sendBuffer[4096] = {};
+	std::deque<std::vector<BYTE>> sendQueue;
+	size_t sendOffset = 0;
+	size_t queuedBytes = 0;
+	bool sendPending = false;
+	static constexpr size_t maxQueuedBytes = 1024 * 1024;
 
 	
 	// 여러 스레드가 동시에 Send 호출 시 꼬임 방지.

@@ -18,8 +18,6 @@
 #include <Actor/Agit.h>
 #include <Util/Timer.h>
 #include <Util/Util.h>
-#include <Algorithm/AStar.h>
-#include <Algorithm/Node.h>
 #include <fstream>
 #include <iostream>
 #include <cassert>
@@ -1007,7 +1005,7 @@ void DefenseLevel::BuildTurretFromNetwork(int x, int y, int turretType)
 	mapGrid[worldPos.y + 1][worldPos.x + 1] = 2;
 
 	// 3. 3개가 모이면 자동 승급 체크.
-	CheckTurretMerge();
+	if (!NetworkManager::Get()->IsConnected()) CheckTurretMerge();
 
 	// 4. 몬스터들의 A* 길찾기 재계산.
 	for (const auto& actor : actorList)
@@ -1026,7 +1024,7 @@ void DefenseLevel::BuildTurretFromNetwork(int x, int y, int turretType)
 void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, int refundGold)
 {
 	// 1. 해당 좌표에 있는 타워 찾아서 파괴.
-	for (auto turret : FindActors<Turret>())
+	if (auto turret = FindTurretAt(x, y))
 	{
 		Vector2 tPos = turret->GetPosition();
 		if (tPos.x == x && tPos.y == y)
@@ -1053,7 +1051,6 @@ void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, in
 
 			// 3. 타워 객체 소멸.
 			turret->Destroy();
-			break;
 		}
 	}
 
@@ -1065,6 +1062,22 @@ void DefenseLevel::SellTurretFromNetwork(int x, int y, uint32_t sellerPlayer, in
 			enemy->RecalculatePath();
 		}
 	}
+}
+
+std::shared_ptr<Turret> DefenseLevel::FindTurretAt(int x, int y)
+{
+	const auto find = [x, y](const auto& actors) -> std::shared_ptr<Turret> {
+		for (const auto& actor : actors)
+		{
+			auto turret = Cast<Turret>(actor);
+			if (!turret || !turret->IsActive() || turret->HasExpired()) continue;
+			const auto point = turret->GetPosition();
+			if (point.x == x && point.y == y) return turret;
+		}
+		return nullptr;
+	};
+	if (auto turret = find(actorList)) return turret;
+	return find(addRequestedActorList);
 }
 
 void DefenseLevel::SpawnMonsterFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed)
@@ -1100,6 +1113,72 @@ void DefenseLevel::UpgradeTurretFromNetwork(int upgradeType, int newLevel)
 	}
 }
 
+SKDefense::AStar::Result DefenseLevel::FindOfflinePath(SKDefense::GridPoint start)
+{
+	if (NetworkManager::Get()->IsConnected()) return {};
+	return offlinePathfinder.FindPath(start, {static_cast<int>(targetPoint.x), static_cast<int>(targetPoint.y)}, mapGrid, showAStarDebug);
+}
+
+void DefenseLevel::ApplyMonsterPath(const S_MONSTER_PATH_PACKET& pkt, const PathCoordinate* points)
+{
+	for (size_t i = 0; i < static_cast<size_t>(pkt.pathCount) + pkt.historyCount; ++i)
+		if (!SKDefense::AStar::IsWalkable(mapGrid, {points[i].x, points[i].y})) return;
+	const auto apply = [&](const auto& actors) {
+		for (const auto& actor : actors)
+		{
+			auto enemy = Cast<Enemy>(actor);
+			if (enemy && enemy->IsActive() && enemy->GetMonsterId() == pkt.monsterId)
+			{
+				enemy->ApplyServerPath(pkt.mapRevision, points, pkt.pathCount, pkt.historyCount);
+				return true;
+			}
+		}
+		return false;
+	};
+	if (!apply(actorList)) apply(addRequestedActorList);
+}
+
+void DefenseLevel::ApplyMonsterMove(const S_MONSTER_MOVE_PACKET& pkt)
+{
+	if (!SKDefense::AStar::IsWalkable(mapGrid, {pkt.position.x, pkt.position.y})) return;
+	const auto apply = [&](const auto& actors) {
+		for (const auto& actor : actors)
+		{
+			auto enemy = Cast<Enemy>(actor);
+			if (enemy && enemy->IsActive() && enemy->GetMonsterId() == pkt.monsterId)
+			{
+				enemy->ApplyServerMove(pkt);
+				return true;
+			}
+		}
+		return false;
+	};
+	if (!apply(actorList)) apply(addRequestedActorList);
+}
+
+void DefenseLevel::MergeTurretsFromNetwork(const S_MERGE_TURRET_PACKET& pkt)
+{
+	const auto apply = [&](const auto& actors) {
+		for (const auto& actor : actors)
+		{
+			auto turret = Cast<Turret>(actor);
+			if (!turret || !turret->IsActive() || turret->HasExpired()) continue;
+			const auto position = turret->GetPosition();
+			if (position.x == pkt.survivor.x && position.y == pkt.survivor.y)
+				while (turret->GetStarTier() < pkt.newTier && turret->GetStarTier() < 3) turret->UpgradeStar();
+			for (const auto point : pkt.removed)
+			{
+				if (position.x != point.x || position.y != point.y) continue;
+				for (int dy = 0; dy < 2; ++dy)
+					for (int dx = 0; dx < 2; ++dx) mapGrid[point.y + dy][point.x + dx] = 0;
+				turret->Destroy();
+			}
+		}
+	};
+	apply(actorList);
+	apply(addRequestedActorList);
+}
+
 void DefenseLevel::SetAgitHealthFromNetwork(int health)
 {
 	auto agit = FindActor<Agit>();
@@ -1133,87 +1212,42 @@ void DefenseLevel::DamageAgit(int damage)
 
 bool DefenseLevel::CanBuildTurret(int x, int y)
 {
-	// 1. 터렛은 2x2 사이즈이므로 4칸 모두 0(바닥)인지 확인
-	for (int i = 0; i < 2; ++i)
-	{
-		for (int j = 0; j < 2; ++j)
-		{
-			int cx = x + i;
-			int cy = y + j;
-			
-			// 맵 경계선 체크
-			if (cy < 0 || cy >= static_cast<int>(mapGrid.size())) return false;
-			if (cx < 0 || cx >= static_cast<int>(mapGrid[cy].size())) return false;
-			
-			// 벽(1), 기존 터렛(2), 아지트(3)가 있으면 설치 불가
-			if (mapGrid[cy][cx] != 0) return false;
-		}
-	}
+    if (mapGrid.empty() || x < 0 || y < 0 ||
+        x >= static_cast<int>(mapGrid.front().size()) - 1 || y >= static_cast<int>(mapGrid.size()) - 1) return false;
+    for (int dy = 0; dy < 2; ++dy)
+        for (int dx = 0; dx < 2; ++dx)
+            if (mapGrid[y + dy][x + dx] != 0) return false;
+    const auto covered = [x, y](const Vector2& point) {
+        return point.x >= x && point.x <= x + 1 && point.y >= y && point.y <= y + 1;
+    };
+    for (const auto& point : spawnPoints) if (covered(point)) return false;
+    for (auto enemy : FindActors<Enemy>())
+        if (enemy->IsActive() && covered(enemy->GetPosition())) return false;
+    // Online preview checks occupancy only; the server decides reachability atomically.
+    if (NetworkManager::Get()->IsConnected()) return true;
 
-	// 2. 가상 시뮬레이션: 임시로 4칸에 터렛(2)을 가상 설치
-	mapGrid[y][x] = 2;
-	mapGrid[y][x + 1] = 2;
-	mapGrid[y + 1][x] = 2;
-	mapGrid[y + 1][x + 1] = 2;
-
-	bool canReach = true;
-
-	// (A) 모든 스폰 지점(S)에서 아지트(D)까지 경로가 여전히 존재하는지 확인
-	{
-		for (const auto& sp : spawnPoints)
-		{
-			AStar astar;
-			Node* startNode = new Node(static_cast<int>(std::round(sp.x)), static_cast<int>(std::round(sp.y)));
-			Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
-
-			std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
-			delete goalNode;
-
-			if (path.empty())
-			{
-				canReach = false;
-				break;
-			}
-		}
-	}
-
-	// (B) 현재 맵에 살아있는(Active) 몬스터들이 있다면, 그 몬스터들도 아지트에 갈 수 있는지 확인 (갇힘 방지)
-	if (canReach)
-	{
-		for (const auto& actor : actorList)
-		{
-			if (!actor->IsActive()) continue;
-			auto enemy = Craft::Cast<Enemy>(actor);
-			if (enemy)
-			{
-				AStar astar;
-				Vector2 enemyPos = enemy->GetPosition();
-				Node* startNode = new Node(static_cast<int>(std::round(enemyPos.x)), static_cast<int>(std::round(enemyPos.y)));
-				Node* goalNode = new Node(static_cast<int>(std::round(targetPoint.x)), static_cast<int>(std::round(targetPoint.y)));
-
-				std::vector<Node*> path = astar.FindPath(startNode, goalNode, mapGrid);
-				delete goalNode;
-
-				if (path.empty())
-				{
-					canReach = false;
-					break;
-				}
-			}
-		}
-	}
-
-	// 3. 임시 설치했던 터렛을 다시 빈 바닥(0)으로 롤백(복구)
-	mapGrid[y][x] = 0;
-	mapGrid[y][x + 1] = 0;
-	mapGrid[y + 1][x] = 0;
-	mapGrid[y + 1][x + 1] = 0;
-
-	return canReach;
+    for (int dy = 0; dy < 2; ++dy)
+        for (int dx = 0; dx < 2; ++dx) mapGrid[y + dy][x + dx] = 2;
+    const auto reachable = SKDefense::AStar::ReachableFrom(
+        {static_cast<int>(targetPoint.x), static_cast<int>(targetPoint.y)}, mapGrid);
+    const int width = static_cast<int>(mapGrid.front().size());
+    bool valid = !reachable.empty();
+    for (const auto& point : spawnPoints)
+        valid = valid && reachable[static_cast<int>(point.y) * width + static_cast<int>(point.x)];
+    for (auto enemy : FindActors<Enemy>())
+    {
+        if (!enemy->IsActive()) continue;
+        const auto point = enemy->GetPosition();
+        valid = valid && reachable[static_cast<int>(point.y) * width + static_cast<int>(point.x)];
+    }
+    for (int dy = 0; dy < 2; ++dy)
+        for (int dx = 0; dx < 2; ++dx) mapGrid[y + dy][x + dx] = 0;
+    return valid;
 }
 
 void DefenseLevel::CheckTurretMerge()
 {
+	if (NetworkManager::Get()->IsConnected()) return;
 #ifdef _DEBUG
 	// F3(A* 디버그 모드)가 켜져 있으면 길찾기 관찰이 목적이므로 합성을 제한함
 	if (showAStarDebug) return;

@@ -144,6 +144,11 @@ void NetworkManager::RecvThread()
 			}
 
 			PacketHeader* header = reinterpret_cast<PacketHeader*>(&buffer[readPos + processLen]);
+			if (header->size < sizeof(PacketHeader))
+			{
+				connected = false;
+				return;
+			}
 			if (currentSize < header->size)
 			{
 				// 덜 왔으면 다음 수신 대기.

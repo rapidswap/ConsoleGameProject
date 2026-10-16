@@ -21,6 +21,9 @@
     <ClInclude Include="Common\PacketType.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Common\Pathfinding.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="Common\Protocol.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>

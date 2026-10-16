@@ -17,8 +17,16 @@ public:
 	virtual void OnSend(int32_t len) override;
 	virtual void OnDisconnected() override;
 
-	std::shared_ptr<GameRoom> GetRoom() const { return room.lock(); }
-	void SetRoom(std::shared_ptr<GameRoom> inRoom) { room = inRoom; }
+	std::shared_ptr<GameRoom> GetRoom() const
+	{
+		std::lock_guard<std::mutex> guard(roomLock);
+		return room.lock();
+	}
+	void SetRoom(std::shared_ptr<GameRoom> inRoom)
+	{
+		std::lock_guard<std::mutex> guard(roomLock);
+		room = inRoom;
+	}
 
 public:
 	// 이 세션의 고유 플레이어 ID.
@@ -33,5 +41,6 @@ public:
 	int32_t nextTurretType = 0;
 
 private:
+	mutable std::mutex roomLock;
 	std::weak_ptr<GameRoom> room;
 };

@@ -4,13 +4,12 @@
 #include <Render/Renderer.h>
 #include <Engine/Engine.h>
 #include <Level/DefenseLevel.h>
-#include <Algorithm/AStar.h>
-#include <Algorithm/Node.h>
 #include <Actor/TurretBullet.h>
 #include <Actor/Agit.h>
 #include "Network/NetworkManager.h"
 #include "Common/Protocol.h"
 #include <cmath>
+#include <iostream>
 
 using namespace Craft;
 Enemy::Enemy(const Vector2& position)
@@ -28,24 +27,17 @@ void Enemy::BeginPlay()
 
 void Enemy::RecalculatePath()
 {
+	if (NetworkManager::Get()->IsConnected()) return;
 	auto defenseLevel = Cast<DefenseLevel>(GetOwner());
 	if (defenseLevel)
 	{
-		AStar astar;
-		// 현재 위치를 정수로 변환하여 시작점으로 사용 (정확한 칸 맞춤)
-		Vector2 spawn = position; 
-		Vector2 target = defenseLevel->GetTargetPoint();
-
-		Node* startNode = new Node(static_cast<int>(std::round(spawn.x)), static_cast<int>(std::round(spawn.y)));
-		Node* goalNode = new Node(static_cast<int>(std::round(target.x)), static_cast<int>(std::round(target.y)));
-
-		std::vector<Node*> nodePath = astar.FindPath(startNode, goalNode, defenseLevel->GetMapGrid());
+		const auto result = defenseLevel->FindOfflinePath({static_cast<int>(std::round(position.x)), static_cast<int>(std::round(position.y))});
 
 		path.clear();
 		// 길찾기 결과 복사 (시작 노드는 보통 현재 위치이므로 제외)
-		for (size_t i = 1; i < nodePath.size(); ++i)
+		for (size_t i = 1; i < result.path.size(); ++i)
 		{
-			path.emplace_back(Vector2(static_cast<float>(nodePath[i]->position.x), static_cast<float>(nodePath[i]->position.y)));
+			path.emplace_back(Vector2(static_cast<float>(result.path[i].x), static_cast<float>(result.path[i].y)));
 		}
 		
 		currentPathIndex = 0;
@@ -54,19 +46,40 @@ void Enemy::RecalculatePath()
 		
 		// 시각화를 위해 탐색 히스토리 복사
 		searchHistory.clear();
-		for (const auto& pos : astar.searchHistory)
+		for (const auto& pos : result.history)
 		{
 			searchHistory.emplace_back(Vector2(static_cast<float>(pos.x), static_cast<float>(pos.y)));
 		}
 
-		delete goalNode;
 		
 	}
+}
+
+void Enemy::ApplyServerPath(uint32_t revision, const PathCoordinate* points, size_t pathCount, size_t historyCount)
+{
+	if (revision < pathRevision || pathCount == 0) return;
+	pathRevision = revision;
+	path.clear();
+	searchHistory.clear();
+	SetPosition(Vector2(points[0].x, points[0].y));
+	for (size_t i = 0; i < pathCount; ++i) path.emplace_back(Vector2(points[i].x, points[i].y));
+	for (size_t i = 0; i < historyCount; ++i) searchHistory.emplace_back(Vector2(points[pathCount + i].x, points[pathCount + i].y));
+	currentPathIndex = 1;
+	debugAnimFrame = 0;
+}
+
+void Enemy::ApplyServerMove(const S_MONSTER_MOVE_PACKET& pkt)
+{
+	if (pkt.mapRevision != pathRevision || pkt.pathIndex > path.size()) return;
+	SetPosition(Vector2(pkt.position.x, pkt.position.y));
+	currentPathIndex = pkt.pathIndex;
+	if (!pkt.active) SetActive(false);
 }
 
 void Enemy::Tick(float deltaTime)
 {
 	Actor::Tick(deltaTime);
+	if (NetworkManager::Get()->IsConnected()) return;
 	
 	// A* 경로를 따라 한 칸씩 이동
 	if (currentPathIndex < path.size())
@@ -83,6 +96,8 @@ void Enemy::Tick(float deltaTime)
 	{
 		// 경로 끝(아지트) 도착 처리: 아지트에 도달하여 데미지를 입히고 소멸(골드 미지급)
 		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
+		// A failed search must not damage the agit from an unreachable cell.
+		if (!defenseLevel || position != defenseLevel->GetTargetPoint()) return;
 		if (defenseLevel)
 		{
 			defenseLevel->DamageAgit(1);
@@ -113,6 +128,7 @@ void Enemy::Draw()
 void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 {
 	super::OnCollision(other);
+	if (killReported) return;
 
 	// 터렛 총알에 맞았다면.
 	if (other->IsTypeOf<TurretBullet>())
@@ -142,6 +158,8 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 				pkt.monsterId = monsterId;
 				pkt.rewardGold = 10;
 				NetworkManager::Get()->Send(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+				killReported = true;
+				return; // Keep this pool slot until the server confirms death/arrival.
 			}
 			else
 			{
@@ -159,6 +177,7 @@ void Enemy::OnCollision(const std::shared_ptr<Actor>& other)
 	// 아지트에 도달했다면.
 	if (other->IsTypeOf<Agit>())
 	{
+		if (NetworkManager::Get()->IsConnected()) return;
 		auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
 		if (defenseLevel)
 		{

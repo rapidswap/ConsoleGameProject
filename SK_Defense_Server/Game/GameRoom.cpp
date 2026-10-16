@@ -3,6 +3,9 @@
 #include <Util/Util.h>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <cstring>
 
 RoomState GameRoom::GetState()
 {
@@ -190,6 +193,19 @@ void GameRoom::BroadcastRoomInfo()
 
 void GameRoom::StartGame()
 {
+	if (!LoadNavigationMap())
+	{
+		S_CHAT_PACKET error;
+		strcpy_s(error.msg, "[System] Cannot start: invalid or missing SK_Defense_Map.txt.");
+		Broadcast(reinterpret_cast<BYTE*>(&error), error.size);
+		return;
+	}
+	turrets.clear();
+	monsters.clear();
+	deadMonsters.clear();
+	pathCache.clear();
+	++mapRevision;
+	nextTurretOrder = 0;
 	state = RoomState::PLAYING;
 	waveCount = 1;
 	isWaveActive = false;
@@ -306,10 +322,10 @@ void GameRoom::HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_T
 	const int turretCost = 50;
 
 	// 서버 권한 검증: 보유 골드가 터렛 비용 이상인지 검사
-	if (session->gold < turretCost)
+	if (state != RoomState::PLAYING || session->gold < turretCost || !CanBuildTurret(pkt.posX, pkt.posY))
 	{
 		std::cout << "[GameRoom #" << roomId << " Build FAIL] Player " << session->playerId
-			<< " has insufficient gold (" << session->gold << " < " << turretCost << ")\n";
+			<< " has insufficient gold or invalid placement (Gold: " << session->gold << ")\n";
 
 		S_BUILD_TURRET_PACKET sendPkt;
 		sendPkt.success = false;
@@ -330,6 +346,8 @@ void GameRoom::HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_T
 
 	// 클라이언트가 보낸 속성은 무시, 서버가 보관 중이던 타워로 확정.
 	int32_t builtTurretType = session->nextTurretType;
+	SetTurretTiles({pkt.posX, pkt.posY}, 2);
+	turrets.push_back({{pkt.posX, pkt.posY}, builtTurretType, 1, nextTurretOrder++});
 
 	session->nextTurretType = static_cast<int32_t>(Util::RandomRange(0, 2));
 
@@ -353,22 +371,32 @@ void GameRoom::HandleBuildTurret(std::shared_ptr<GameSession> session, C_BUILD_T
 	sendPkt.nextTurretType = session->nextTurretType;
 
 	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+	MergeTurrets();
+	RefreshMonsterPaths();
 }
 
 void GameRoom::HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TURRET_PACKET& pkt)
 {
 	std::lock_guard<std::mutex> guard(lock);
+	if (state != RoomState::PLAYING) return;
+	const auto turret = std::find_if(turrets.begin(), turrets.end(), [&](const ServerTurret& item) {
+		return item.position == SKDefense::GridPoint{pkt.posX, pkt.posY};
+	});
+	if (turret == turrets.end()) return;
 
 	// 터렛 기본 비용 50G의 절반(25G)에 성급 배율 적용
-	int multiplier = (pkt.starTier == 3) ? 9 : (pkt.starTier == 2) ? 3 : 1;
+	const int tier = turret->tier;
+	int multiplier = (tier == 3) ? 9 : (tier == 2) ? 3 : 1;
 	int refund = 25 * multiplier;
+	SetTurretTiles(turret->position, 0);
+	turrets.erase(turret);
 
 	// 서버 측 골드 환불 가산
 	session->gold += refund;
 
 	std::cout << "[GameRoom #" << roomId << " Sell SUCCESS] Player " << session->playerId
 		<< " sold Turret at (" << pkt.posX << ", " << pkt.posY
-		<< ") [Tier: " << pkt.starTier << ", Refund: " << refund << "G, Total: " << session->gold << "G]\n";
+		<< ") [Tier: " << tier << ", Refund: " << refund << "G, Total: " << session->gold << "G]\n";
 
 	// 방 안의 모든 화면에 타워 철거 및 환불 골드 브로드캐스트
 	S_SELL_TURRET_PACKET sendPkt;
@@ -379,6 +407,7 @@ void GameRoom::HandleSellTurret(std::shared_ptr<GameSession> session, C_SELL_TUR
 	sendPkt.refundGold = refund;
 
 	Broadcast(reinterpret_cast<BYTE*>(&sendPkt), sendPkt.size);
+	RefreshMonsterPaths();
 }
 
 void GameRoom::Update(float deltaTime)
@@ -391,6 +420,8 @@ void GameRoom::Update(float deltaTime)
 	{
 		return;
 	}
+	UpdateMonsters(deltaTime);
+	if (state != RoomState::PLAYING || waveCount > 9) return;
 
 	if (!isWaveActive)
 	{
@@ -401,7 +432,6 @@ void GameRoom::Update(float deltaTime)
 			isWaveActive = true;
 			spawnedCount = 0;
 			spawnTimer = 0.0f;
-			deadMonsters.clear(); // 새 웨이브 시작 시 처치 목록 초기화
 			std::cout << "[GameRoom #" << roomId << "] Wave " << waveCount << " Started! Spawning 30 monsters...\n";
 		}
 	}
@@ -441,12 +471,13 @@ void GameRoom::Update(float deltaTime)
 			
 			int baseHp = 3 * waveCount;
 
+			activeSpawns = (std::min)(activeSpawns, static_cast<int>(spawnPoints.size()));
 			int spawnIdx = static_cast<int>(Util::RandomRange(0, activeSpawns - 1));
 			int maxHp = (sessions.size() >= 2) ? baseHp * 2 : baseHp;
 			float speed = 2.0f;
 
-			// spawnedCount - 1 을 고유 monsterId로 지정 (0 ~ 29)
-			int32_t monsterId = spawnedCount - 1;
+			// Game-wide IDs keep previous-wave survivors and delayed reports distinct.
+			int32_t monsterId = (waveCount - 1) * maxPerWave + spawnedCount - 1;
 			SpawnMonster(monsterId, spawnIdx, maxHp, speed);
 		}
 	}
@@ -454,6 +485,11 @@ void GameRoom::Update(float deltaTime)
 
 void GameRoom::SpawnMonster(int32_t monsterId, int32_t spawnIndex, int32_t hp, float speed)
 {
+	if (spawnIndex < 0 || spawnIndex >= static_cast<int32_t>(spawnPoints.size())) return;
+	ServerMonster monster;
+	monster.position = spawnPoints[spawnIndex];
+	monster.speed = speed;
+	monsters[monsterId] = std::move(monster);
 	S_SPAWN_MONSTER_PACKET pkt;
 	pkt.monsterId = monsterId;
 	pkt.spawnIndex = spawnIndex;
@@ -463,6 +499,7 @@ void GameRoom::SpawnMonster(int32_t monsterId, int32_t spawnIndex, int32_t hp, f
 	std::cout << "[GameRoom #" << roomId << "] Monster #" << monsterId << " SpawnPoint: " << spawnIndex << "\n";
 
 	Broadcast(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+	AssignMonsterPath(monsterId, monsters.at(monsterId));
 }
 
 void GameRoom::HandleEnemyKill(std::shared_ptr<GameSession> session, C_ENEMY_KILL_PACKET& pkt)
@@ -472,12 +509,13 @@ void GameRoom::HandleEnemyKill(std::shared_ptr<GameSession> session, C_ENEMY_KIL
 	if (state != RoomState::PLAYING) return;
 
 	// 이미 사망 처리된 몬스터는 중복 지급 방지
-	if (deadMonsters.find(pkt.monsterId) != deadMonsters.end())
+	if (monsters.find(pkt.monsterId) == monsters.end() || deadMonsters.find(pkt.monsterId) != deadMonsters.end())
 	{
 		return;
 	}
 
 	deadMonsters.insert(pkt.monsterId);
+	monsters.erase(pkt.monsterId);
 
 	int32_t reward = (pkt.rewardGold <= 0) ? 10 : pkt.rewardGold;
 
@@ -560,16 +598,17 @@ void GameRoom::HandleUpgradeTurret(std::shared_ptr<GameSession> session, C_UPGRA
 
 void GameRoom::HandleAgitDamage(std::shared_ptr<GameSession> session, C_AGIT_DAMAGE_PACKET& pkt)
 {
-	std::lock_guard<std::mutex> guard(lock);
+	// Arrival is decided by server movement. Client reports would double damage.
+}
 
-	if (state != RoomState::PLAYING) return;
-
-	int32_t dmg = (pkt.damage <= 0) ? 1 : pkt.damage;
+void GameRoom::DamageAgitFromMonster()
+{
+	const int32_t dmg = 1;
 	agitHealth -= dmg;
 	if (agitHealth < 0) agitHealth = 0;
 
 	std::cout << "[GameRoom #" << roomId << "] Agit Damaged by " << dmg
-		<< " (Remaining HP: " << agitHealth << "/100) reported by Player " << session->playerId << "\n";
+		<< " (Remaining HP: " << agitHealth << "/100)\n";
 
 	S_AGIT_DAMAGE_PACKET sendPkt;
 	sendPkt.remainingAgitHealth = agitHealth;
@@ -640,6 +679,195 @@ void GameRoom::HandleGameClear(std::shared_ptr<GameSession> session, C_GAME_CLEA
 
 	Broadcast(reinterpret_cast<BYTE*>(&clearPkt), clearPkt.size);
 	BroadcastRoomInfo();
+}
+
+bool GameRoom::LoadNavigationMap()
+{
+	wchar_t executable[MAX_PATH] = {};
+	GetModuleFileNameW(nullptr, executable, MAX_PATH);
+	const auto assetPath = std::filesystem::path(executable).parent_path().parent_path() / "Assets" / "SK_Defense_Map.txt";
+	std::ifstream input(assetPath);
+	if (!input.is_open()) input.open("Assets/SK_Defense_Map.txt");
+	if (!input.is_open()) input.open("../Assets/SK_Defense_Map.txt");
+	if (!input.is_open()) return false;
+	SKDefense::Grid grid;
+	std::vector<SKDefense::GridPoint> spawns;
+	SKDefense::GridPoint goal;
+	int goalCount = 0;
+	std::string line;
+	while (std::getline(input, line))
+	{
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		if (line.empty()) return false;
+		std::vector<int> row;
+		for (int x = 0; x < static_cast<int>(line.size()); ++x)
+		{
+			const SKDefense::GridPoint point{x, static_cast<int>(grid.size())};
+			switch (line[x])
+			{
+			case '#': row.push_back(1); break;
+			case '.': row.push_back(0); break;
+			case 'S': spawns.push_back(point); row.push_back(0); break;
+			case 'D': goal = point; ++goalCount; row.push_back(3); break;
+			default: return false;
+			}
+		}
+		grid.push_back(std::move(row));
+	}
+	if (!SKDefense::AStar::IsValidGrid(grid) || spawns.empty() || goalCount != 1) return false;
+	const auto reachable = SKDefense::AStar::ReachableFrom(goal, grid);
+	const int width = static_cast<int>(grid.front().size());
+	for (const auto point : spawns)
+		if (!reachable[point.y * width + point.x]) return false;
+	navigationGrid = std::move(grid);
+	spawnPoints = std::move(spawns);
+	targetPoint = goal;
+	return true;
+}
+
+void GameRoom::SetTurretTiles(SKDefense::GridPoint position, int value)
+{
+	for (int dy = 0; dy < 2; ++dy)
+		for (int dx = 0; dx < 2; ++dx)
+			navigationGrid[position.y + dy][position.x + dx] = value;
+}
+
+bool GameRoom::CanBuildTurret(int x, int y)
+{
+	if (navigationGrid.empty() || x < 0 || y < 0 ||
+		x >= static_cast<int>(navigationGrid.front().size()) - 1 || y >= static_cast<int>(navigationGrid.size()) - 1) return false;
+	for (int dy = 0; dy < 2; ++dy)
+		for (int dx = 0; dx < 2; ++dx)
+			if (navigationGrid[y + dy][x + dx] != 0) return false;
+	// Spawn cells and occupied monster cells cannot become obstacles.
+	const auto covered = [x, y](SKDefense::GridPoint point) {
+		return point.x >= x && point.x <= x + 1 && point.y >= y && point.y <= y + 1;
+	};
+	for (const auto point : spawnPoints) if (covered(point)) return false;
+	for (const auto& [id, monster] : monsters) if (covered(monster.position)) return false;
+	SetTurretTiles({x, y}, 2);
+	const auto reachable = SKDefense::AStar::ReachableFrom(targetPoint, navigationGrid);
+	const int width = static_cast<int>(navigationGrid.front().size());
+	bool valid = !reachable.empty();
+	for (const auto point : spawnPoints) valid = valid && reachable[point.y * width + point.x];
+	for (const auto& [id, monster] : monsters) valid = valid && reachable[monster.position.y * width + monster.position.x];
+	SetTurretTiles({x, y}, 0);
+	return valid;
+}
+
+void GameRoom::MergeTurrets()
+{
+	for (;;)
+	{
+		// Match the existing type/tier grouping and oldest-turret survivor rule.
+		std::map<std::pair<int, int>, std::vector<size_t>> groups;
+		for (size_t i = 0; i < turrets.size(); ++i)
+			if (turrets[i].tier < 3) groups[{turrets[i].type, turrets[i].tier}].push_back(i);
+		bool merged = false;
+		for (auto& [key, indices] : groups)
+		{
+			if (indices.size() < 3) continue;
+			std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) { return turrets[a].order < turrets[b].order; });
+			ServerTurret& survivor = turrets[indices[0]];
+			++survivor.tier;
+			S_MERGE_TURRET_PACKET pkt;
+			pkt.survivor = {static_cast<int16_t>(survivor.position.x), static_cast<int16_t>(survivor.position.y)};
+			pkt.newTier = survivor.tier;
+			for (size_t i = 0; i < 2; ++i)
+			{
+				const auto point = turrets[indices[i + 1]].position;
+				SetTurretTiles(point, 0);
+				pkt.removed[i] = {static_cast<int16_t>(point.x), static_cast<int16_t>(point.y)};
+			}
+			const size_t first = (std::max)(indices[1], indices[2]);
+			const size_t second = (std::min)(indices[1], indices[2]);
+			turrets.erase(turrets.begin() + first);
+			turrets.erase(turrets.begin() + second);
+			Broadcast(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+			merged = true;
+			break;
+		}
+		if (!merged) return;
+	}
+}
+
+void GameRoom::RefreshMonsterPaths()
+{
+	++mapRevision;
+	pathCache.clear();
+	for (auto& [id, monster] : monsters) AssignMonsterPath(id, monster);
+}
+
+void GameRoom::AssignMonsterPath(int32_t id, ServerMonster& monster)
+{
+	const int key = monster.position.y * static_cast<int>(navigationGrid.front().size()) + monster.position.x;
+	auto found = pathCache.find(key);
+	if (found == pathCache.end())
+	{
+		bool history = false;
+#ifdef _DEBUG
+		history = true;
+#endif
+		found = pathCache.emplace(key, pathfinder.FindPath(monster.position, targetPoint, navigationGrid, history)).first;
+	}
+	const auto& result = found->second;
+	monster.path = result.path;
+	monster.pathIndex = 1;
+	// Keep fractional movement progress when a tower changes the route.
+	S_MONSTER_PATH_PACKET pkt;
+	pkt.monsterId = id;
+	pkt.mapRevision = mapRevision;
+	pkt.pathCount = static_cast<uint16_t>(result.path.size());
+	pkt.historyCount = static_cast<uint16_t>(result.history.size());
+	pkt.size = static_cast<uint16_t>(sizeof(pkt) + (result.path.size() + result.history.size()) * sizeof(PathCoordinate));
+	std::vector<BYTE> buffer(pkt.size);
+	std::memcpy(buffer.data(), &pkt, sizeof(pkt));
+	size_t offset = sizeof(pkt);
+	for (const auto* points : {&result.path, &result.history})
+	{
+		for (const auto point : *points)
+		{
+			const PathCoordinate coordinate{static_cast<int16_t>(point.x), static_cast<int16_t>(point.y)};
+			std::memcpy(buffer.data() + offset, &coordinate, sizeof(coordinate));
+			offset += sizeof(coordinate);
+		}
+	}
+	Broadcast(buffer.data(), static_cast<int32_t>(buffer.size()));
+}
+
+void GameRoom::UpdateMonsters(float deltaTime)
+{
+	for (auto it = monsters.begin(); it != monsters.end();)
+	{
+		ServerMonster& monster = it->second;
+		monster.moveAccumulator += deltaTime * monster.speed;
+		bool moved = false;
+		while (monster.moveAccumulator >= 1.0f && monster.pathIndex < monster.path.size())
+		{
+			monster.position = monster.path[monster.pathIndex++];
+			monster.moveAccumulator -= 1.0f;
+			moved = true;
+		}
+		const bool arrived = monster.position == targetPoint;
+		if (moved || arrived)
+		{
+			S_MONSTER_MOVE_PACKET pkt;
+			pkt.monsterId = it->first;
+			pkt.mapRevision = mapRevision;
+			pkt.pathIndex = static_cast<uint16_t>(monster.pathIndex);
+			pkt.position = {static_cast<int16_t>(monster.position.x), static_cast<int16_t>(monster.position.y)};
+			pkt.active = !arrived;
+			Broadcast(reinterpret_cast<BYTE*>(&pkt), pkt.size);
+		}
+		if (arrived)
+		{
+			deadMonsters.insert(it->first);
+			it = monsters.erase(it);
+			DamageAgitFromMonster();
+			if (state != RoomState::PLAYING) return;
+		}
+		else ++it;
+	}
 }
 
 // -------------------------------------------------------------

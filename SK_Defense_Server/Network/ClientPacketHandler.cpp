@@ -4,59 +4,74 @@
 
 void ClientPacketHandler::HandlePacket(std::shared_ptr<GameSession> session, BYTE* buffer, int32_t len)
 {
+	if (!buffer || len < sizeof(PacketHeader)) return;
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
+	if (header->size != len) return;
 
 	switch (static_cast<PacketType>(header->id))
 	{
 	case PacketType::C_LOGIN:
+		if (len != sizeof(C_LOGIN_PACKET)) return;
 		Handle_C_LOGIN(session, *reinterpret_cast<C_LOGIN_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_CHAT:
+		if (len != sizeof(C_CHAT_PACKET)) return;
 		Handle_C_CHAT(session, *reinterpret_cast<C_CHAT_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_BUILD_TURRET:
+		if (len != sizeof(C_BUILD_TURRET_PACKET)) return;
 		Handle_C_BUILD_TURRET(session, *reinterpret_cast<C_BUILD_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_SELL_TURRET:
+		if (len != sizeof(C_SELL_TURRET_PACKET)) return;
 		Handle_C_SELL_TURRET(session, *reinterpret_cast<C_SELL_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_READY:
+		if (len != sizeof(C_READY_PACKET)) return;
 		Handle_C_READY(session, *reinterpret_cast<C_READY_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_GAME_OVER:
+		if (len != sizeof(C_GAME_OVER_PACKET)) return;
 		Handle_C_GAME_OVER(session, *reinterpret_cast<C_GAME_OVER_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_LEAVE_ROOM:
+		if (len != sizeof(C_LEAVE_ROOM_PACKET)) return;
 		Handle_C_LEAVE_ROOM(session, *reinterpret_cast<C_LEAVE_ROOM_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_SPEND_GOLD:
+		if (len != sizeof(C_SPEND_GOLD_PACKET)) return;
 		Handle_C_SPEND_GOLD(session, *reinterpret_cast<C_SPEND_GOLD_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_ADD_GOLD:
+		if (len != sizeof(C_ADD_GOLD_PACKET)) return;
 		Handle_C_ADD_GOLD(session, *reinterpret_cast<C_ADD_GOLD_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_UPGRADE_TURRET:
+		if (len != sizeof(C_UPGRADE_TURRET_PACKET)) return;
 		Handle_C_UPGRADE_TURRET(session, *reinterpret_cast<C_UPGRADE_TURRET_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_AGIT_DAMAGE:
+		if (len != sizeof(C_AGIT_DAMAGE_PACKET)) return;
 		Handle_C_AGIT_DAMAGE(session, *reinterpret_cast<C_AGIT_DAMAGE_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_ENEMY_KILL:
+		if (len != sizeof(C_ENEMY_KILL_PACKET)) return;
 		Handle_C_ENEMY_KILL(session, *reinterpret_cast<C_ENEMY_KILL_PACKET*>(buffer));
 		break;
 
 	case PacketType::C_GAME_CLEAR:
+		if (len != sizeof(C_GAME_CLEAR_PACKET)) return;
 		Handle_C_GAME_CLEAR(session, *reinterpret_cast<C_GAME_CLEAR_PACKET*>(buffer));
 		break;
 

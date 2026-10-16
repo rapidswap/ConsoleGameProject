@@ -436,3 +436,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Generated SKDefense navigation test binaries, objects and logs
+Intermediate/PathfindingTests/

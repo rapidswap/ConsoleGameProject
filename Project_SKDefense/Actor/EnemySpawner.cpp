@@ -6,6 +6,7 @@
 #include <Actor/Enemy.h>
 #include <Level/Level.h>
 #include <Level/DefenseLevel.h>
+#include <iostream>
 
 using namespace Craft;
 
@@ -173,7 +174,7 @@ void EnemySpawner::SkipWave()
 void EnemySpawner::SpawnEnemyFromNetwork(int monsterId, int spawnIndex, int maxHp, float speed)
 {
 	auto defenseLevel = Craft::Cast<DefenseLevel>(GetOwner());
-	if (!defenseLevel) return;
+	if (!defenseLevel || spawnIndex < 0 || spawnIndex >= defenseLevel->GetSpawnPointCount()) return;
 
 	// 기존 30마리 오브젝트 풀(Pool)에서 비활성 몬스터 재사용!
 	for (auto& weakEnemy : enemyPool)
@@ -183,14 +184,22 @@ void EnemySpawner::SpawnEnemyFromNetwork(int monsterId, int spawnIndex, int maxH
 		{
 			enemy->SetMonsterId(monsterId);
 			enemy->SetHealth(static_cast<float>(maxHp));
+			enemy->SetMoveSpeed(speed);
 			enemy->SetPosition(defenseLevel->GetSpawnPoint(spawnIndex));
 			enemy->SetActive(true);
 			enemy->RecalculatePath();
 
 			spawnedCount++;
-			break;
+			return;
 		}
 	}
+	// Long maze routes can leave survivors when the next wave begins.
+	auto enemy = defenseLevel->SpawnActor<Enemy>(defenseLevel->GetSpawnPoint(spawnIndex));
+	enemy->SetMonsterId(monsterId);
+	enemy->SetHealth(static_cast<float>(maxHp));
+	enemy->SetMoveSpeed(speed);
+	enemyPool.push_back(enemy);
+	++spawnedCount;
 }
 
 void EnemySpawner::KillMonsterFromNetwork(int monsterId, int rewardGold)

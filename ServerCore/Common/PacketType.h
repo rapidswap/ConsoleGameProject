@@ -48,5 +48,8 @@ enum class PacketType : uint16
 
 	// 서버가 몬스터 소환 명령.
 	S_SPAWN_MONSTER=4001,
+	S_MONSTER_PATH=4002,
+	S_MONSTER_MOVE=4003,
+	S_MERGE_TURRET=4004,
 
 };

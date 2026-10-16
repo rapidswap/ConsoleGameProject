@@ -2,6 +2,7 @@
 
 #include <Actor/Actor.h>
 #include <vector>
+#include "Common/Protocol.h"
 
 class Enemy : public Craft::Actor
 {
@@ -17,7 +18,7 @@ public:
 	inline void SetHealth(float health) { enemyHealth = health; }
 
 	inline int GetMonsterId() const { return monsterId; }
-	inline void SetMonsterId(int id) { monsterId = id; }
+	inline void SetMonsterId(int id) { monsterId = id; killReported = false; pathRevision = 0; path.clear(); searchHistory.clear(); currentPathIndex = 0; }
 
 private:
 	// 이벤트 함수 오버라이드.
@@ -28,6 +29,8 @@ private:
 public:
 	// 터렛이 설치될 때마다 경로를 갱신하기 위한 함수
 	void RecalculatePath();
+	void ApplyServerPath(uint32_t revision, const PathCoordinate* points, size_t pathCount, size_t historyCount);
+	void ApplyServerMove(const S_MONSTER_MOVE_PACKET& pkt);
 	
 	const std::vector<Craft::Vector2>& GetPath() const { return path; }
 	int GetCurrentPathIndex() const { return currentPathIndex; }
@@ -42,8 +45,10 @@ private:
 	virtual void OnCollision(const std::shared_ptr<Actor>& other) override;
 
 private:
-	// 몬스터 고유 식별 번호 (웨이브 내 0 ~ 29)
+	// 서버가 발급하는 게임 내 고유 식별 번호 (웨이브가 바뀌어도 재사용하지 않음).
 	int monsterId = -1;
+	uint32_t pathRevision = 0;
+	bool killReported = false;
 
 	// 위치 이동 처리를 위한 변수.
 	float xPosition = 0.0f;
